@@ -1,47 +1,47 @@
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-8">
-      <h1 className="text-4xl font-bold mb-4">Hi, I&apos;m [G]</h1>
-      <p className="text-lg">Welcome to my personal site.</p>
-      <p className="mt-2">I&apos;m a creative explorer, passionate about building things and sharing ideas.</p>
+    <div className="min-h-screen bg-white text-gray-900 font-sans p-8 max-w-3xl mx-auto">
+      <h1 className="text-4xl font-bold mb-6">Hi, I&apos;m Gabriel</h1>
 
-      <p className="mt-6 text-lg">
-        I have a background in{' '}
-        <Link href="/automation" className="text-blue-600 underline">
-          automation and consulting
+      <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
+        Welcome to my personal site.
+      </p>
+
+      <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
+        I&apos;m a creative explorer, passionate about building things and sharing ideas.
+      </p>
+
+      <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
+        I have a{' '}
+        <Link href="/career" className="text-blue-600 underline">
+          background
         </Link>{' '}
-        and I am passionate about projects that leverage public decentralized technology to conduct{' '}
+        in engineering and I’m passionate about using public decentralized technologies to pursue{' '}
         <Link href="/experiments" className="text-blue-600 underline">
-          experimental projects
+          experimental work
         </Link>
         .
       </p>
-      <p className="text-lg">
-        I also enjoy{' '}
-        <Link href="/photography" className="text-blue-600 underline">
-          digital art &amp; photography
+
+      <p className="text-lg mb-12" style={{ textAlign: 'justify' }}>
+        I also enjoy collecting digital artifacts across multiple blockchains. You can explore my curated{' '}
+        <Link href="/collection" className="text-blue-600 underline">
+          collections and galleries
         </Link>
-        , and play the drums and guitars — find my{' '}
-        <Link href="/music" className="text-blue-600 underline">
-          music
-        </Link>{' '}
-        here.
+        . I’ve also linked some art you may find enjoyable via ArtTab below.
       </p>
 
-      {/* Live ArtTab Preview */}
-      <div className="mt-12">
-        <p className="text-lg mb-4">Find some of the art I like via ArtTab below:</p>
-        <div className="rounded-lg overflow-hidden border shadow-lg max-w-4xl">
-          <iframe
-            src="https://arttab.xyz/"
-            title="ArtTab Live Preview"
-            className="w-full"
-            style={{ height: '500px', border: 'none' }}
-          />
-        </div>
+      <div className="rounded-lg overflow-hidden border shadow-lg max-w-4xl mx-auto">
+        <iframe
+          src="https://arttab.xyz/"
+          title="ArtTab Live Preview"
+          className="w-full"
+          style={{ height: '500px', border: 'none' }}
+          loading="lazy"
+          allowFullScreen
+        />
       </div>
     </div>
   )

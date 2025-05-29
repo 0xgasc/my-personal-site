@@ -3,9 +3,8 @@ import Link from 'next/link'
 
 const tabs = [
   { name: 'Home', href: '/' },
-  { name: 'Automation', href: '/automation' },
-  { name: 'Photography', href: '/photography' },
-  { name: 'Music', href: '/music' },
+  { name: 'Background', href: '/career' },
+  { name: 'Collection', href: '/collection' },
   { name: 'Experiments', href: '/experiments' },
   { name: 'Contact', href: '/contact' }
 ]
