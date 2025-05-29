@@ -23,7 +23,7 @@ export default function Experiments() {
           </a>
         </h2>
         <p className="mb-4 max-w-4xl">
-          after the 2021 mania and shakeout in the crypto assets market, artists and builders deployed multiple interesting smart contracts and artworks into Ethereum's layer 2 ecosystem. This gallery shows some of my favorite ones.
+          after the 2021 mania and shakeout in the crypto assets market, artists and builders deployed multiple interesting smart contracts and artworks into Ethereum layer 2 ecosystem. This gallery shows some of my favorite ones.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-4xl">

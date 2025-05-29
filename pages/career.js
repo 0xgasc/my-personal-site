@@ -61,7 +61,7 @@ export default function Career() {
       </p>
 
       <p className="mb-8 text-justify">
-        I’m especially interested in how emerging tools like AI and connected systems can enable smarter, safer, and more adaptive environments. If you'd like to learn more, here is{" "}
+        Im especially interested in how emerging tools like AI and connected systems can enable smarter, safer, and more adaptive environments. If you would like to learn more, here is{" "}
         <a
           href="https://docs.google.com/document/d/1dADh80WJbSXYeYvpU3jf9qtZU2A-seU1MaD4cu9P6ME/edit?usp=sharing"
           target="_blank"
