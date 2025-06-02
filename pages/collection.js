@@ -148,6 +148,8 @@ export default function Experiments() {
 
 // Helper component
 function GalleryImage({ href, src, alt }) {
+  const noExtension = !/\.(jpe?g|png|gif|webp)$/i.test(src)
+
   return (
     <a
       href={href}
@@ -155,14 +157,25 @@ function GalleryImage({ href, src, alt }) {
       rel="noopener noreferrer"
       className="block rounded overflow-hidden shadow hover:shadow-lg transition-shadow duration-300"
     >
-      <Image
-        src={src}
-        alt={alt}
-        width={300}
-        height={300}
-        loading="lazy"
-        className="w-full h-auto"
-      />
+      {noExtension ? (
+        <img
+          src={src}
+          alt={alt}
+          width={300}
+          height={300}
+          loading="lazy"
+          className="w-full h-auto"
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          width={300}
+          height={300}
+          loading="lazy"
+          className="w-full h-auto"
+        />
+      )}
     </a>
   )
 }
