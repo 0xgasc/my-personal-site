@@ -147,8 +147,19 @@ export default function Experiments() {
 }
 
 // Helper component
+
+
 function GalleryImage({ href, src, alt }) {
-  const noExtension = !/\.(jpe?g|png|gif|webp)$/i.test(src)
+  const noExtension = !/\.(jpe?g|png|gif|webp)$/i.test(src);
+
+  // Domains that block Next.js image proxy — use native <img> for these
+  const disableOptimizationDomains = [
+    'assets.objkt.media',
+    'arweave.net', // add others if needed
+    // add more domains here if you find more blocked by proxy
+  ];
+
+  const disableOptimization = disableOptimizationDomains.some(domain => src.includes(domain));
 
   return (
     <a
@@ -157,7 +168,7 @@ function GalleryImage({ href, src, alt }) {
       rel="noopener noreferrer"
       className="block rounded overflow-hidden shadow hover:shadow-lg transition-shadow duration-300"
     >
-      {noExtension ? (
+      {(noExtension || disableOptimization) ? (
         <img
           src={src}
           alt={alt}
@@ -177,5 +188,6 @@ function GalleryImage({ href, src, alt }) {
         />
       )}
     </a>
-  )
+  );
 }
+
