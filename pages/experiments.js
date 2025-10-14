@@ -12,7 +12,7 @@ export default function Photography() {
       <ul className="mb-10 space-y-2">
         <li>
           <a
-            href="#"
+            href="https://umoarchive.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 underline"
@@ -22,7 +22,7 @@ export default function Photography() {
         </li>
         <li>
           <a
-            href="#"
+            href="https://flyinguate.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 underline"
@@ -32,7 +32,7 @@ export default function Photography() {
         </li>
         <li>
           <a
-            href="#"
+            href="https://stablepay-nine.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 underline"
