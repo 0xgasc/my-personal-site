@@ -4,6 +4,44 @@ export default function Photography() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans p-8">
 
+      {/* Bespoke Applications Section */}
+      <h2 className="text-xl font-semibold mb-4">bespoke applications:</h2>
+      <p className="mb-6">
+        custom-built applications and experimental projects
+      </p>
+      <ul className="mb-10 space-y-2">
+        <li>
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            UMO live moment archive
+          </a>
+        </li>
+        <li>
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            Helicopter ride sharing app in Guatemala
+          </a>
+        </li>
+        <li>
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            Stablepay
+          </a>
+        </li>
+      </ul>
+
       <h2 className="text-xl font-semibold mb-4">coined moments:</h2>
       <p className="mb-6">
         i explore light, story, and composition through photography &mdash; from street shots to abstract scenes. Here&apos;s some of my latest pieces on Zora:
