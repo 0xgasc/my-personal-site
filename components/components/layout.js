@@ -1,31 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Sidebar from './Sidebar'
+import { useApp } from '@/contexts/AppContext'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [language, setLanguage] = useState('EN')
-  const [darkMode, setDarkMode] = useState(false)
-
-  // Load preferences from localStorage
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language')
-    const savedDarkMode = localStorage.getItem('darkMode')
-    if (savedLanguage) setLanguage(savedLanguage)
-    if (savedDarkMode) setDarkMode(savedDarkMode === 'true')
-  }, [])
-
-  // Save preferences to localStorage
-  useEffect(() => {
-    localStorage.setItem('language', language)
-    localStorage.setItem('darkMode', darkMode.toString())
-  }, [language, darkMode])
-
-  const languages = ['EN', 'ES', 'PT', 'FR']
-  const cycleLanguage = () => {
-    const currentIndex = languages.indexOf(language)
-    const nextIndex = (currentIndex + 1) % languages.length
-    setLanguage(languages[nextIndex])
-  }
+  const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
 
   return (
     <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} font-sans transition-colors duration-300`}>

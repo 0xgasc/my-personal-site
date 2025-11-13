@@ -1,8 +1,11 @@
 import Link from 'next/link'
+import { useApp } from '@/contexts/AppContext'
 
 export default function Home() {
+  const { darkMode } = useApp()
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-8 max-w-3xl mx-auto">
+    <div className="w-full">
       <h1 className="text-4xl font-bold mb-6">Hi, I&apos;m Gabriel</h1>
 
       <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
@@ -33,7 +36,7 @@ export default function Home() {
         . I’ve also linked some art you may find enjoyable via ArtTab below.
       </p>
 
-      <div className="rounded-lg overflow-hidden border shadow-lg max-w-4xl mx-auto">
+      <div className={`rounded-lg overflow-hidden border shadow-lg max-w-4xl mx-auto ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
         <iframe
           src="https://arttab.xyz/"
           title="ArtTab Live Preview"

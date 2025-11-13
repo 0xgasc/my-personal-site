@@ -1,8 +1,11 @@
 import Image from 'next/image'
+import { useApp } from '@/contexts/AppContext'
 
 export default function Photography() {
+  const { darkMode } = useApp()
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-8">
+    <div className="w-full">
 
       {/* Bespoke Applications Section */}
       <h2 className="text-xl font-semibold mb-4">bespoke applications:</h2>
@@ -174,11 +177,11 @@ export default function Photography() {
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 italic mb-10">minting soon on a custom manifold contract.</p>
+      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>minting soon on a custom manifold contract.</p>
 
       {/* Music Section */}
       <h2 className="text-xl font-semibold mb-4">music:</h2>
-      <p className="text-sm text-gray-600 italic mb-10">coming soon...</p>
+      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>coming soon...</p>
 
       {/* Back link */}
       <button

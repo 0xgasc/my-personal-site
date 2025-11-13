@@ -1,11 +1,13 @@
 import Image from 'next/image'
 import { useRouter } from 'next/router'
+import { useApp } from '@/contexts/AppContext'
 
 export default function Experiments() {
   const router = useRouter()
+  const { darkMode } = useApp()
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-8">
+    <div className="w-full">
       {/* Title */}
       <h1 className="text-4xl font-extrabold mb-8">Digital Articles</h1>
 
@@ -134,12 +136,16 @@ export default function Experiments() {
 
       <button
         onClick={() => router.back()}
-        className="mt-6 px-5 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+        className={`mt-6 px-5 py-2 rounded transition ${
+          darkMode
+            ? 'bg-gray-800 hover:bg-gray-700 text-gray-100'
+            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+        }`}
       >
         ← Go Back
       </button>
 
-      <p className="mt-4 text-sm text-gray-600">
+      <p className={`mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         Click any image to view it on OpenSea or its source.
       </p>
     </div>
@@ -147,47 +153,3 @@ export default function Experiments() {
 }
 
 // Helper component
-
-
-function GalleryImage({ href, src, alt }) {
-  const noExtension = !/\.(jpe?g|png|gif|webp)$/i.test(src);
-
-  // Domains that block Next.js image proxy — use native <img> for these
-  const disableOptimizationDomains = [
-    'assets.objkt.media',
-    'arweave.net', // add others if needed
-    // add more domains here if you find more blocked by proxy
-  ];
-
-  const disableOptimization = disableOptimizationDomains.some(domain => src.includes(domain));
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block rounded overflow-hidden shadow hover:shadow-lg transition-shadow duration-300"
-    >
-      {(noExtension || disableOptimization) ? (
-        <img
-          src={src}
-          alt={alt}
-          width={300}
-          height={300}
-          loading="lazy"
-          className="w-full h-auto"
-        />
-      ) : (
-        <Image
-          src={src}
-          alt={alt}
-          width={300}
-          height={300}
-          loading="lazy"
-          className="w-full h-auto"
-        />
-      )}
-    </a>
-  );
-}
-
