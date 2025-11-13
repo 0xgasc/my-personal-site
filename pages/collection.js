@@ -156,15 +156,28 @@ export default function Experiments() {
 
 // Helper component
 function GalleryImage({ href, src, alt }) {
+  // Use regular img tag for objkt.media URLs to avoid Next.js optimization issues
+  const useRegularImg = src.includes('assets.objkt.media')
+
   return (
     <a href={href} target="_blank" rel="noopener noreferrer">
-      <Image
-        src={src}
-        alt={alt}
-        width={200}
-        height={200}
-        className="rounded-lg shadow-md hover:opacity-90 transition-opacity"
-      />
+      {useRegularImg ? (
+        <img
+          src={src}
+          alt={alt}
+          width={200}
+          height={200}
+          className="rounded-lg shadow-md hover:opacity-90 transition-opacity"
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          width={200}
+          height={200}
+          className="rounded-lg shadow-md hover:opacity-90 transition-opacity"
+        />
+      )}
     </a>
   )
 }
