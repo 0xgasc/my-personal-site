@@ -17,7 +17,7 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            UMO live moment archive
+            UMO live moment archive (DEMO)
           </a>
         </li>
         <li>
