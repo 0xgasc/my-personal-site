@@ -1,14 +1,16 @@
 import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Career() {
-  const { darkMode } = useApp()
+  const { darkMode, language } = useApp()
+  const t = useTranslation(language)
 
   return (
     <div className="w-full">
-      <h1 className="text-3xl font-bold mb-6">Career & Education</h1>
+      <h1 className="text-3xl font-bold mb-6">{t.career.title}</h1>
 
       <p className="mb-8 text-justify">
-        With a background in Industrial Engineering from{" "}
+        {t.career.paragraph1}{" "}
         <a
           href="https://www.uvg.edu.gt/carreras/industrial/"
           target="_blank"
@@ -17,7 +19,7 @@ export default function Career() {
         >
           UVG
         </a>
-        , an MBA from{" "}
+        {t.career.paragraph1b}{" "}
         <a
           href="https://en.ufm.edu/maestrias/mba/pensum/"
           target="_blank"
@@ -26,7 +28,7 @@ export default function Career() {
         >
           UFM
         </a>
-        , and ongoing studies in Blockchain and Digital Currency at{" "}
+        {t.career.paragraph1c}{" "}
         <a
           href="https://www.unic.ac.cy/blockchain"
           target="_blank"
@@ -35,44 +37,44 @@ export default function Career() {
         >
           UNIC
         </a>
-        , I’ve shaped my path around technology, operations, and systems thinking.
+        {t.career.paragraph1d}
       </p>
 
       <p className="mb-8 text-justify">
-        I work at the intersection of industrial design and modern technology. Recently, I supported a global{" "}
+        {t.career.paragraph2}{" "}
         <a
           href="https://www.slickcharts.com/symbol/CL"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline"
         >
-          manufacturer
+          {t.career.manufacturer}
         </a>{" "}
-        in rethinking its operations strategy and digital tooling approach.
+        {t.career.paragraph2b}
       </p>
 
       <p className="mb-8 text-justify">
-        I also partnered with a startup developing AI tools for frontline teams. Together, we built an integration that overlays intelligent guidance onto SAP Plant Maintenance, helping factory workers navigate complex procedures in real time. You can{" "}
+        {t.career.paragraph3}{" "}
         <a
           href="https://www.augmentir.com/news/augmentir-brings-ai-to-sap-plant-maintenance-with-its-connected-worker-solution"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline"
         >
-          read more here
+          {t.career.readMore}
         </a>
         .
       </p>
 
       <p className="mb-8 text-justify">
-        Im especially interested in how emerging tools like AI and connected systems can enable smarter, safer, and more adaptive environments. If you would like to learn more, here is{" "}
+        {t.career.paragraph4}{" "}
         <a
           href="https://docs.google.com/document/d/1dADh80WJbSXYeYvpU3jf9qtZU2A-seU1MaD4cu9P6ME/edit?usp=sharing"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline"
         >
-          my resume
+          {t.career.myResume}
         </a>
         .
       </p>
@@ -81,7 +83,7 @@ export default function Career() {
         onClick={() => window.history.back()}
         className="text-blue-600 underline cursor-pointer"
       >
-        ← Go back
+        {t.career.goBack}
       </button>
     </div>
   )

@@ -1,39 +1,41 @@
 import Link from 'next/link'
 import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Home() {
-  const { darkMode } = useApp()
+  const { darkMode, language } = useApp()
+  const t = useTranslation(language)
 
   return (
     <div className="w-full">
-      <h1 className="text-4xl font-bold mb-6">Hi, I&apos;m Gabriel</h1>
+      <h1 className="text-4xl font-bold mb-6">{t.home.greeting}</h1>
 
       <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
-        Welcome to my personal site.
+        {t.home.welcome}
       </p>
 
       <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
-        I&apos;m a creative explorer, passionate about building things and sharing ideas.
+        {t.home.intro}
       </p>
 
       <p className="text-lg mb-6" style={{ textAlign: 'justify' }}>
-        I have a{' '}
+        {t.home.background}{' '}
         <Link href="/career" className="text-blue-600 underline">
-          background
+          {t.home.backgroundLink}
         </Link>{' '}
-        in engineering and I&apos;m passionate about using public decentralized technologies to pursue{' '}
+        {t.home.engineering}{' '}
         <Link href="/experiments" className="text-blue-600 underline">
-          experimental work
+          {t.home.experimentalWork}
         </Link>
         .
       </p>
 
       <p className="text-lg mb-12" style={{ textAlign: 'justify' }}>
-        I also enjoy collecting digital artifacts across multiple blockchains. You can explore my curated{' '}
+        {t.home.collections}{' '}
         <Link href="/collection" className="text-blue-600 underline">
-          collections and galleries
+          {t.home.collectionsLink}
         </Link>
-        . I’ve also linked some art you may find enjoyable via ArtTab below.
+        {t.home.artTab}
       </p>
 
       <div className={`rounded-lg overflow-hidden border shadow-lg max-w-4xl mx-auto ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>

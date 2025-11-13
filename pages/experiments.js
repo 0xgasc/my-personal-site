@@ -1,16 +1,18 @@
 import Image from 'next/image'
 import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Photography() {
-  const { darkMode } = useApp()
+  const { darkMode, language } = useApp()
+  const t = useTranslation(language)
 
   return (
     <div className="w-full">
 
       {/* Bespoke Applications Section */}
-      <h2 className="text-xl font-semibold mb-4">bespoke applications:</h2>
+      <h2 className="text-xl font-semibold mb-4">{t.experiments.bespokeApps}</h2>
       <p className="mb-6">
-        custom-built applications and experimental projects
+        {t.experiments.bespokeDesc}
       </p>
       <ul className="mb-10 space-y-2">
         <li>
@@ -20,9 +22,9 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            UMO Live Moment Archive
+            {t.experiments.umo}
           </a>
-          {' '}- live music repository for the best band in the world (DEMO)
+          {' '}- {t.experiments.umoDesc}
         </li>
         <li>
           <a
@@ -31,9 +33,9 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            FlyinGuate
+            {t.experiments.flyinguate}
           </a>
-          {' '}- helicopter ride sharing app in Guatemala
+          {' '}- {t.experiments.flyinguateDesc}
         </li>
         <li>
           <a
@@ -42,9 +44,9 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            Stablepay
+            {t.experiments.stablepay}
           </a>
-          {' '}- enabling crypto payment rails using stablecoins for global business
+          {' '}- {t.experiments.stablepayDesc}
         </li>
         <li>
           <a
@@ -53,15 +55,15 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            tiqueteo.xyz
+            {t.experiments.tiqueteo}
           </a>
-          {' '}- p2p ticket swapping platform
+          {' '}- {t.experiments.tiqueteoDesc}
         </li>
       </ul>
 
-      <h2 className="text-xl font-semibold mb-4">coined moments:</h2>
+      <h2 className="text-xl font-semibold mb-4">{t.experiments.coinedMoments}</h2>
       <p className="mb-6">
-        i explore light, story, and composition through photography &mdash; from street shots to abstract scenes. Here&apos;s some of my latest pieces on Zora:
+        {t.experiments.coinedDesc}
       </p>
 
       <div className="flex flex-wrap md:flex-nowrap gap-8 mb-8">
@@ -75,14 +77,14 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">higher</h3>
+            <h3 className="font-semibold">{t.experiments.higher}</h3>
             <a
               href="https://zora.co/collect/zora:0x2000c459b2b41d0311c9f57518d4a69294268590/4?referrer=0xd573becb6a6b0a0d43065d468d07787ca65daf8a"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline text-sm"
             >
-              View and Collect on Zora
+              {t.experiments.viewCollect}
             </a>
           </div>
         </div>
@@ -97,14 +99,14 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">rflxns</h3>
+            <h3 className="font-semibold">{t.experiments.rflxns}</h3>
             <a
               href="https://zora.co/collect/zora:0x2000c459b2b41d0311c9f57518d4a69294268590/3?referrer=0xd573becb6a6b0a0d43065d468d07787ca65daf8a"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline text-sm"
             >
-              View and Collect on Zora
+              {t.experiments.viewCollect}
             </a>
           </div>
         </div>
@@ -119,22 +121,22 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">atitlán 12.22.24</h3>
+            <h3 className="font-semibold">{t.experiments.atitlan}</h3>
             <a
               href="https://rodeo.club/post/0x98e116FDAF8dC4D324BC69FA7aE41f588113D3FC/1"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline text-sm"
             >
-              View and Collect on Rodeo
+              {t.experiments.viewCollectRodeo}
             </a>
           </div>
         </div>
       </div>
 
       {/* Stretch Studies Section */}
-      <h2 className="text-xl font-semibold mb-4">stretch studies:</h2>
-      <p className="mb-6">a series of quick, experimental shots exploring form and texture made from living moments.</p>
+      <h2 className="text-xl font-semibold mb-4">{t.experiments.stretchStudies}</h2>
+      <p className="mb-6">{t.experiments.stretchDesc}</p>
 
       <div className="flex flex-wrap md:flex-nowrap gap-8 mb-4">
         <div className="flex-shrink-0">
@@ -146,7 +148,7 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">bound blight</h3>
+            <h3 className="font-semibold">{t.experiments.boundBlight}</h3>
           </div>
         </div>
 
@@ -159,7 +161,7 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">is fearr ar domhan</h3>
+            <h3 className="font-semibold">{t.experiments.isFearr}</h3>
           </div>
         </div>
 
@@ -172,23 +174,23 @@ export default function Photography() {
             className="rounded-lg shadow-md"
           />
           <div className="mt-2">
-            <h3 className="font-semibold">dreams</h3>
+            <h3 className="font-semibold">{t.experiments.dreams}</h3>
           </div>
         </div>
       </div>
 
-      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>minting soon on a custom manifold contract.</p>
+      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.experiments.mintingSoon}</p>
 
       {/* Music Section */}
-      <h2 className="text-xl font-semibold mb-4">music:</h2>
-      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>coming soon...</p>
+      <h2 className="text-xl font-semibold mb-4">{t.experiments.music}</h2>
+      <p className={`text-sm italic mb-10 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.experiments.comingSoon}</p>
 
       {/* Back link */}
       <button
         onClick={() => window.history.back()}
         className="text-blue-600 underline cursor-pointer mt-4"
       >
-        ← Go back
+        {t.experiments.goBack}
       </button>
     </div>
   )

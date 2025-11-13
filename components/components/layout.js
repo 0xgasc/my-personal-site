@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
 import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
+  const t = useTranslation(language)
 
   return (
     <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} font-sans transition-colors duration-300`}>
@@ -45,7 +47,7 @@ export default function Layout({ children }) {
 
       {/* Footer */}
       <footer className={`border-t p-4 text-center text-sm ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}>
-        credits: GS - 2025
+        {t.footer.credits}
       </footer>
 
       {/* Sidebar toggle button on right */}

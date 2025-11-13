@@ -1,15 +1,19 @@
 // components/Sidebar.js
 import Link from 'next/link'
-
-const tabs = [
-  { name: 'Home', href: '/' },
-  { name: 'Background', href: '/career' },
-  { name: 'Collection', href: '/collection' },
-  { name: 'Experiments', href: '/experiments' },
-  { name: 'Contact', href: '/contact' }
-]
+import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Sidebar({ isOpen, onClose, darkMode }) {
+  const { language } = useApp()
+  const t = useTranslation(language)
+
+  const tabs = [
+    { name: t.nav.home, href: '/' },
+    { name: t.nav.background, href: '/career' },
+    { name: t.nav.collection, href: '/collection' },
+    { name: t.nav.experiments, href: '/experiments' },
+    { name: t.nav.contact, href: '/contact' }
+  ]
   return (
     <div
       className={`fixed top-0 right-0 h-full w-64 border-l shadow-lg transform transition-all duration-300 ease-in-out ${
@@ -30,7 +34,7 @@ export default function Sidebar({ isOpen, onClose, darkMode }) {
         }`}
         aria-label="Close menu"
       >
-        Close ×
+        {t.nav.close}
       </button>
       <nav className="flex flex-col space-y-4 p-4">
         {tabs.map((tab) => (
