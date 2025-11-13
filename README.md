@@ -1,4 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Gabriel's Personal Site
+
+Personal portfolio site built with Next.js, featuring multi-language support and dark mode.
+
+**Live Site:** [https://www.s-o-l-o.fun](https://www.s-o-l-o.fun)
+
+## Features
+
+### 🌍 Multi-Language Support
+- **4 Languages:** English (EN), Spanish (ES), Portuguese (PT), French (FR)
+- Click the language toggle (top left) to cycle through languages
+- All content is fully translated including navigation, pages, and UI elements
+- Preferences saved to localStorage
+
+### 🌙 Dark Mode
+- Toggle between light and dark themes
+- Sun/moon icon (top left, next to language toggle)
+- Applies to all pages, containers, and modals
+- Smooth color transitions
+- Preference persists across sessions
+
+### 📄 Pages
+- **Home** - Introduction and overview
+- **Career** - Professional background and education
+- **Experiments** - Bespoke applications and creative projects
+  - UMO Live Moment Archive (DEMO) - live music repository
+  - FlyinGuate - helicopter ridesharing in Guatemala
+  - Stablepay - crypto payment rails using stablecoins
+  - tiqueteo.xyz - p2p ticket swapping platform
+- **Collection** - Digital art galleries and NFT collections
+  - Random collectibles (post-2022)
+  - Tezos journey curation
+  - Memetic artifacts vault
+
+### 🛠 Technical Details
+- **Framework:** Next.js 15.3.2
+- **Styling:** Tailwind CSS
+- **Translation System:** Custom implementation in `/lib/translations.js`
+- **State Management:** React Context API (`/contexts/AppContext.js`)
+- **Image Optimization:** Mix of Next.js Image and native img tags (for IPFS content)
 
 ## Getting Started
 
@@ -33,8 +72,50 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Adding New Translations
+
+To add or modify translations:
+
+1. Edit `/lib/translations.js`
+2. Add your translation keys under the appropriate language sections (EN, ES, PT, FR)
+3. Use the translation in your component:
+
+```javascript
+import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
+
+export default function MyComponent() {
+  const { language } = useApp()
+  const t = useTranslation(language)
+
+  return <h1>{t.mySection.title}</h1>
+}
+```
+
+## Project Structure
+
+```
+├── components/
+│   └── components/
+│       ├── layout.js          # Main layout with toggles
+│       └── Sidebar.js         # Navigation sidebar
+├── contexts/
+│   └── AppContext.js          # Global state (language, dark mode)
+├── lib/
+│   └── translations.js        # All translation strings
+├── pages/
+│   ├── index.js              # Home page
+│   ├── career.js             # Career/education page
+│   ├── experiments.js        # Projects/photography page
+│   └── collection.js         # NFT galleries page
+└── styles/
+    └── globals.css           # Global styles
+```
+
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Currently deployed at [https://www.s-o-l-o.fun](https://www.s-o-l-o.fun)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+Connected to GitHub - automatic deployments on push to main branch.
+
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
