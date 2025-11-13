@@ -17,8 +17,9 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            UMO live moment archive (DEMO)
+            UMO Live Moment Archive
           </a>
+          {' '}- live music repository for the best band in the world (DEMO)
         </li>
         <li>
           <a
@@ -27,8 +28,9 @@ export default function Photography() {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            Helicopter ride sharing app in Guatemala
+            FlyinGuate
           </a>
+          {' '}- helicopter ride sharing app in Guatemala
         </li>
         <li>
           <a
@@ -51,17 +53,6 @@ export default function Photography() {
             tiqueteo.xyz
           </a>
           {' '}- p2p ticket swapping platform
-        </li>
-        <li>
-          <a
-            href="https://preview--the-coin-curriculum-hub.lovable.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            The Coin Curriculum Hub
-          </a>
-          {' '}- an academy to learn blockchain concepts
         </li>
       </ul>
 
