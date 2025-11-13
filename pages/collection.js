@@ -153,3 +153,16 @@ export default function Experiments() {
 }
 
 // Helper component
+function GalleryImage({ href, src, alt }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      <Image
+        src={src}
+        alt={alt}
+        width={200}
+        height={200}
+        className="rounded-lg shadow-md hover:opacity-90 transition-opacity"
+      />
+    </a>
+  )
+}
