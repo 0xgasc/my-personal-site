@@ -18,11 +18,11 @@ export default function Home() {
         <Link href="/career" className="text-blue-600 underline">
           background
         </Link>{' '}
-        in engineering and I'm passionate about using public decentralized technologies to pursue{' '}
+        in engineering and I&apos;m passionate about using public decentralized technologies to pursue{' '}
         <Link href="/experiments" className="text-blue-600 underline">
           experimental work
         </Link>
-        . I've built projects like{' '}
+        . I&apos;ve built projects like{' '}
         <a href="https://tiqueteo.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
           tiqueteo.xyz
         </a>
