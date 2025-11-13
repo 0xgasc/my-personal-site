@@ -1,20 +1,22 @@
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/translations'
 
 export default function Experiments() {
   const router = useRouter()
-  const { darkMode } = useApp()
+  const { darkMode, language } = useApp()
+  const t = useTranslation(language)
 
   return (
     <div className="w-full">
       {/* Title */}
-      <h1 className="text-4xl font-extrabold mb-8">Digital Articles</h1>
+      <h1 className="text-4xl font-extrabold mb-8">{t.collection.title}</h1>
 
       {/* Gallery Section */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">
-          gallery: random collectibles – post 2022{' '}
+          {t.collection.galleryRandom}{' '}
           <a
             href="https://opensea.io/gallery/0xd573becb6a6b0a0d43065d468d07787ca65daf8a/0ede10101eb1468b9a3978a9da1eca28"
             target="_blank"
@@ -25,7 +27,7 @@ export default function Experiments() {
           </a>
         </h2>
         <p className="mb-4 max-w-4xl">
-          after the 2021 mania and shakeout in the crypto assets market, artists and builders deployed multiple interesting smart contracts and artworks into Ethereum layer 2 ecosystem. This gallery shows some of my favorite ones.
+          {t.collection.galleryRandomDesc}
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-4xl">
@@ -50,7 +52,7 @@ export default function Experiments() {
       {/* Tezos Evergreen Section */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">
-          gallery: exploring the evergreen{' '}
+          {t.collection.galleryEvergreen}{' '}
           <a
             href="https://objkt.com/curations/objkt/exploring-the-evergreen-b3fe55e2"
             target="_blank"
@@ -61,7 +63,7 @@ export default function Experiments() {
           </a>
         </h2>
         <p className="mb-4 max-w-4xl">
-          my tezos journey, documented in this small curation
+          {t.collection.galleryEvergreenDesc}
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-4xl">
@@ -86,7 +88,7 @@ export default function Experiments() {
       {/* Vault Section */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">
-          vault: memetic artifacts{' '}
+          {t.collection.vaultMemetic}{' '}
           <a
             href="https://opensea.io/0x69c8c2923005d26eaeea9500d7602eff8c81c848"
             target="_blank"
@@ -97,7 +99,7 @@ export default function Experiments() {
           </a>
         </h2>
         <p className="mb-4 max-w-4xl">
-          tokens that I love because of their relatable and global memetic value.
+          {t.collection.vaultMemeticDesc}
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-4xl">
@@ -142,11 +144,11 @@ export default function Experiments() {
             : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
         }`}
       >
-        ← Go Back
+        {t.collection.goBack}
       </button>
 
       <p className={`mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-        Click any image to view it on OpenSea or its source.
+        {t.collection.clickImage}
       </p>
     </div>
   )
