@@ -22,11 +22,7 @@ export default function Home() {
         <Link href="/experiments" className="text-blue-600 underline">
           experimental work
         </Link>
-        . I&apos;ve built projects like{' '}
-        <a href="https://tiqueteo.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-          tiqueteo.xyz
-        </a>
-        , a p2p ticket swapping platform.
+        .
       </p>
 
       <p className="text-lg mb-12" style={{ textAlign: 'justify' }}>

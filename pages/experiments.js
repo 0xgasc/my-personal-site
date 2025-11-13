@@ -39,6 +39,29 @@ export default function Photography() {
           >
             Stablepay
           </a>
+          {' '}- enabling crypto payment rails using stablecoins for global business
+        </li>
+        <li>
+          <a
+            href="https://tiqueteo.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            tiqueteo.xyz
+          </a>
+          {' '}- p2p ticket swapping platform
+        </li>
+        <li>
+          <a
+            href="https://preview--the-coin-curriculum-hub.lovable.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            The Coin Curriculum Hub
+          </a>
+          {' '}- an academy to learn blockchain concepts
         </li>
       </ul>
 
