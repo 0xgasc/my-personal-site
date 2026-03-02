@@ -12,47 +12,8 @@ export default function Photography() {
       {/* Bespoke Applications Section */}
       <h2 className="text-xl font-semibold mb-4">{t.experiments.bespokeApps}</h2>
       <p className="mb-6">
-        {t.experiments.bespokeDesc}
+        {t.experiments.bespokeDesc} via my design studio: <strong>offset works</strong>
       </p>
-      <ul className="mb-10 space-y-2">
-        <li>
-          <a
-            href="https://umoarchive.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            {t.experiments.umo}
-          </a>
-          {' '}- {t.experiments.umoDesc}
-        </li>
-        <li>
-          <a
-            href="https://flyinguate.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            {t.experiments.flyinguate}
-          </a>
-          {' '}- {t.experiments.flyinguateDesc}
-        </li>
-        <li>
-          <a
-            href="https://stablepay-nine.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            {t.experiments.stablepay}
-          </a>
-          {' '}- {t.experiments.stablepayDesc}
-        </li>
-      </ul>
-
-      {/* Offset Works Section */}
-      <h2 className="text-xl font-semibold mb-4 mt-10">{t.experiments.offsetWorks}</h2>
-      <p className="mb-6">{t.experiments.offsetWorksDesc}</p>
       <div className="w-full mb-10">
         <iframe
           src="https://offsetworks.xyz/#work"
