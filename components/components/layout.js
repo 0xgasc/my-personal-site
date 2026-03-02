@@ -41,7 +41,7 @@ export default function Layout({ children }) {
       </div>
 
       {/* Main content */}
-      <div className="flex-grow p-8 max-w-3xl mx-auto">
+      <div className="flex-grow p-8 max-w-5xl mx-auto">
         {children}
       </div>
 
