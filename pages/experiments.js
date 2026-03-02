@@ -18,7 +18,7 @@ export default function Photography() {
         <iframe
           src="https://offsetworks.xyz/#work"
           className="w-full border-2 rounded-lg"
-          style={{ height: '600px' }}
+          style={{ height: '750px' }}
           title="Offset Works"
         />
       </div>
