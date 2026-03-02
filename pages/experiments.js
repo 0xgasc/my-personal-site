@@ -50,14 +50,14 @@ export default function Photography() {
         </li>
         <li>
           <a
-            href="https://tiqueteo.xyz"
+            href="https://offsetworks.xyz/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            {t.experiments.tiqueteo}
+            {t.experiments.offsetWorks}
           </a>
-          {' '}- {t.experiments.tiqueteoDesc}
+          {' '}- {t.experiments.offsetWorksDesc}
         </li>
       </ul>
 
