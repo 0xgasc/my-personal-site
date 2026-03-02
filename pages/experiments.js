@@ -48,18 +48,19 @@ export default function Photography() {
           </a>
           {' '}- {t.experiments.stablepayDesc}
         </li>
-        <li>
-          <a
-            href="https://offsetworks.xyz/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            {t.experiments.offsetWorks}
-          </a>
-          {' '}- {t.experiments.offsetWorksDesc}
-        </li>
       </ul>
+
+      {/* Offset Works Section */}
+      <h2 className="text-xl font-semibold mb-4 mt-10">{t.experiments.offsetWorks}</h2>
+      <p className="mb-6">{t.experiments.offsetWorksDesc}</p>
+      <div className="w-full mb-10">
+        <iframe
+          src="https://offsetworks.xyz/#work"
+          className="w-full border-2 rounded-lg"
+          style={{ height: '800px' }}
+          title="Offset Works"
+        />
+      </div>
 
       <h2 className="text-xl font-semibold mb-4">{t.experiments.coinedMoments}</h2>
       <p className="mb-6">
