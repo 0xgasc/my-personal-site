@@ -14,11 +14,11 @@ export default function Photography() {
       <p className="mb-6">
         {t.experiments.bespokeDesc} via my design studio: <strong>offset works</strong>
       </p>
-      <div className="w-full mb-10">
+      <div className="w-full mb-10" style={{ maxWidth: '1400px' }}>
         <iframe
           src="https://offsetworks.xyz/#work"
           className="w-full border-2 rounded-lg"
-          style={{ height: '750px' }}
+          style={{ height: '600px' }}
           title="Offset Works"
         />
       </div>
