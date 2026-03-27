@@ -12,6 +12,7 @@ export default function Sidebar({ isOpen, onClose, darkMode }) {
     { name: t.nav.background, href: '/career' },
     { name: t.nav.collection, href: '/collection' },
     { name: t.nav.experiments, href: '/experiments' },
+    { name: t.nav.tip, href: '/tip' },
     { name: t.nav.contact, href: '/contact' }
   ]
   return (
