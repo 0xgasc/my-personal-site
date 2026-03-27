@@ -1,16 +1,62 @@
+import { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
 export default function Tip() {
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
+  const [selected, setSelected] = useState(null)
 
   const tiers = [
-    { emoji: '☕', amount: '$3', key: 'coffee' },
-    { emoji: '🍕', amount: '$5', key: 'slice' },
-    { emoji: '🍽️', amount: '$10', key: 'meal' },
-    { emoji: '🚀', amount: '$25', key: 'rocket' },
+    { emoji: '☕', cents: 300, key: 'coffee' },
+    { emoji: '🍕', cents: 500, key: 'slice' },
+    { emoji: '🍽️', cents: 1000, key: 'meal' },
+    { emoji: '🚀', cents: 2500, key: 'rocket' },
   ]
+
+  const formatAmount = (cents) => `$${(cents / 100).toFixed(0)}`
+
+  if (selected) {
+    return (
+      <div className="w-full max-w-lg mx-auto">
+        <button
+          onClick={() => setSelected(null)}
+          className="text-blue-600 underline cursor-pointer mb-6"
+        >
+          {t.tip.goBack}
+        </button>
+
+        <div className={`text-center p-6 rounded-lg border-2 mb-8 ${
+          darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
+        }`}>
+          <span className="text-4xl">{selected.emoji}</span>
+          <h2 className="text-2xl font-bold mt-3">
+            {t.tip[selected.key]} — {formatAmount(selected.cents)}
+          </h2>
+        </div>
+
+        <h3 className="text-lg font-semibold mb-4">{t.tip.chooseMethod}</h3>
+
+        <div className="flex flex-col gap-3">
+          <button
+            disabled
+            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-not-allowed opacity-60 ${
+              darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
+            }`}
+          >
+            <span className="font-medium">Stablepay</span>
+            <span className={`text-xs px-2 py-1 rounded ${
+              darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+            }`}>{t.tip.comingSoonShort}</span>
+          </button>
+        </div>
+
+        <div className={`mt-6 text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <p>{t.tip.moreMethodsSoon}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full max-w-lg mx-auto">
@@ -23,28 +69,20 @@ export default function Tip() {
         {tiers.map((tier) => (
           <button
             key={tier.key}
-            disabled
-            className={`flex flex-col items-center justify-center p-6 rounded-lg border-2 transition-all cursor-not-allowed opacity-70 ${
+            onClick={() => setSelected(tier)}
+            className={`flex flex-col items-center justify-center p-6 rounded-lg border-2 transition-all cursor-pointer ${
               darkMode
-                ? 'border-gray-700 bg-gray-800/50'
-                : 'border-gray-200 bg-gray-50'
+                ? 'border-gray-700 bg-gray-800/50 hover:border-blue-500 hover:bg-gray-800'
+                : 'border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50'
             }`}
           >
             <span className="text-3xl mb-2">{tier.emoji}</span>
-            <span className="text-lg font-semibold">{tier.amount}</span>
+            <span className="text-lg font-semibold">{formatAmount(tier.cents)}</span>
             <span className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.tip[tier.key]}
             </span>
           </button>
         ))}
-      </div>
-
-      <div className={`text-center p-4 rounded-lg border ${
-        darkMode
-          ? 'border-gray-700 bg-gray-800/30 text-gray-400'
-          : 'border-gray-200 bg-gray-50 text-gray-500'
-      }`}>
-        <p className="text-sm">{t.tip.comingSoon}</p>
       </div>
 
       <div className={`mt-8 text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
