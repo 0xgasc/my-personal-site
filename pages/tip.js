@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Script from 'next/script'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
@@ -17,28 +16,9 @@ export default function Tip() {
 
   const formatAmount = (cents) => `${cents}¢`
 
-  const handleStablepay = () => {
-    const amount = selected.cents / 100
-    if (window.WeTakeStables) {
-      window.WeTakeStables.checkout({
-        amount,
-        productName: `Tip — ${t.tip[selected.key]}`,
-        onSuccess: () => {
-          setSelected(null)
-          alert(t.tip.thankYou)
-        },
-      })
-    }
-  }
-
   if (selected) {
     return (
       <div className="w-full max-w-lg mx-auto">
-        <Script
-          src="https://embed.wetakestables.shop/v1/widget.js"
-          strategy="lazyOnload"
-        />
-
         <button
           onClick={() => setSelected(null)}
           className="text-blue-600 underline cursor-pointer mb-6"
@@ -59,17 +39,15 @@ export default function Tip() {
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={handleStablepay}
-            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-pointer ${
-              darkMode
-                ? 'border-gray-700 bg-gray-800/50 hover:border-green-500 hover:bg-gray-800'
-                : 'border-gray-200 bg-gray-50 hover:border-green-500 hover:bg-green-50'
+            disabled
+            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-not-allowed opacity-60 ${
+              darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
             }`}
           >
             <span className="font-medium">Stablepay</span>
             <span className={`text-xs px-2 py-1 rounded ${
-              darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
-            }`}>USDC / USDT</span>
+              darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+            }`}>{t.tip.comingSoonShort}</span>
           </button>
         </div>
 
