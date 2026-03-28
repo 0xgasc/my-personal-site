@@ -8,13 +8,13 @@ export default function Tip() {
   const [selected, setSelected] = useState(null)
 
   const tiers = [
-    { emoji: '☕', cents: 300, key: 'coffee' },
-    { emoji: '🍕', cents: 500, key: 'slice' },
-    { emoji: '🍽️', cents: 1000, key: 'meal' },
-    { emoji: '🚀', cents: 2500, key: 'rocket' },
+    { emoji: '☕', cents: 3, key: 'coffee' },
+    { emoji: '🍕', cents: 5, key: 'slice' },
+    { emoji: '🍽️', cents: 10, key: 'meal' },
+    { emoji: '🚀', cents: 25, key: 'rocket' },
   ]
 
-  const formatAmount = (cents) => `$${(cents / 100).toFixed(0)}`
+  const formatAmount = (cents) => `${cents}¢`
 
   if (selected) {
     return (
