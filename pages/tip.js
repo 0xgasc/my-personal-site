@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import Script from 'next/script'
+import { useRouter } from 'next/router'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
 export default function Tip() {
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
+  const router = useRouter()
   const [selected, setSelected] = useState(null)
 
   const tiers = [
@@ -16,9 +19,31 @@ export default function Tip() {
 
   const formatAmount = (cents) => `${cents}¢`
 
+  const handleStablepay = () => {
+    if (window.StablePay) {
+      window.StablePay.checkout({
+        merchantId: 'cmncj71sz00002m3nzy2cth78',
+        amount: selected.cents / 100,
+        onSuccess: (data) => {
+          console.log('Payment confirmed!', data)
+          setSelected(null)
+          alert(t.tip.thankYou)
+        },
+        onCancel: () => {
+          console.log('Payment cancelled')
+        },
+      })
+    }
+  }
+
   if (selected) {
     return (
       <div className="w-full max-w-lg mx-auto">
+        <Script
+          src="https://wetakestables.shop/checkout-widget.js"
+          strategy="lazyOnload"
+        />
+
         <button
           onClick={() => setSelected(null)}
           className="text-blue-600 underline cursor-pointer mb-6"
@@ -39,15 +64,17 @@ export default function Tip() {
 
         <div className="flex flex-col gap-3">
           <button
-            disabled
-            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-not-allowed opacity-60 ${
-              darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
+            onClick={handleStablepay}
+            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              darkMode
+                ? 'border-gray-700 bg-gray-800/50 hover:border-green-500 hover:bg-gray-800'
+                : 'border-gray-200 bg-gray-50 hover:border-green-500 hover:bg-green-50'
             }`}
           >
-            <span className="font-medium">Stablepay</span>
+            <span className="font-medium">Pay with Crypto</span>
             <span className={`text-xs px-2 py-1 rounded ${
-              darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
-            }`}>{t.tip.comingSoonShort}</span>
+              darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
+            }`}>USDC / USDT</span>
           </button>
         </div>
 
@@ -60,6 +87,11 @@ export default function Tip() {
 
   return (
     <div className="w-full max-w-lg mx-auto">
+      <Script
+        src="https://wetakestables.shop/checkout-widget.js"
+        strategy="lazyOnload"
+      />
+
       <h1 className="text-3xl font-bold mb-2">{t.tip.title}</h1>
       <p className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         {t.tip.subtitle}
