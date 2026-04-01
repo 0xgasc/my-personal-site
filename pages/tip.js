@@ -11,19 +11,19 @@ export default function Tip() {
   const [selected, setSelected] = useState(null)
 
   const tiers = [
-    { emoji: '☕', cents: 3, key: 'coffee' },
-    { emoji: '🍕', cents: 5, key: 'slice' },
-    { emoji: '🍽️', cents: 10, key: 'meal' },
-    { emoji: '🚀', cents: 25, key: 'rocket' },
+    { emoji: '☕', amount: 0.005, key: 'coffee' },
+    { emoji: '🍕', amount: 0.01, key: 'slice' },
+    { emoji: '🍽️', amount: 0.03, key: 'meal' },
+    { emoji: '🚀', amount: 0.1, key: 'rocket' },
   ]
 
-  const formatAmount = (cents) => `${cents}¢`
+  const formatAmount = (amount) => `$${amount}`
 
   const handleStablepay = () => {
     if (window.StablePay) {
       window.StablePay.checkout({
         merchantId: 'cmncj71sz00002m3nzy2cth78',
-        amount: selected.cents / 100,
+        amount: selected.amount,
         onSuccess: (data) => {
           console.log('Payment confirmed!', data)
           setSelected(null)
@@ -56,7 +56,7 @@ export default function Tip() {
         }`}>
           <span className="text-4xl">{selected.emoji}</span>
           <h2 className="text-2xl font-bold mt-3">
-            {t.tip[selected.key]} — {formatAmount(selected.cents)}
+            {t.tip[selected.key]} — {formatAmount(selected.amount)}
           </h2>
         </div>
 
@@ -109,7 +109,7 @@ export default function Tip() {
             }`}
           >
             <span className="text-3xl mb-2">{tier.emoji}</span>
-            <span className="text-lg font-semibold">{formatAmount(tier.cents)}</span>
+            <span className="text-lg font-semibold">{formatAmount(tier.amount)}</span>
             <span className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.tip[tier.key]}
             </span>
