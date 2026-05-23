@@ -289,16 +289,12 @@ a:hover {
   background: var(--text-muted);
 }
 
-/* ─── Smooth image loading ──────────────────────────────── */
+/* ─── Image transitions ──────────────────────────────────
+   (Note: the previous "fade-in on .loaded" trick was nuking every
+   lazy image because nothing in the codebase ever adds .loaded.
+   Lazy images now just appear when the browser decodes them.) */
 img {
   transition: opacity 300ms ease;
-}
-img[loading="lazy"] {
-  opacity: 0;
-}
-img[loading="lazy"].loaded,
-img[loading="lazy"][complete] {
-  opacity: 1;
 }
 
 /* ─── FX Effects Panel — right-side slide-in (admin) ───── */
