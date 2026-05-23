@@ -169,7 +169,7 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
               )}
               {imageError && loaded && (
                 <div className="text-center text-white/70 text-sm py-12 px-6">
-                  <p>Image couldn't load.</p>
+                  <p>Image couldn&apos;t load.</p>
                   {current.link && (
                     <a
                       href={current.link}
