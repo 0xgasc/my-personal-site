@@ -82,6 +82,15 @@ export const MODE_SPECS: Record<FxMode, ModeSpec> = {
         type: "ascii",
         params: [
           { key: "cellSize", label: "Cell Size", type: "number", min: 4, max: 24, step: 1, default: 10 },
+          // Glyph style — driven by the shader's procedural pattern generator.
+          // default: 5-bucket shape progression
+          // dots:    filled dots scaling with luminance
+          // blocks:  Unicode-shade-style filled blocks of varying size
+          // lines:   thin horizontal lines (scanline character look)
+          // binary:  0/1 alternation pattern
+          { key: "charset", label: "Charset", type: "select", options: ["default", "dots", "blocks", "lines", "binary"], default: "default" },
+          { key: "presenceThreshold", label: "Threshold", type: "number", min: 0, max: 1, step: 0.01, default: 0.0 },
+          { key: "shimmerAmount", label: "Shimmer", type: "number", min: 0, max: 1, step: 0.01, default: 0.0 },
           { key: "invert", label: "Invert", type: "number", min: 0, max: 1, step: 1, default: 0 },
 
           // ─── Recolorer ───────────────────────────────────────────

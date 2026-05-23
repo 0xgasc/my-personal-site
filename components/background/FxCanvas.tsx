@@ -64,6 +64,9 @@ uniform int   u_ditherAlgo;        // 0=bayer 1=ordered 2=atkinson
 uniform int   u_dithCharMode;      // 0=off 1=on (dither-only)
 uniform float u_dithCharSize;
 uniform int   u_asciiInvert;       // 0/1 (ascii only)
+uniform int   u_asciiCharset;      // 0=default 1=dots 2=blocks 3=lines 4=binary (ascii only)
+uniform float u_asciiThreshold;    // 0..1 — lum cutoff below which cells are bg (ascii only)
+uniform float u_asciiShimmer;      // 0..1 — random per-cell brightness jitter (ascii only)
 
 // Shared by ASCII + DITHER modes — populated from the active mode's params.
 uniform int   u_palette;           // ascii: 0=video 1=mono 2=duo 3=tri 4=quad ; dither: 0=mono 1=duo 2=tri 3=quad
@@ -168,6 +171,42 @@ vec3 applyDream(vec2 uv) {
   return col;
 }
 
+// Per-cell glyph generators driven by u_asciiCharset.
+//   default — 5-bucket procedural shape progression
+//   dots    — filled disc, radius scales with luminance
+//   blocks  — Unicode-shade-style filled rectangle, size scales with luminance
+//   lines   — thin horizontal lines (scanline character look)
+//   binary  — '0' / '1' style alternating diagonals
+float asciiGlyphDefault(float lum, vec2 t) {
+  if (lum < 0.18) return 0.0;
+  if (lum < 0.32) return (abs(t.x - 0.5) < 0.06 && abs(t.y - 0.5) < 0.4) ? 1.0 : 0.0;
+  if (lum < 0.5)  return (abs(t.x - t.y) < 0.10 || abs(t.x - (1.0 - t.y)) < 0.10) ? 1.0 : 0.0;
+  if (lum < 0.7)  {
+    float d = length(t - 0.5);
+    return (d < 0.34 && d > 0.18) ? 1.0 : 0.0;
+  }
+  return (t.x > 0.12 && t.x < 0.88 && t.y > 0.12 && t.y < 0.88) ? 1.0 : 0.0;
+}
+float asciiGlyphDots(float lum, vec2 t) {
+  float r = mix(0.05, 0.45, lum);
+  return length(t - 0.5) < r ? 1.0 : 0.0;
+}
+float asciiGlyphBlocks(float lum, vec2 t) {
+  float half = mix(0.02, 0.48, lum);
+  return (abs(t.x - 0.5) < half && abs(t.y - 0.5) < half) ? 1.0 : 0.0;
+}
+float asciiGlyphLines(float lum, vec2 t) {
+  float lines = floor(mix(1.0, 6.0, lum));
+  float band = fract(t.y * lines);
+  return band < 0.45 ? 1.0 : 0.0;
+}
+float asciiGlyphBinary(float lum, vec2 t) {
+  // Diagonal "1" stroke for >0.5, ring "0" for lower.
+  if (lum > 0.55) return (abs(t.x - t.y) < 0.12) ? 1.0 : 0.0;
+  float d = length(t - 0.5);
+  return (d > 0.22 && d < 0.40) ? 1.0 : 0.0;
+}
+
 vec3 applyAscii(vec2 uv) {
   float effCell = max(2.0, u_cell);
   vec2 cellSize = vec2(effCell) / u_viewport;
@@ -176,8 +215,26 @@ vec3 applyAscii(vec2 uv) {
   float lum = dot(sampled, vec3(0.299, 0.587, 0.114));
   if (u_asciiInvert == 1) lum = 1.0 - lum;
 
+  // Shimmer: per-cell time-varying brightness jitter.
+  if (u_asciiShimmer > 0.0) {
+    float seed = hash(cellUv * u_viewport + floor(u_time * 12.0));
+    lum += (seed - 0.5) * u_asciiShimmer * 0.6;
+    lum = clamp(lum, 0.0, 1.0);
+  }
+
+  // Presence threshold: cells below the threshold become pure bg.
+  if (lum < u_asciiThreshold) {
+    vec3 bgT = (u_palette == 0 || u_palette == 1) ? vec3(0.0) : u_pal0;
+    return bgT;
+  }
+
   vec2 t = mod(uv, cellSize) / cellSize;
-  float glyph = ditherGlyph(lum, t);
+  float glyph;
+  if (u_asciiCharset == 1)      glyph = asciiGlyphDots(lum, t);
+  else if (u_asciiCharset == 2) glyph = asciiGlyphBlocks(lum, t);
+  else if (u_asciiCharset == 3) glyph = asciiGlyphLines(lum, t);
+  else if (u_asciiCharset == 4) glyph = asciiGlyphBinary(lum, t);
+  else                          glyph = asciiGlyphDefault(lum, t);
 
   // u_palette for ASCII: 0=video (sample) 1=mono 2=duo 3=tri 4=quad
   vec3 fg = u_palette == 0 ? sampled : paletteSample(u_palette - 1, lum);
@@ -461,6 +518,9 @@ export default function FxCanvas({
       "u_dithCharMode",
       "u_dithCharSize",
       "u_asciiInvert",
+      "u_asciiCharset",
+      "u_asciiThreshold",
+      "u_asciiShimmer",
       "u_palette",
       "u_pal0",
       "u_pal1",
@@ -656,6 +716,19 @@ export default function FxCanvas({
 
       // ASCII-specific
       gl.uniform1i(u.u_asciiInvert, num(pp, "ascii", "ascii", "invert", 0) > 0.5 ? 1 : 0);
+      const charsetIdx: Record<string, number> = {
+        default: 0,
+        dots: 1,
+        blocks: 2,
+        lines: 3,
+        binary: 4,
+      };
+      gl.uniform1i(
+        u.u_asciiCharset,
+        charsetIdx[str(pp, "ascii", "ascii", "charset", "default")] ?? 0
+      );
+      gl.uniform1f(u.u_asciiThreshold, num(pp, "ascii", "ascii", "presenceThreshold", 0));
+      gl.uniform1f(u.u_asciiShimmer, num(pp, "ascii", "ascii", "shimmerAmount", 0));
 
       // Palette is mode-specific (ASCII vs DITHER each have their own colors).
       let paletteIdx = 0;

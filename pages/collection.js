@@ -30,9 +30,11 @@ const tezosOriginals = [
   { hash: "QmXZgkNBU98bUZVhyNnFJeTGAVv44mnCiwo4JZkQgq2Tom", alt: "Jellyfish by Gogolitus", title: "Jellyfish — Gogolitus", link: "https://objkt.com/tokens/KT1PoKNmnMeuf4ReHSYNwhJdELZkMcYKfL6K/43" },
   { hash: "Qme2FDRj7V9PsHu3tVzEcfjCgoDPpbRFLKBnPXGyexRtMF", alt: "GM_ɢᴀʀʙᴀɢᴇ by Slava3ngl", title: "GM_ɢᴀʀʙᴀɢᴇ — Slava3ngl", link: "https://objkt.com/tokens/KT1A9SuKGSj1YYx35kY1LKmHwYRoN3N7Gv51/5" },
 ]
+// v2 cache-buster to skip any stale 404 / failed-image entry from before
+// the URL pattern changed.
 const tezosGallery = tezosOriginals.map((o) => {
   const original = `https://assets.objkt.media/file/assets-003/${o.hash}/artifact`
-  const thumb = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=600&h=600&fit=cover&output=jpg&q=82`
+  const thumb = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=600&h=600&fit=cover&output=jpg&q=82&v=2`
   return { src: thumb, full: original, alt: o.alt, title: o.title, link: o.link }
 })
 
