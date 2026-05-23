@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- s-o-l-o.fun favicon — dithered orb on the city/beach palette.
+       Neon cyan dot at the center, fading through magenta + cream
+       via a Bayer-quantized pixel halo. Single SVG, theme-agnostic. -->
+  <rect width="32" height="32" fill="#06090f"/>
+
+  <!-- Cyan core -->
+  <circle cx="16" cy="16" r="3" fill="#38bdf8"/>
+
+  <!-- Inner halo ring — magenta pixels at cardinal directions -->
+  <g fill="#f472b6">
+    <rect x="15" y="9"  width="2" height="2"/>
+    <rect x="15" y="21" width="2" height="2"/>
+    <rect x="9"  y="15" width="2" height="2"/>
+    <rect x="21" y="15" width="2" height="2"/>
+  </g>
+
+  <!-- Mid ring — dither dots at diagonals + offsets -->
+  <g fill="#0ea5b8">
+    <rect x="11" y="11" width="2" height="2"/>
+    <rect x="19" y="11" width="2" height="2"/>
+    <rect x="11" y="19" width="2" height="2"/>
+    <rect x="19" y="19" width="2" height="2"/>
+    <rect x="13" y="7"  width="2" height="2"/>
+    <rect x="17" y="7"  width="2" height="2"/>
+    <rect x="13" y="23" width="2" height="2"/>
+    <rect x="17" y="23" width="2" height="2"/>
+    <rect x="7"  y="13" width="2" height="2"/>
+    <rect x="7"  y="17" width="2" height="2"/>
+    <rect x="23" y="13" width="2" height="2"/>
+    <rect x="23" y="17" width="2" height="2"/>
+  </g>
+
+  <!-- Outer dither — scattered warm dots -->
+  <g fill="#f4c170">
+    <rect x="5"  y="9"  width="1" height="1"/>
+    <rect x="9"  y="5"  width="1" height="1"/>
+    <rect x="23" y="5"  width="1" height="1"/>
+    <rect x="27" y="9"  width="1" height="1"/>
+    <rect x="5"  y="23" width="1" height="1"/>
+    <rect x="9"  y="27" width="1" height="1"/>
+    <rect x="23" y="27" width="1" height="1"/>
+    <rect x="27" y="23" width="1" height="1"/>
+    <rect x="3"  y="15" width="1" height="2"/>
+    <rect x="28" y="15" width="1" height="2"/>
+    <rect x="15" y="3"  width="2" height="1"/>
+    <rect x="15" y="28" width="2" height="1"/>
+  </g>
+</svg>
