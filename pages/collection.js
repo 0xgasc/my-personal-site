@@ -30,12 +30,17 @@ const tezosOriginals = [
   { hash: "QmXZgkNBU98bUZVhyNnFJeTGAVv44mnCiwo4JZkQgq2Tom", alt: "Jellyfish by Gogolitus", title: "Jellyfish — Gogolitus", link: "https://objkt.com/tokens/KT1PoKNmnMeuf4ReHSYNwhJdELZkMcYKfL6K/43" },
   { hash: "Qme2FDRj7V9PsHu3tVzEcfjCgoDPpbRFLKBnPXGyexRtMF", alt: "GM_ɢᴀʀʙᴀɢᴇ by Slava3ngl", title: "GM_ɢᴀʀʙᴀɢᴇ — Slava3ngl", link: "https://objkt.com/tokens/KT1A9SuKGSj1YYx35kY1LKmHwYRoN3N7Gv51/5" },
 ]
-// v2 cache-buster to skip any stale 404 / failed-image entry from before
-// the URL pattern changed.
+// Both grid thumbs AND the lightbox "full" image go through weserv. Objkt's
+// CDN is flaky for direct /artifact fetches (some hashes can hang for 30+s),
+// and weserv has aggressive global caching + can be told to preserve all GIF
+// frames via &n=-1 so animated artifacts still animate.
 const tezosGallery = tezosOriginals.map((o) => {
   const original = `https://assets.objkt.media/file/assets-003/${o.hash}/artifact`
   const thumb = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=600&h=600&fit=cover&output=jpg&q=82&v=2`
-  return { src: thumb, full: original, alt: o.alt, title: o.title, link: o.link }
+  // n=-1 preserves all frames (GIF animation). No `output=` so weserv picks
+  // the source's format (gif stays gif, png stays png).
+  const full = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=1600&n=-1&v=2`
+  return { src: thumb, full, alt: o.alt, title: o.title, link: o.link }
 })
 
 const vaultGallery = [

@@ -28,6 +28,20 @@ interface Props {
 export default function Lightbox({ items, initialIndex, onClose }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
   const [loaded, setLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  /** Tracks whether we've already fallen back to the thumbnail src so we
+   *  don't loop between full / thumb if both fail. */
+  const [usingFallback, setUsingFallback] = useState(false);
+  /** Force-show after N seconds even if onLoad never fires. Some Tezos GIFs
+   *  do fire onLoad eventually but the browser stutters; flip the spinner
+   *  off so the user at least sees whatever is decoding. */
+  useEffect(() => {
+    setLoaded(false);
+    setImageError(false);
+    setUsingFallback(false);
+    const id = setTimeout(() => setLoaded(true), 8000);
+    return () => clearTimeout(id);
+  }, [currentIndex]);
 
   // Sync initialIndex
   useEffect(() => {
@@ -118,9 +132,26 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
             <div className="relative flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={current.full ?? current.src}
+                src={
+                  usingFallback || !current.full
+                    ? current.src
+                    : current.full
+                }
                 alt={current.alt}
-                onLoad={() => setLoaded(true)}
+                onLoad={() => {
+                  setLoaded(true);
+                  setImageError(false);
+                }}
+                onError={() => {
+                  // Full URL failed — fall back to the thumb so the user at
+                  // least sees something.
+                  if (!usingFallback && current.full && current.full !== current.src) {
+                    setUsingFallback(true);
+                  } else {
+                    setImageError(true);
+                    setLoaded(true);
+                  }
+                }}
                 className={`max-w-full max-h-[75vh] rounded-lg shadow-2xl transition-opacity duration-300 ${
                   loaded ? "opacity-100" : "opacity-0"
                 }`}
@@ -129,8 +160,26 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
 
               {/* Loading placeholder */}
               {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+                  <span className="text-[10px] uppercase tracking-widest text-white/40">
+                    {usingFallback ? "falling back to thumb…" : "loading…"}
+                  </span>
+                </div>
+              )}
+              {imageError && loaded && (
+                <div className="text-center text-white/70 text-sm py-12 px-6">
+                  <p>Image couldn't load.</p>
+                  {current.link && (
+                    <a
+                      href={current.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block mt-3 text-white/80 underline text-xs"
+                    >
+                      View on chain ↗
+                    </a>
+                  )}
                 </div>
               )}
             </div>
