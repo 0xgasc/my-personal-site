@@ -38,7 +38,12 @@ export async function listAllClips(): Promise<Clip[]> {
   return (data ?? []).map(rowToClip);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getClip(id: string): Promise<Clip | null> {
+  // Postgres throws "invalid input syntax for type uuid" if `id` isn't a
+  // valid UUID, which would 500 our endpoint. Short-circuit early.
+  if (!UUID_RE.test(id)) return null;
   const { data, error } = await admin().from("clips").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return data ? rowToClip(data) : null;
