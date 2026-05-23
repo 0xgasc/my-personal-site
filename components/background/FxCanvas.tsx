@@ -192,8 +192,9 @@ float asciiGlyphDots(float lum, vec2 t) {
   return length(t - 0.5) < r ? 1.0 : 0.0;
 }
 float asciiGlyphBlocks(float lum, vec2 t) {
-  float half = mix(0.02, 0.48, lum);
-  return (abs(t.x - 0.5) < half && abs(t.y - 0.5) < half) ? 1.0 : 0.0;
+  // GLSL reserves `half` (planned float16). Use a different name.
+  float halfSize = mix(0.02, 0.48, lum);
+  return (abs(t.x - 0.5) < halfSize && abs(t.y - 0.5) < halfSize) ? 1.0 : 0.0;
 }
 float asciiGlyphLines(float lum, vec2 t) {
   float lines = floor(mix(1.0, 6.0, lum));
