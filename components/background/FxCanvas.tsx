@@ -192,7 +192,7 @@ float asciiGlyphDots(float lum, vec2 t) {
   return length(t - 0.5) < r ? 1.0 : 0.0;
 }
 float asciiGlyphBlocks(float lum, vec2 t) {
-  // GLSL reserves `half` (planned float16). Use a different name.
+  // halfSize, not half — GLSL reserves the bare word as a planned float16 type.
   float halfSize = mix(0.02, 0.48, lum);
   return (abs(t.x - 0.5) < halfSize && abs(t.y - 0.5) < halfSize) ? 1.0 : 0.0;
 }
