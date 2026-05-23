@@ -1,93 +1,59 @@
 "use client";
 
-import { usePublicConfig } from "@/lib/scenes/fetcher";
-import SceneBackground from "@/components/background/SceneBackground";
+import { useState } from "react";
 import GenerativeShader from "@/components/background/GenerativeShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
-import VideoClipsBackground from "@/components/background/VideoClipsBackground";
+import ClipsPlayer from "@/components/background/ClipsPlayer";
 import DitherOverlay from "@/components/background/DitherOverlay";
+import { usePublicClips } from "@/lib/clips/fetcher";
 import { useApp } from "@/contexts/AppContext";
+import type { Clip, BlendMode } from "@/lib/clips/types";
 
 const YT_BG_ID = process.env.NEXT_PUBLIC_YOUTUBE_BG_ID;
-// Comma-separated list of clip URLs (Irys/Arweave/same-origin). Highest
-// priority backdrop — beats YouTube and the generative scene when set.
-const BG_CLIPS = (process.env.NEXT_PUBLIC_BG_CLIPS ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
 
 /**
- * Client-only mount that fetches public scenes + settings and renders:
- * 1. A generative shader background (always on, ambient layer)
- * 2. The scene-based video background on top (when scenes exist)
- *
- * Always covers the full viewport behind content.
- *
- * If the URL contains ?preview=<id>, fetches that one scene from the
- * admin-gated preview endpoint and shows ONLY it.
+ * Background stack:
+ *   - Layer -2: bottom backdrop. Priority is Supabase clips → YouTube
+ *     env-var fallback → generative beach/city scene shader.
+ *   - Layer -1: dither overlay (procedural Bayer-RGB-split). Per-clip
+ *     overrides — intensity, palette, blend mode — flow in via
+ *     `onActiveClipChange` from ClipsPlayer.
  */
 export default function BackgroundMount() {
-  const { scenes, settings, loading, isPreview } = usePublicConfig();
+  const { clips, loading } = usePublicClips();
   const { fxEnabled } = useApp();
+  const [activeClip, setActiveClip] = useState<Clip | null>(null);
 
   if (loading) return null;
 
-  const hasClips = BG_CLIPS.length > 0;
+  const hasClips = clips.length > 0;
   const hasYouTube = Boolean(YT_BG_ID);
-  // Priority: self-hosted clips > YouTube > generative scene shader.
   const backdrop: "clips" | "yt" | "scene" = hasClips
     ? "clips"
     : hasYouTube
       ? "yt"
       : "scene";
 
+  // Per-clip FX overrides for the dither layer.
+  const ditherIntensity = activeClip?.fxDitherIntensity ?? 1;
+  const ditherBlend: BlendMode = activeClip?.fxBlendMode ?? "overlay";
+
   return (
     <>
-      {/* Layer -2: chosen backdrop */}
       {fxEnabled && backdrop === "clips" && (
-        <VideoClipsBackground clips={BG_CLIPS} zIndex={-2} />
+        <ClipsPlayer clips={clips} zIndex={-2} onActiveClipChange={setActiveClip} />
       )}
       {fxEnabled && backdrop === "yt" && (
         <YouTubeBackground videoId={YT_BG_ID!} zIndex={-2} />
       )}
       {fxEnabled && backdrop === "scene" && <GenerativeShader />}
 
-      {/* Layer -1: Dither overlay — strong wall texture behind the
-          glass content panel. `overlay` blend keeps colors punchy and
-          obliterates the YouTube branding bleed at the iframe edges. */}
       {fxEnabled && (
-        <DitherOverlay zIndex={-1} blendMode="overlay" opacity={1} />
-      )}
-
-      {/* Layer 0+: Scene video backgrounds (when scenes exist) */}
-      <SceneBackground
-        scenes={scenes}
-        rotationMode={isPreview ? "single" : settings.rotationMode}
-        rotationIntervalSec={settings.rotationIntervalSec}
-        masterEnabled={settings.masterFxEnabled}
-      />
-
-      {isPreview && (
-        <div
-          style={{
-            position: "fixed",
-            top: 14,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 60,
-            padding: "6px 14px",
-            background: "rgba(245, 158, 11, 0.95)",
-            color: "#1f1300",
-            fontSize: 12,
-            fontFamily: "ui-monospace, monospace",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            borderRadius: 999,
-            pointerEvents: "none",
-          }}
-        >
-          Preview · {scenes[0]?.name ?? "scene"}
-        </div>
+        <DitherOverlay
+          zIndex={-1}
+          blendMode={ditherBlend as React.CSSProperties["mixBlendMode"]}
+          opacity={ditherIntensity}
+        />
       )}
     </>
   );
