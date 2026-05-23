@@ -4,74 +4,55 @@ import { useEffect, useRef } from "react";
 
 interface Props {
   videoId: string;
-  /** Min seconds of continuous playback before jumping to a new random spot. */
   minSegmentSec?: number;
-  /** Max seconds of continuous playback before jumping. */
   maxSegmentSec?: number;
-  /** Whether to start from a random offset on first load. */
-  randomStart?: boolean;
-  /** Z-index. Default -2 (behind everything). */
   zIndex?: number;
 }
 
-declare global {
-  interface Window {
-    YT?: {
-      Player: new (
-        el: HTMLElement | string,
-        config: Record<string, unknown>
-      ) => YTPlayer;
-      PlayerState: { ENDED: number; PLAYING: number; PAUSED: number };
-    };
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-interface YTPlayer {
-  playVideo: () => void;
-  pauseVideo: () => void;
-  mute: () => void;
-  seekTo: (sec: number, allowSeekAhead: boolean) => void;
-  getDuration: () => number;
-  destroy: () => void;
-}
-
 /**
- * Full-viewport YouTube background that plays as a collage:
- *   - Starts at a random timestamp
- *   - After a random 5–25 second segment, jumps to a different random spot
- *   - Loops forever (when video ends naturally, picks a new random start too)
- *   - Muted, autoplay, no controls, no related-video overlay
+ * Full-viewport YouTube backdrop with collage behavior:
+ *   - Initial random start offset
+ *   - Every 6–22 s (random), jumps to a different random timestamp
+ *   - Loops forever via the `playlist=ID` trick + manual jumps
  *
- * The iframe is over-sized to maintain its 16:9 aspect ratio while covering
- * the viewport, so there are no black bars regardless of window shape.
+ * Uses a plain <iframe> with the embed URL (more permissive than the
+ * IFrame Player API which often rejects valid videos with a misleading
+ * "Invalid video id" error). Sends seekTo commands via postMessage —
+ * works as long as `enablejsapi=1` is in the URL.
  */
 export default function YouTubeBackground({
   videoId,
   minSegmentSec = 6,
   maxSegmentSec = 22,
-  randomStart = true,
   zIndex = -2,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<YTPlayer | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
+  const durationRef = useRef<number>(0);
 
   useEffect(() => {
-    mountedRef.current = true;
+    let mounted = true;
 
-    // Inject the YT IFrame API script once.
-    if (!document.getElementById("yt-iframe-api")) {
-      const s = document.createElement("script");
-      s.id = "yt-iframe-api";
-      s.src = "https://www.youtube.com/iframe_api";
-      s.async = true;
-      document.head.appendChild(s);
+    function postCommand(func: string, args: unknown[] = []) {
+      const w = iframeRef.current?.contentWindow;
+      if (!w) return;
+      w.postMessage(
+        JSON.stringify({ event: "command", func, args }),
+        "https://www.youtube.com"
+      );
+    }
+
+    function jumpToRandom() {
+      if (!mounted) return;
+      // Fall back to a 4-minute guess if we never learned the real duration.
+      const dur = durationRef.current > 8 ? durationRef.current : 240;
+      const target = Math.random() * Math.max(0, dur - 6);
+      postCommand("seekTo", [target, true]);
+      postCommand("playVideo");
+      scheduleJump();
     }
 
     function scheduleJump() {
-      if (!mountedRef.current) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       const ms =
         (minSegmentSec + Math.random() * Math.max(0, maxSegmentSec - minSegmentSec)) *
@@ -79,94 +60,75 @@ export default function YouTubeBackground({
       timeoutRef.current = setTimeout(jumpToRandom, ms);
     }
 
-    function jumpToRandom() {
-      const p = playerRef.current;
-      if (!p) return;
-      let duration = 0;
+    // Listen for state events from the iframe so we can:
+    //   (a) capture the real video duration
+    //   (b) re-jump when the video ends naturally
+    function onMessage(e: MessageEvent) {
+      if (typeof e.data !== "string") return;
+      if (!e.origin.includes("youtube.com")) return;
       try {
-        duration = p.getDuration() ?? 0;
+        const msg = JSON.parse(e.data);
+        if (msg?.event === "onReady") {
+          postCommand("mute");
+          postCommand("playVideo");
+          // Request duration; will come back in onApiChange or via getDuration
+          postCommand("getDuration");
+          // Initial random start after a tick
+          setTimeout(jumpToRandom, 800);
+        }
+        if (msg?.event === "onStateChange") {
+          // Player state 0 = ENDED
+          if (msg.info === 0) jumpToRandom();
+        }
+        if (msg?.event === "infoDelivery") {
+          const d = msg?.info?.duration;
+          if (typeof d === "number" && d > 0) durationRef.current = d;
+        }
       } catch {
-        // metadata not ready yet
+        // not a JSON message; ignore
       }
-      if (duration < 8) {
-        // Try again shortly
-        timeoutRef.current = setTimeout(jumpToRandom, 600);
-        return;
-      }
-      const target = Math.random() * Math.max(0, duration - 6);
-      try {
-        p.seekTo(target, true);
-        p.playVideo();
-      } catch {
-        // ignore
-      }
-      scheduleJump();
     }
+    window.addEventListener("message", onMessage);
 
-    function createPlayer() {
-      if (!window.YT?.Player || !containerRef.current) return;
-      playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          showinfo: 0,
-          iv_load_policy: 3,
-          fs: 0,
-          disablekb: 1,
-          playsinline: 1,
-          loop: 0, // we manage looping ourselves
-          cc_load_policy: 0,
-        },
-        events: {
-          onReady: (e: { target: YTPlayer }) => {
-            try {
-              e.target.mute();
-              if (randomStart) {
-                const dur = e.target.getDuration?.() ?? 0;
-                if (dur > 8) e.target.seekTo(Math.random() * (dur - 6), true);
-              }
-              e.target.playVideo();
-            } catch {
-              // ignore
-            }
-            scheduleJump();
-          },
-          onStateChange: (e: { data: number; target: YTPlayer }) => {
-            // When the video ends naturally, jump to a new random spot.
-            if (e.data === window.YT?.PlayerState.ENDED) {
-              jumpToRandom();
-            }
-          },
-        },
-      });
+    // Tell the iframe to start sending events to us once it's loaded.
+    function onLoad() {
+      const w = iframeRef.current?.contentWindow;
+      if (!w) return;
+      w.postMessage(
+        JSON.stringify({ event: "listening", id: videoId, channel: "widget" }),
+        "https://www.youtube.com"
+      );
     }
+    const ifr = iframeRef.current;
+    ifr?.addEventListener("load", onLoad);
 
-    if (window.YT?.Player) {
-      createPlayer();
-    } else {
-      // Chain the API ready callback so multiple components can coexist.
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        prev?.();
-        createPlayer();
-      };
-    }
+    // Safety net — kick off random jumps after 3s even if onReady never fires.
+    const kickoffId = setTimeout(() => {
+      if (durationRef.current === 0) {
+        // No metadata yet — start jumping anyway with the fallback duration.
+        scheduleJump();
+      }
+    }, 3000);
 
     return () => {
-      mountedRef.current = false;
+      mounted = false;
+      window.removeEventListener("message", onMessage);
+      ifr?.removeEventListener("load", onLoad);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      try {
-        playerRef.current?.destroy();
-      } catch {
-        // ignore
-      }
-      playerRef.current = null;
+      clearTimeout(kickoffId);
     };
-  }, [videoId, minSegmentSec, maxSegmentSec, randomStart]);
+  }, [videoId, minSegmentSec, maxSegmentSec]);
+
+  // enablejsapi=1 unlocks postMessage commands; rest is the standard
+  // background-iframe cleanup. `playlist=ID` is required for `loop=1`
+  // to actually loop the same video.
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const src =
+    `https://www.youtube.com/embed/${videoId}` +
+    `?enablejsapi=1&autoplay=1&mute=1&controls=0&modestbranding=1` +
+    `&rel=0&playsinline=1&iv_load_policy=3&fs=0&disablekb=1&cc_load_policy=0` +
+    `&loop=1&playlist=${videoId}` +
+    (origin ? `&origin=${encodeURIComponent(origin)}` : "");
 
   return (
     <div
@@ -180,16 +142,19 @@ export default function YouTubeBackground({
         background: "#000",
       }}
     >
-      <div
-        ref={containerRef}
+      <iframe
+        ref={iframeRef}
+        src={src}
+        title="background"
+        allow="autoplay; encrypted-media"
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
-          // Cover the viewport at 16:9 — whichever dimension is the constraint.
           width: "max(100vw, 177.78vh)",
           height: "max(56.25vw, 100vh)",
           transform: "translate(-50%, -50%)",
+          border: "none",
           pointerEvents: "none",
         }}
       />

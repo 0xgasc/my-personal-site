@@ -4,6 +4,7 @@ import { usePublicConfig } from "@/lib/scenes/fetcher";
 import SceneBackground from "@/components/background/SceneBackground";
 import GenerativeShader from "@/components/background/GenerativeShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
+import DitherOverlay from "@/components/background/DitherOverlay";
 import { useApp } from "@/contexts/AppContext";
 
 const YT_BG_ID = process.env.NEXT_PUBLIC_YOUTUBE_BG_ID;
@@ -28,20 +29,26 @@ export default function BackgroundMount() {
 
   return (
     <>
-      {/* Layer 0: YouTube random-jump background (when env var is set) */}
+      {/* Layer -2: YouTube random-jump backdrop (when env var is set) */}
       {fxEnabled && hasYouTube && (
         <YouTubeBackground videoId={YT_BG_ID!} zIndex={-2} />
       )}
 
-      {/* Layer 1: Generative ambient shader. When YT is the backdrop,
-          this layer becomes a translucent FX overlay via blend mode so
-          the trippy aesthetic stacks ON TOP of the video. Otherwise it
-          renders opaque as the standalone backdrop. */}
-      {fxEnabled && (
-        <GenerativeShader overlay={hasYouTube} />
+      {/* Layer -2 (fallback): beach/city scene shader when no YT is set.
+          Doubles as the static ambient backdrop. */}
+      {fxEnabled && !hasYouTube && (
+        <GenerativeShader />
       )}
 
-      {/* Layer 2: Scene video backgrounds (when scenes exist) */}
+      {/* Layer -1: Dither overlay — the trippy layer the user wants
+          behind the content "wall". Procedural Bayer-quantized animated
+          field, theme-colored, blended with soft-light so it tints
+          whatever's beneath (YT or scene). */}
+      {fxEnabled && (
+        <DitherOverlay zIndex={-1} blendMode="soft-light" />
+      )}
+
+      {/* Layer 0+: Scene video backgrounds (when scenes exist) */}
       <SceneBackground
         scenes={scenes}
         rotationMode={isPreview ? "single" : settings.rotationMode}
