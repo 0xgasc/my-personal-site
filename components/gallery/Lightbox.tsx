@@ -5,7 +5,10 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface LightboxItem {
+  /** Thumbnail src used in the grid. */
   src: string;
+  /** Optional full-resolution src for the lightbox. Falls back to `src`. */
+  full?: string;
   alt: string;
   title?: string;
   link?: string;
@@ -115,7 +118,7 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
             <div className="relative flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={current.src}
+                src={current.full ?? current.src}
                 alt={current.alt}
                 onLoad={() => setLoaded(true)}
                 className={`max-w-full max-h-[75vh] rounded-lg shadow-2xl transition-opacity duration-300 ${

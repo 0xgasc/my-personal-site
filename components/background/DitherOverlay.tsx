@@ -84,8 +84,8 @@ void main(){
   // Subtle grain for texture
   col += (hash(uv*u_viewport + u_time*60.0) - 0.5) * 0.04;
 
-  // Layer alpha — leaves the underlying YT/scene visible
-  gl_FragColor = vec4(col, 0.55);
+  // Layer alpha — denser so dither dominates the visible texture
+  gl_FragColor = vec4(col, 0.88);
 }`;
 
 interface Props {

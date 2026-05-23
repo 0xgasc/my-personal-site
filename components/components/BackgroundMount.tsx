@@ -40,12 +40,11 @@ export default function BackgroundMount() {
         <GenerativeShader />
       )}
 
-      {/* Layer -1: Dither overlay — the trippy layer the user wants
-          behind the content "wall". Procedural Bayer-quantized animated
-          field, theme-colored, blended with soft-light so it tints
-          whatever's beneath (YT or scene). */}
+      {/* Layer -1: Dither overlay — strong wall texture behind the
+          glass content panel. `overlay` blend keeps colors punchy and
+          obliterates the YouTube branding bleed at the iframe edges. */}
       {fxEnabled && (
-        <DitherOverlay zIndex={-1} blendMode="soft-light" />
+        <DitherOverlay zIndex={-1} blendMode="overlay" opacity={1} />
       )}
 
       {/* Layer 0+: Scene video backgrounds (when scenes exist) */}

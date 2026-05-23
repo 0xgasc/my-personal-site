@@ -151,8 +151,11 @@ export default function YouTubeBackground({
           position: "absolute",
           top: "50%",
           left: "50%",
-          width: "max(100vw, 177.78vh)",
-          height: "max(56.25vw, 100vh)",
+          // Overscan 1.4× the calculated cover size so YouTube's title
+          // bar, watermark, and player chrome are pushed off the
+          // viewport on every screen aspect ratio.
+          width: "max(140vw, 248.9vh)",
+          height: "max(78.75vw, 140vh)",
           transform: "translate(-50%, -50%)",
           border: "none",
           pointerEvents: "none",

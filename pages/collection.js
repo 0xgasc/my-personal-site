@@ -21,17 +21,20 @@ const randomGallery = [
   { src: "https://i2.seadn.io/zora/0x2e3112987df0b0beb942203701abc0efb6c572d0/32a01b58ee3ce33a0d918c9b27a3dc/4332a01b58ee3ce33a0d918c9b27a3dc.png?w=1000", alt: "a tale about how a dragon feels by thisisgonz", title: "a tale about how a dragon feels — thisisgonz", link: "https://opensea.io/item/zora/0x2e3112987df0b0beb942203701abc0efb6c572d0/21" },
 ]
 
-// Objkt serves multiple sizes for the same IPFS hash:
-//   /artifact  — original (sometimes 50MB+ GIFs, kills LCP)
-//   /display   — large web-safe variant
-//   /thumb400  — small thumbnail
-// Use /thumb400 in the grid and /display in the lightbox to balance
-// load time vs quality.
-const tezosGallery = [
-  { src: "https://assets.objkt.media/file/assets-003/QmNhHb86j57AQ6RvM1uHzfsBBh7cMoYYpUDyP5PkxbQRBw/thumb400", full: "https://assets.objkt.media/file/assets-003/QmNhHb86j57AQ6RvM1uHzfsBBh7cMoYYpUDyP5PkxbQRBw/display", alt: "Digital Footprints by Ribela", title: "Digital Footprints — Ribela", link: "https://objkt.com/tokens/KT1Sfvkj5boovQCRRFSroE6SAecPHnLed7uD/11" },
-  { src: "https://assets.objkt.media/file/assets-003/QmXZgkNBU98bUZVhyNnFJeTGAVv44mnCiwo4JZkQgq2Tom/thumb400", full: "https://assets.objkt.media/file/assets-003/QmXZgkNBU98bUZVhyNnFJeTGAVv44mnCiwo4JZkQgq2Tom/display", alt: "Jellyfish by Gogolitus", title: "Jellyfish — Gogolitus", link: "https://objkt.com/tokens/KT1PoKNmnMeuf4ReHSYNwhJdELZkMcYKfL6K/43" },
-  { src: "https://assets.objkt.media/file/assets-003/Qme2FDRj7V9PsHu3tVzEcfjCgoDPpbRFLKBnPXGyexRtMF/thumb400", full: "https://assets.objkt.media/file/assets-003/Qme2FDRj7V9PsHu3tVzEcfjCgoDPpbRFLKBnPXGyexRtMF/display", alt: "GM_ɢᴀʀʙᴀɢᴇ by Slava3ngl", title: "GM_ɢᴀʀʙᴀɢᴇ — Slava3ngl", link: "https://objkt.com/tokens/KT1A9SuKGSj1YYx35kY1LKmHwYRoN3N7Gv51/5" },
+// Objkt only serves /artifact (sometimes 50MB+ GIFs) — no built-in
+// thumbnails. We route the grid through images.weserv.nl which proxies +
+// resizes + reformats on the fly. The lightbox still pulls the original
+// /artifact for full animated quality.
+const tezosOriginals = [
+  { hash: "QmNhHb86j57AQ6RvM1uHzfsBBh7cMoYYpUDyP5PkxbQRBw", alt: "Digital Footprints by Ribela", title: "Digital Footprints — Ribela", link: "https://objkt.com/tokens/KT1Sfvkj5boovQCRRFSroE6SAecPHnLed7uD/11" },
+  { hash: "QmXZgkNBU98bUZVhyNnFJeTGAVv44mnCiwo4JZkQgq2Tom", alt: "Jellyfish by Gogolitus", title: "Jellyfish — Gogolitus", link: "https://objkt.com/tokens/KT1PoKNmnMeuf4ReHSYNwhJdELZkMcYKfL6K/43" },
+  { hash: "Qme2FDRj7V9PsHu3tVzEcfjCgoDPpbRFLKBnPXGyexRtMF", alt: "GM_ɢᴀʀʙᴀɢᴇ by Slava3ngl", title: "GM_ɢᴀʀʙᴀɢᴇ — Slava3ngl", link: "https://objkt.com/tokens/KT1A9SuKGSj1YYx35kY1LKmHwYRoN3N7Gv51/5" },
 ]
+const tezosGallery = tezosOriginals.map((o) => {
+  const original = `https://assets.objkt.media/file/assets-003/${o.hash}/artifact`
+  const thumb = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=600&h=600&fit=cover&output=jpg&q=82`
+  return { src: thumb, full: original, alt: o.alt, title: o.title, link: o.link }
+})
 
 const vaultGallery = [
   { src: "https://art-blocks-explorations-mainnet.s3.amazonaws.com/12686.png", alt: "Friendship Bracelet by Alexis Andre and Snowfro", title: "Friendship Bracelet — Alexis Andre + Snowfro", link: "https://opensea.io/item/ethereum/0x942bc2d3e7a589fe5bd4a5c6ef9727dfd82f5c8a/12686" },
