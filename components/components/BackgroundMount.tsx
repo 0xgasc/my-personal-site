@@ -3,21 +3,21 @@
 import { useState } from "react";
 import GenerativeShader from "@/components/background/GenerativeShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
-import ClipsPlayer from "@/components/background/ClipsPlayer";
+import ClipFxPlayer from "@/components/background/ClipFxPlayer";
 import DitherOverlay from "@/components/background/DitherOverlay";
 import { usePublicClips } from "@/lib/clips/fetcher";
 import { useApp } from "@/contexts/AppContext";
-import type { Clip, BlendMode } from "@/lib/clips/types";
+import type { Clip } from "@/lib/clips/types";
 
 const YT_BG_ID = process.env.NEXT_PUBLIC_YOUTUBE_BG_ID;
 
 /**
  * Background stack:
- *   - Layer -2: bottom backdrop. Priority is Supabase clips → YouTube
- *     env-var fallback → generative beach/city scene shader.
- *   - Layer -1: dither overlay (procedural Bayer-RGB-split). Per-clip
- *     overrides — intensity, palette, blend mode — flow in via
- *     `onActiveClipChange` from ClipsPlayer.
+ *   - Layer -2: chosen backdrop
+ *       Priority: Supabase clips (with full per-clip shader mode) → YouTube
+ *       env-var fallback → generative beach/city scene shader.
+ *   - Layer -1: dither overlay (procedural Bayer-RGB-split). Per-active-clip
+ *       overrides — intensity, blend mode — flow in via ClipFxPlayer.
  */
 export default function BackgroundMount() {
   const { clips, loading } = usePublicClips();
@@ -34,14 +34,14 @@ export default function BackgroundMount() {
       ? "yt"
       : "scene";
 
-  // Per-clip FX overrides for the dither layer.
+  // Per-active-clip dither overlay overrides.
   const ditherIntensity = activeClip?.fxDitherIntensity ?? 1;
-  const ditherBlend: BlendMode = activeClip?.fxBlendMode ?? "overlay";
+  const ditherBlend = (activeClip?.fxBlendMode ?? "overlay") as React.CSSProperties["mixBlendMode"];
 
   return (
     <>
       {fxEnabled && backdrop === "clips" && (
-        <ClipsPlayer clips={clips} zIndex={-2} onActiveClipChange={setActiveClip} />
+        <ClipFxPlayer clips={clips} zIndex={-2} onActiveClipChange={setActiveClip} />
       )}
       {fxEnabled && backdrop === "yt" && (
         <YouTubeBackground videoId={YT_BG_ID!} zIndex={-2} />
@@ -49,11 +49,7 @@ export default function BackgroundMount() {
       {fxEnabled && backdrop === "scene" && <GenerativeShader />}
 
       {fxEnabled && (
-        <DitherOverlay
-          zIndex={-1}
-          blendMode={ditherBlend as React.CSSProperties["mixBlendMode"]}
-          opacity={ditherIntensity}
-        />
+        <DitherOverlay zIndex={-1} blendMode={ditherBlend} opacity={ditherIntensity} />
       )}
     </>
   );

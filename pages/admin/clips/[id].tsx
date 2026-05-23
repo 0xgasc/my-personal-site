@@ -12,12 +12,16 @@ import {
   type StartMode,
   type Orientation,
   type MobileZoom,
+  type HoverEffect,
+  type HoverSettings,
   PALETTES,
   BLEND_MODES,
   START_MODES,
   ORIENTATIONS,
   MOBILE_ZOOMS,
+  HOVER_EFFECTS,
 } from "@/lib/clips/types";
+import { FX_MODES, MODE_SPECS, defaultParams, type FxMode, type FxParams } from "@/lib/fx/effects";
 
 interface Props {
   initialClip: Clip;
@@ -253,21 +257,167 @@ export default function ClipEditor({ initialClip }: Props) {
 
           {/* Right: per-clip FX + live device preview */}
           <div className="space-y-5">
-            <Section title="Per-clip FX">
+            <Section title="Shader mode">
+              <div className="grid grid-cols-4 gap-1.5">
+                {FX_MODES.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => update("fxMode", m)}
+                    className={`px-2 py-1.5 rounded text-[10px] uppercase tracking-widest border ${
+                      clip.fxMode === m
+                        ? "bg-amber-500 text-black border-amber-500"
+                        : "bg-gray-900 border-gray-700 hover:border-gray-500 text-gray-300"
+                    }`}
+                  >
+                    {MODE_SPECS[m].label}
+                  </button>
+                ))}
+              </div>
               <Slider
-                label="Dither intensity"
+                label="FX wet/dry"
+                min={0}
+                max={1}
+                step={0.01}
+                value={clip.fxWet}
+                onChange={(v) => update("fxWet", v)}
+                hint="0 = raw video · 1 = full shader effect"
+              />
+            </Section>
+
+            {/* Per-mode params dynamically from MODE_SPECS */}
+            {MODE_SPECS[clip.fxMode].effects.length > 0 && (
+              <Section title={`${MODE_SPECS[clip.fxMode].label} params`}>
+                {MODE_SPECS[clip.fxMode].effects.map((eff) => (
+                  <div key={eff.type} className="space-y-2.5 mt-1 first:mt-0">
+                    {eff.params.length === 0 && (
+                      <p className="text-[11px] text-gray-500">preset — no params</p>
+                    )}
+                    {eff.params.map((p) => {
+                      const cur =
+                        clip.fxParams?.[clip.fxMode]?.[eff.type]?.[p.key] ?? p.default;
+                      const setVal = (val: number | string) => {
+                        const next: FxParams = JSON.parse(
+                          JSON.stringify(clip.fxParams ?? defaultParams())
+                        );
+                        if (!next[clip.fxMode]) next[clip.fxMode] = {};
+                        if (!next[clip.fxMode][eff.type]) next[clip.fxMode][eff.type] = {};
+                        next[clip.fxMode][eff.type][p.key] = val;
+                        update("fxParams", next);
+                      };
+                      if (p.type === "select") {
+                        return (
+                          <Row key={p.key} label={p.label}>
+                            <select
+                              value={String(cur)}
+                              onChange={(e) => setVal(e.target.value)}
+                              className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs"
+                            >
+                              {p.options!.map((o) => (
+                                <option key={o} value={o}>
+                                  {o}
+                                </option>
+                              ))}
+                            </select>
+                          </Row>
+                        );
+                      }
+                      if (p.type === "color") {
+                        return (
+                          <Row key={p.key} label={p.label}>
+                            <input
+                              type="color"
+                              value={String(cur)}
+                              onChange={(e) => setVal(e.target.value)}
+                              className="w-12 h-7 border border-gray-700 bg-transparent rounded"
+                            />
+                          </Row>
+                        );
+                      }
+                      return (
+                        <Slider
+                          key={p.key}
+                          label={p.label}
+                          min={p.min ?? 0}
+                          max={p.max ?? 1}
+                          step={p.step ?? 0.01}
+                          value={Number(cur)}
+                          onChange={(v) => setVal(v)}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </Section>
+            )}
+
+            <Section title="Mouse hover FX">
+              <Row label="Enabled">
+                <Toggle
+                  checked={clip.hover.enabled}
+                  onChange={(v) =>
+                    update("hover", { ...clip.hover, enabled: v } as HoverSettings)
+                  }
+                />
+              </Row>
+              {clip.hover.enabled && (
+                <>
+                  <Row label="Effect">
+                    <select
+                      value={clip.hover.effect}
+                      onChange={(e) =>
+                        update("hover", {
+                          ...clip.hover,
+                          effect: e.target.value as HoverEffect,
+                        } as HoverSettings)
+                      }
+                      className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs"
+                    >
+                      {HOVER_EFFECTS.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                  </Row>
+                  <Slider
+                    label="Radius"
+                    min={0.05}
+                    max={0.6}
+                    step={0.01}
+                    value={clip.hover.radius}
+                    onChange={(v) =>
+                      update("hover", { ...clip.hover, radius: v } as HoverSettings)
+                    }
+                  />
+                  <Slider
+                    label="Intensity"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={clip.hover.intensity}
+                    onChange={(v) =>
+                      update("hover", { ...clip.hover, intensity: v } as HoverSettings)
+                    }
+                  />
+                </>
+              )}
+            </Section>
+
+            <Section title="Dither wall overlay">
+              <Slider
+                label="Dither alpha"
                 min={0}
                 max={1}
                 step={0.01}
                 value={clip.fxDitherIntensity}
                 onChange={(v) => update("fxDitherIntensity", v)}
-                hint="0 = clip plays raw · 1 = dither maxed"
+                hint="Standalone Bayer dither layer on top of the clip"
               />
               <Row label="Palette">
                 <select
                   value={clip.fxPalette}
                   onChange={(e) => update("fxPalette", e.target.value as Palette)}
-                  className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
+                  className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs"
                 >
                   {PALETTES.map((p) => (
                     <option key={p} value={p}>
@@ -280,7 +430,7 @@ export default function ClipEditor({ initialClip }: Props) {
                 <select
                   value={clip.fxBlendMode}
                   onChange={(e) => update("fxBlendMode", e.target.value as BlendMode)}
-                  className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
+                  className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs"
                 >
                   {BLEND_MODES.map((b) => (
                     <option key={b} value={b}>

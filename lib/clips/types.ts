@@ -1,7 +1,11 @@
 /**
  * Clip = a background video with its own FX overrides + playback rules.
- * Replaces the older scene/site_settings model entirely.
+ * Each clip picks a shader mode (off/crt/vhs/dream/ascii/pixel/dither)
+ * with mode-specific params + a universal hover effect on top.
  */
+
+import type { FxMode, FxParams } from "@/lib/fx/effects";
+import { defaultParams as defaultFxParams } from "@/lib/fx/effects";
 
 export type Palette = "auto" | "video" | "mono" | "duotone" | "tritone" | "quadtone";
 export type BlendMode =
@@ -15,6 +19,23 @@ export type BlendMode =
 export type StartMode = "random" | "window" | "fixed";
 export type Orientation = "auto" | "landscape" | "portrait";
 export type MobileZoom = "cover" | "contain" | "overscan";
+export type HoverEffect = "invert" | "pixelate" | "recolor" | "sharpen";
+
+export interface HoverSettings {
+  enabled: boolean;
+  effect: HoverEffect;
+  radius: number;
+  intensity: number;
+}
+
+export const DEFAULT_HOVER: HoverSettings = {
+  enabled: false,
+  effect: "invert",
+  radius: 0.2,
+  intensity: 0.8,
+};
+
+export const HOVER_EFFECTS: HoverEffect[] = ["invert", "pixelate", "recolor", "sharpen"];
 
 export interface Clip {
   id: string;
@@ -24,9 +45,19 @@ export interface Clip {
   sortOrder: number;
 
   // ─── Per-clip FX overrides ─────────────────────────────────
+  /** Shader mode applied to the clip via FxCanvas. */
+  fxMode: FxMode;
+  /** Per-mode shader params. Structure: { mode: { effectType: { key: value } } } */
+  fxParams: FxParams;
+  /** 0..1 wet/dry mix between raw video and FX-processed output. */
+  fxWet: number;
+  /** Universal mouse-hover effect applied AFTER any mode FX. */
+  hover: HoverSettings;
+
+  // ─── Legacy dither-overlay knobs (kept for the standalone overlay layer) ───
   fxDitherIntensity: number;     // 0..1 — clamp on DitherOverlay alpha
-  fxPalette: Palette;            // forces a palette family on this clip
-  fxBlendMode: BlendMode;        // CSS mix-blend-mode for the dither layer
+  fxPalette: Palette;            // forces a palette family on the overlay
+  fxBlendMode: BlendMode;        // CSS mix-blend-mode for the overlay
 
   // ─── Start time control ────────────────────────────────────
   startMode: StartMode;          // random | window | fixed
@@ -52,6 +83,10 @@ export const DEFAULT_CLIP: Omit<Clip, "id" | "createdAt" | "updatedAt"> = {
   videoUrl: "",
   isPublic: false,
   sortOrder: 0,
+  fxMode: "off",
+  fxParams: defaultFxParams(),
+  fxWet: 0.85,
+  hover: { ...DEFAULT_HOVER },
   fxDitherIntensity: 0.92,
   fxPalette: "auto",
   fxBlendMode: "overlay",
@@ -87,6 +122,13 @@ interface ClipRow {
   video_url: string;
   is_public: boolean;
   sort_order: number;
+  fx_mode: string;
+  fx_params: FxParams | string | null;
+  fx_wet: number | string;
+  hover_enabled: boolean;
+  hover_effect: string;
+  hover_radius: number | string;
+  hover_intensity: number | string;
   fx_dither_intensity: number | string;
   fx_palette: string;
   fx_blend_mode: string;
@@ -103,6 +145,21 @@ interface ClipRow {
   updated_at: string;
 }
 
+const isHoverEffect = (s: string): s is HoverEffect =>
+  (HOVER_EFFECTS as string[]).includes(s);
+
+function parseFxParams(v: ClipRow["fx_params"]): FxParams {
+  if (!v) return defaultFxParams();
+  if (typeof v === "string") {
+    try {
+      return JSON.parse(v) as FxParams;
+    } catch {
+      return defaultFxParams();
+    }
+  }
+  return v;
+}
+
 const num = (v: number | string | null | undefined): number | undefined =>
   v === null || v === undefined ? undefined : typeof v === "string" ? parseFloat(v) : v;
 
@@ -113,6 +170,15 @@ export function rowToClip(r: ClipRow): Clip {
     videoUrl: r.video_url,
     isPublic: r.is_public,
     sortOrder: r.sort_order,
+    fxMode: (r.fx_mode || "off") as FxMode,
+    fxParams: parseFxParams(r.fx_params),
+    fxWet: num(r.fx_wet) ?? DEFAULT_CLIP.fxWet,
+    hover: {
+      enabled: Boolean(r.hover_enabled ?? DEFAULT_HOVER.enabled),
+      effect: isHoverEffect(r.hover_effect ?? "") ? r.hover_effect as HoverEffect : DEFAULT_HOVER.effect,
+      radius: num(r.hover_radius) ?? DEFAULT_HOVER.radius,
+      intensity: num(r.hover_intensity) ?? DEFAULT_HOVER.intensity,
+    },
     fxDitherIntensity: num(r.fx_dither_intensity) ?? DEFAULT_CLIP.fxDitherIntensity,
     fxPalette: (r.fx_palette || "auto") as Palette,
     fxBlendMode: (r.fx_blend_mode || "overlay") as BlendMode,
@@ -136,6 +202,15 @@ export function clipToRow(c: Partial<Clip>): Partial<ClipRow> {
   if (c.videoUrl !== undefined) out.video_url = c.videoUrl;
   if (c.isPublic !== undefined) out.is_public = c.isPublic;
   if (c.sortOrder !== undefined) out.sort_order = c.sortOrder;
+  if (c.fxMode !== undefined) out.fx_mode = c.fxMode;
+  if (c.fxParams !== undefined) out.fx_params = c.fxParams;
+  if (c.fxWet !== undefined) out.fx_wet = c.fxWet;
+  if (c.hover !== undefined) {
+    out.hover_enabled = c.hover.enabled;
+    out.hover_effect = c.hover.effect;
+    out.hover_radius = c.hover.radius;
+    out.hover_intensity = c.hover.intensity;
+  }
   if (c.fxDitherIntensity !== undefined) out.fx_dither_intensity = c.fxDitherIntensity;
   if (c.fxPalette !== undefined) out.fx_palette = c.fxPalette;
   if (c.fxBlendMode !== undefined) out.fx_blend_mode = c.fxBlendMode;

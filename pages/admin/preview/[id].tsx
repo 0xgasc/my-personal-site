@@ -1,10 +1,10 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import ClipsPlayer from "@/components/background/ClipsPlayer";
+import ClipFxPlayer from "@/components/background/ClipFxPlayer";
 import DitherOverlay from "@/components/background/DitherOverlay";
 import { withAdminAuth } from "@/lib/admin/withAdminAuth";
 import { getClip } from "@/lib/clips/store";
-import type { Clip, BlendMode } from "@/lib/clips/types";
+import type { Clip } from "@/lib/clips/types";
 
 interface Props {
   initialClip: Clip;
@@ -66,7 +66,7 @@ export default function ClipPreviewPage({ initialClip }: Props) {
           overflow: "hidden",
         }}
       >
-        <ClipsPlayer
+        <ClipFxPlayer
           clips={[clip]}
           zIndex={-2}
           onActiveClipChange={(c) => setActive(c)}

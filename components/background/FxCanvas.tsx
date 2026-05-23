@@ -22,6 +22,9 @@ interface Props {
   fixed?: boolean;
   /** Override z-index. Defaults to 0 (background); use higher for stack layers. */
   zIndex?: number;
+  /** When the video first loads metadata, seek to this second. Used by
+   *  ClipFxPlayer to drive random start times per the clip's startMode. */
+  initialSeekSec?: number;
 }
 
 /**
@@ -372,6 +375,7 @@ export default function FxCanvas({
   blendMode,
   fixed = true,
   zIndex,
+  initialSeekSec,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const effectiveHover = hover ?? DEFAULT_HOVER;
@@ -383,6 +387,7 @@ export default function FxCanvas({
     videoOpacity,
     videoBlur,
     hover: effectiveHover,
+    initialSeekSec,
   });
   propsRef.current = {
     videoUrl,
@@ -392,6 +397,7 @@ export default function FxCanvas({
     videoOpacity,
     videoBlur,
     hover: effectiveHover,
+    initialSeekSec,
   };
   // Mouse in normalized 0..1 coords relative to the canvas. (-1,-1) = inactive.
   const mouseRef = useRef({ x: -1, y: -1 });
@@ -528,6 +534,16 @@ export default function FxCanvas({
         ready: false,
         onMeta() {
           entry.pxSize = { w: el.videoWidth || 1, h: el.videoHeight || 1 };
+          // Apply caller's initial seek if provided.
+          const seek = propsRef.current.initialSeekSec;
+          if (typeof seek === "number" && el.duration > 0) {
+            const target = Math.max(0, Math.min(el.duration - 0.1, seek));
+            try {
+              el.currentTime = target;
+            } catch {
+              // ignore — some browsers reject seeks pre-canplay
+            }
+          }
         },
       };
       el.addEventListener("loadedmetadata", entry.onMeta);
