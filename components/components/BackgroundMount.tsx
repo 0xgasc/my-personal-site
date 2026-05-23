@@ -4,6 +4,7 @@ import { useState } from "react";
 import GenerativeShader from "@/components/background/GenerativeShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
 import ClipFxPlayer from "@/components/background/ClipFxPlayer";
+import NextClipButton from "@/components/background/NextClipButton";
 import DitherOverlay from "@/components/background/DitherOverlay";
 import { usePublicClips } from "@/lib/clips/fetcher";
 import { useApp } from "@/contexts/AppContext";
@@ -51,6 +52,8 @@ export default function BackgroundMount() {
       {fxEnabled && (
         <DitherOverlay zIndex={-1} blendMode={ditherBlend} opacity={ditherIntensity} />
       )}
+
+      {fxEnabled && backdrop === "clips" && clips.length > 0 && <NextClipButton />}
     </>
   );
 }
