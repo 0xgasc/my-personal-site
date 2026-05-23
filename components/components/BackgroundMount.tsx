@@ -4,10 +4,17 @@ import { usePublicConfig } from "@/lib/scenes/fetcher";
 import SceneBackground from "@/components/background/SceneBackground";
 import GenerativeShader from "@/components/background/GenerativeShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
+import VideoClipsBackground from "@/components/background/VideoClipsBackground";
 import DitherOverlay from "@/components/background/DitherOverlay";
 import { useApp } from "@/contexts/AppContext";
 
 const YT_BG_ID = process.env.NEXT_PUBLIC_YOUTUBE_BG_ID;
+// Comma-separated list of clip URLs (Irys/Arweave/same-origin). Highest
+// priority backdrop — beats YouTube and the generative scene when set.
+const BG_CLIPS = (process.env.NEXT_PUBLIC_BG_CLIPS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 /**
  * Client-only mount that fetches public scenes + settings and renders:
@@ -25,20 +32,25 @@ export default function BackgroundMount() {
 
   if (loading) return null;
 
+  const hasClips = BG_CLIPS.length > 0;
   const hasYouTube = Boolean(YT_BG_ID);
+  // Priority: self-hosted clips > YouTube > generative scene shader.
+  const backdrop: "clips" | "yt" | "scene" = hasClips
+    ? "clips"
+    : hasYouTube
+      ? "yt"
+      : "scene";
 
   return (
     <>
-      {/* Layer -2: YouTube random-jump backdrop (when env var is set) */}
-      {fxEnabled && hasYouTube && (
+      {/* Layer -2: chosen backdrop */}
+      {fxEnabled && backdrop === "clips" && (
+        <VideoClipsBackground clips={BG_CLIPS} zIndex={-2} />
+      )}
+      {fxEnabled && backdrop === "yt" && (
         <YouTubeBackground videoId={YT_BG_ID!} zIndex={-2} />
       )}
-
-      {/* Layer -2 (fallback): beach/city scene shader when no YT is set.
-          Doubles as the static ambient backdrop. */}
-      {fxEnabled && !hasYouTube && (
-        <GenerativeShader />
-      )}
+      {fxEnabled && backdrop === "scene" && <GenerativeShader />}
 
       {/* Layer -1: Dither overlay — strong wall texture behind the
           glass content panel. `overlay` blend keeps colors punchy and

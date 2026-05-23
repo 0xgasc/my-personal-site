@@ -110,13 +110,8 @@ void main(){
   vec3 p2 = mix(c2, c3, smoothstep(0.0, 1.0, cycle));
   vec3 p3 = mix(c3, c1, smoothstep(0.0, 1.0, cycle));
 
-  // Per-channel palette mapping (gives the RGB-split a colored fringe)
-  vec3 mapPal(float q, vec3 a, vec3 b, vec3 c, vec3 d){
-    if (q < 0.34) return mix(a, b, q/0.33);
-    if (q < 0.67) return mix(b, c, (q-0.33)/0.33);
-    return mix(c, d, (q-0.66)/0.34);
-  }
-  // GLSL prohibits function declarations inside main, so inline.
+  // Per-channel palette mapping inlined below (GLSL ES 1.0 disallows
+  // nested function defs).
   vec3 colR, colG, colB;
   if (qR < 0.34) colR = mix(p0, p1, qR/0.33);
   else if (qR < 0.67) colR = mix(p1, p2, (qR-0.33)/0.33);
