@@ -44,6 +44,20 @@ export default function StashUpload({
     console.log("endpoint:", `${STASH_SERVER}/tus-upload`);
     console.log("type:", original.type);
 
+    // Fetch the Stash API key from the admin-only endpoint. The key never
+    // sits in the public JS bundle — only logged-in admins can retrieve it.
+    let stashApiKey: string | null = null;
+    try {
+      const r = await fetch("/api/admin/stash-token");
+      if (r.ok) {
+        const j = (await r.json()) as { apiKey?: string };
+        stashApiKey = j.apiKey ?? null;
+      }
+    } catch {
+      // Anonymous upload (covered by Stash's IP rate limit) is fine.
+    }
+    if (stashApiKey) console.log("[stash] using API key");
+
     // Always compress to a web-friendly preset (720p VP9, ~1.5 Mbps, audio
     // stripped) before uploading — keeps streaming fast and predictable.
     // Small clips (< 10MB) are passed through as-is.
@@ -86,6 +100,7 @@ export default function StashUpload({
         endpoint: `${STASH_SERVER}/tus-upload`,
         chunkSize: CHUNK_SIZE,
         retryDelays: [0, 1000, 3000, 5000],
+        headers: stashApiKey ? { "X-API-Key": stashApiKey } : undefined,
         metadata: {
           filename: file.name,
           filetype: file.type,
@@ -113,7 +128,10 @@ export default function StashUpload({
             const res = await fetch(`${STASH_SERVER}/tus-upload/complete`, {
               method: "POST",
               credentials: "include",
-              headers: { "content-type": "application/json" },
+              headers: {
+                "content-type": "application/json",
+                ...(stashApiKey ? { "X-API-Key": stashApiKey } : {}),
+              },
               body: JSON.stringify({ uploadId, originalFilename: file.name }),
             });
             console.log("[stash] complete status:", res.status);
