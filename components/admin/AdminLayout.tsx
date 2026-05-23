@@ -13,8 +13,7 @@ interface AdminLayoutProps {
 }
 
 const navItems = [
-  { href: "/admin", label: "Scenes" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/upload", label: "Upload clips" },
   { href: "/", label: "View site" },
 ];
 

@@ -1,26 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { requireAdmin } from "@/lib/admin/sessionAuth";
-import { getStore } from "@/lib/store";
-import { DEFAULT_SCENE } from "@/lib/types";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+/**
+ * Scenes API — retired. The site no longer uses the scene-builder; backgrounds
+ * are env-var driven (NEXT_PUBLIC_BG_CLIPS) and FX is shader-only. This
+ * endpoint stays in place to return a graceful 410 to any stale client.
+ */
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!requireAdmin(req, res)) return;
-
-  const store = getStore();
-
   if (req.method === "GET") {
-    const scenes = await store.listAll();
-    res.status(200).json({ scenes });
+    res.status(200).json({ scenes: [] });
     return;
   }
-
-  if (req.method === "POST") {
-    const body = (req.body ?? {}) as Partial<typeof DEFAULT_SCENE> & { name?: string };
-    const created = await store.create({ ...DEFAULT_SCENE, ...body });
-    res.status(201).json({ scene: created });
-    return;
-  }
-
-  res.setHeader("Allow", "GET, POST");
-  res.status(405).json({ error: "Method not allowed" });
+  res.status(410).json({
+    error: "Scenes are retired. Use /admin/upload + NEXT_PUBLIC_BG_CLIPS env var.",
+  });
 }
