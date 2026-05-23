@@ -5,9 +5,9 @@ import { useApp } from "@/contexts/AppContext";
 
 const VS = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=vec2((a_pos.x+1.0)*0.5,1.0-(a_pos.y+1.0)*0.5);gl_Position=vec4(a_pos,0.0,1.0);}`;
 
-// Procedural dither overlay — Bayer-quantized animated noise + gradient.
-// Independent of any video texture, so it works on top of YouTube backdrops
-// (which WebGL can't sample) just as well as on the scene shaders.
+// Procedural dither overlay — RGB-split Bayer-quantized animated field.
+// Trippy af mode: swirl distortion, chromatic aberration at the dither
+// level, mouse vortex, hue rotation. Independent of any video texture.
 const FS = `precision highp float;
 varying vec2 v_uv;
 uniform float u_time;
@@ -34,58 +34,114 @@ float noise(vec2 p){
 }
 float fbm(vec2 p){
   float v=0.0; float a=0.5;
-  for(int i=0;i<4;i++){ v+=a*noise(p); p*=2.03; a*=0.55; }
+  for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=0.55; }
   return v;
+}
+
+// Swirl distortion around an anchor point. Stronger near the anchor.
+vec2 swirl(vec2 uv, vec2 anchor, float strength, float twist){
+  vec2 c = uv - anchor;
+  float r = length(c);
+  float a = atan(c.y, c.x) + twist / (r * 8.0 + 0.4) * strength;
+  return anchor + vec2(cos(a), sin(a)) * r;
+}
+
+// Compute the animated 0..1 field at a given UV (used 3x for RGB split).
+float computeField(vec2 uv){
+  float t = u_time * 0.42;
+  float f = fbm(uv*3.2 + vec2(t*0.9, t*0.5));
+  f += 0.55 * sin(uv.x*9.0 + t*2.6 + sin(t*0.3)*1.5);
+  f += 0.40 * sin((uv.x+uv.y)*11.0 - t*1.9);
+  f += 0.30 * cos(uv.y*14.0 + t*1.4);
+  f += 0.20 * sin(uv.x*22.0 + cos(t*0.6)*3.0);
+  if (u_mouse.x >= 0.0) {
+    vec2 d = uv - u_mouse;
+    d.x *= u_viewport.x / max(u_viewport.y, 1.0);
+    float k = exp(-dot(d,d)*12.0);
+    f += k * 1.2;
+  }
+  return clamp(f*0.6 + 0.4, 0.0, 1.0);
 }
 
 void main(){
   vec2 uv = v_uv;
+  float t = u_time;
 
-  // ─── Source field that we'll quantize via dither ─────────────
-  float t = u_time * 0.18;
-  float field = fbm(uv*2.5 + vec2(t*0.5, t*0.3));
-  field += 0.35 * sin(uv.x*5.0 + t*1.4);
-  field += 0.20 * sin((uv.x+uv.y)*7.0 - t*0.9);
-  field += 0.10 * cos(uv.y*8.0 + t);
-  // Optional mouse bulge — slight push outward of the field near cursor
-  if (u_mouse.x >= 0.0) {
-    vec2 d = uv - u_mouse;
-    d.x *= u_viewport.x / max(u_viewport.y, 1.0);
-    float k = exp(-dot(d,d)*22.0);
-    field += k * 0.45;
-  }
-  field = clamp(field*0.6 + 0.4, 0.0, 1.0);
+  // ─── Swirl distortion — mouse is the vortex center if present ──
+  vec2 anchor = u_mouse.x >= 0.0 ? u_mouse : vec2(0.5);
+  float mouseStrength = u_mouse.x >= 0.0 ? 1.6 : 0.5;
+  uv = swirl(uv, anchor, mouseStrength, 1.2 + 0.4 * sin(t*0.3));
+  // Subtle global wobble
+  uv += 0.012 * vec2(sin(uv.y*8.0 + t*0.7), cos(uv.x*8.0 - t*0.5));
 
-  // ─── 4-level Bayer dither ────────────────────────────────────
-  float thr = bayer(gl_FragCoord.xy * 0.5);
-  float levels = 4.0;
-  float quant = floor(field*(levels-1.0) + thr) / (levels-1.0);
+  // ─── RGB-split: sample the field at three offset UVs ───────────
+  float ca = 0.012 + 0.006*sin(t*0.6);
+  vec2 dir = normalize(uv - 0.5 + 0.001);
+  float fR = computeField(uv + dir * ca);
+  float fG = computeField(uv);
+  float fB = computeField(uv - dir * ca);
 
-  // ─── Theme palette ───────────────────────────────────────────
+  // ─── Bayer dither, chunky pixels ───────────────────────────────
+  float thr = bayer(gl_FragCoord.xy * 0.32);
+  float levels = 5.0;
+  float qR = floor(fR*(levels-1.0) + thr) / (levels-1.0);
+  float qG = floor(fG*(levels-1.0) + thr) / (levels-1.0);
+  float qB = floor(fB*(levels-1.0) + thr) / (levels-1.0);
+
+  // ─── Hue-cycling palette ───────────────────────────────────────
   vec3 c0, c1, c2, c3;
   if (u_mode == 1) {
-    // Day — beachy: deep ocean → seafoam → warm sand → sun cream
-    c0 = vec3(0.04, 0.18, 0.30);
-    c1 = vec3(0.22, 0.55, 0.62);
-    c2 = vec3(0.93, 0.79, 0.55);
-    c3 = vec3(1.00, 0.93, 0.74);
+    // Day — beachy psychedelic
+    c0 = vec3(0.03, 0.15, 0.28);
+    c1 = vec3(0.95, 0.46, 0.55);   // sunset coral pop
+    c2 = vec3(0.20, 0.78, 0.80);   // bright seafoam
+    c3 = vec3(1.00, 0.93, 0.55);   // sun cream
   } else {
-    // Night — city neon: midnight → indigo → magenta → cyan
-    c0 = vec3(0.02, 0.03, 0.08);
-    c1 = vec3(0.14, 0.10, 0.30);
-    c2 = vec3(0.76, 0.27, 0.56);
-    c3 = vec3(0.22, 0.83, 0.96);
+    // Night — neon city psychedelic
+    c0 = vec3(0.01, 0.02, 0.10);
+    c1 = vec3(0.78, 0.14, 0.66);   // hot magenta
+    c2 = vec3(0.30, 0.95, 0.95);   // electric cyan
+    c3 = vec3(0.92, 0.92, 0.40);   // acid yellow
   }
-  vec3 col;
-  if (quant < 0.34) col = mix(c0, c1, quant/0.33);
-  else if (quant < 0.67) col = mix(c1, c2, (quant-0.33)/0.33);
-  else col = mix(c2, c3, (quant-0.66)/0.34);
+  // Cycle which palette stops anchor low/high every ~30s.
+  float cycle = fract(t / 30.0);
+  vec3 p0 = c0;
+  vec3 p1 = mix(c1, c2, smoothstep(0.0, 1.0, cycle));
+  vec3 p2 = mix(c2, c3, smoothstep(0.0, 1.0, cycle));
+  vec3 p3 = mix(c3, c1, smoothstep(0.0, 1.0, cycle));
 
-  // Subtle grain for texture
-  col += (hash(uv*u_viewport + u_time*60.0) - 0.5) * 0.04;
+  // Per-channel palette mapping (gives the RGB-split a colored fringe)
+  vec3 mapPal(float q, vec3 a, vec3 b, vec3 c, vec3 d){
+    if (q < 0.34) return mix(a, b, q/0.33);
+    if (q < 0.67) return mix(b, c, (q-0.33)/0.33);
+    return mix(c, d, (q-0.66)/0.34);
+  }
+  // GLSL prohibits function declarations inside main, so inline.
+  vec3 colR, colG, colB;
+  if (qR < 0.34) colR = mix(p0, p1, qR/0.33);
+  else if (qR < 0.67) colR = mix(p1, p2, (qR-0.33)/0.33);
+  else colR = mix(p2, p3, (qR-0.66)/0.34);
+  if (qG < 0.34) colG = mix(p0, p1, qG/0.33);
+  else if (qG < 0.67) colG = mix(p1, p2, (qG-0.33)/0.33);
+  else colG = mix(p2, p3, (qG-0.66)/0.34);
+  if (qB < 0.34) colB = mix(p0, p1, qB/0.33);
+  else if (qB < 0.67) colB = mix(p1, p2, (qB-0.33)/0.33);
+  else colB = mix(p2, p3, (qB-0.66)/0.34);
 
-  // Layer alpha — denser so dither dominates the visible texture
-  gl_FragColor = vec4(col, 0.88);
+  // Mix per-channel into final color: R from R-shifted, G from middle,
+  // B from B-shifted. Punchy chromatic-aberration look.
+  vec3 col = vec3(colR.r, colG.g, colB.b);
+
+  // Scanline modulation — faint horizontal CRT vibe
+  col *= 0.92 + 0.08 * sin(gl_FragCoord.y * 1.2 + t * 0.5);
+
+  // Heavy grain
+  col += (hash(uv*u_viewport + t*60.0) - 0.5) * 0.06;
+
+  // Slight overall brightness boost so it stays vivid through soft-light blend
+  col = clamp(col * 1.05, 0.0, 1.0);
+
+  gl_FragColor = vec4(col, 0.92);
 }`;
 
 interface Props {
