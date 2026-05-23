@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface LightboxItem {
@@ -70,8 +71,20 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
   }, []);
 
   const isOpen = initialIndex !== null && initialIndex !== undefined;
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
-  return (
+  // Mount the lightbox at document.body so its `position: fixed`
+  // escapes any ancestor that creates a containing block (the page's
+  // glass-card uses backdrop-filter, which per CSS spec turns into a
+  // containing block for fixed children — that's why the lightbox was
+  // being clipped to the card's size instead of covering the viewport).
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
+
+  if (!portalTarget) return null;
+
+  const tree = (
     <AnimatePresence>
       {isOpen && current && (
         <motion.div
@@ -204,4 +217,6 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
       )}
     </AnimatePresence>
   );
+
+  return createPortal(tree, portalTarget);
 }
