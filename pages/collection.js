@@ -37,9 +37,9 @@ const tezosOriginals = [
 const tezosGallery = tezosOriginals.map((o) => {
   const original = `https://assets.objkt.media/file/assets-003/${o.hash}/artifact`
   const thumb = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=600&h=600&fit=cover&output=jpg&q=82&v=2`
-  // n=-1 preserves all frames (GIF animation). No `output=` so weserv picks
-  // the source's format (gif stays gif, png stays png).
-  const full = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=1600&n=-1&v=2`
+  // No output= means weserv keeps the source format (GIF stays animated).
+  // Width-only resize avoids weserv's animation-stripping pipeline.
+  const full = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&w=1600&v=2`
   return { src: thumb, full, alt: o.alt, title: o.title, link: o.link }
 })
 
