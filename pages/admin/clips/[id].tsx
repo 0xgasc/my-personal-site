@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AdminLayout from "@/components/admin/AdminLayout";
+import DevicePreview from "@/components/admin/DevicePreview";
 import { withAdminAuth } from "@/lib/admin/withAdminAuth";
 import { getClip } from "@/lib/clips/store";
 import {
@@ -38,6 +39,9 @@ export default function ClipEditor({ initialClip }: Props) {
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipFirst = useRef(true);
+  // Increment whenever the clip changes so the preview iframes know to refresh
+  // their cache key. (They also poll on a 1s timer for live edits.)
+  const [previewRev, setPreviewRev] = useState(0);
 
   useEffect(() => {
     if (skipFirst.current) {
@@ -60,6 +64,7 @@ export default function ClipEditor({ initialClip }: Props) {
           throw new Error(j?.error ?? `Save failed (${res.status})`);
         }
         setSavedAt(Date.now());
+        setPreviewRev((r) => r + 1);
       } catch (e) {
         setError(e instanceof Error ? e.message : "save failed");
       } finally {
@@ -246,7 +251,7 @@ export default function ClipEditor({ initialClip }: Props) {
             </Section>
           </div>
 
-          {/* Right: per-clip FX */}
+          {/* Right: per-clip FX + live device preview */}
           <div className="space-y-5">
             <Section title="Per-clip FX">
               <Slider
@@ -285,10 +290,13 @@ export default function ClipEditor({ initialClip }: Props) {
                 </select>
               </Row>
             </Section>
+
+            <DevicePreview clipId={clip.id} revKey={previewRev} />
+
             <p className="text-xs text-gray-500">
-              Changes save automatically. The home page picks public clips weighted by{" "}
-              <code className="font-mono text-amber-400">weight</code> and applies these FX
-              overrides while the clip plays.
+              Previews live-poll every 1 s — drag any slider on the left and
+              watch both frames react. The home page picks public clips weighted
+              by <code className="font-mono text-amber-400">weight</code>.
             </p>
           </div>
         </div>
