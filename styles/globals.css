@@ -1,26 +1,438 @@
 @import "tailwindcss";
 
+/* ─── Hermes Design System ──────────────────────────────────
+   Premium, restrained, typographically-driven.
+   Dark by default. Light as a secondary mode.
+   ─────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ─── NIGHT (city) — default ───────────────────────────────
+     Deep midnight blues, concrete grays, electric neon accents.
+     Think: rooftop bar in Manhattan at 1am, distant signage glow. */
+
+  --bg-primary: #06090f;
+  --bg-secondary: #0d1320;
+  --bg-elevated: #161e2f;
+  --text-primary: #eef1f9;
+  --text-secondary: #b4becb;
+  --text-muted: #6c7587;
+
+  /* Electric cyan — city neon */
+  --accent: #38bdf8;
+  --accent-subtle: rgba(56, 189, 248, 0.14);
+  --accent-glow: rgba(56, 189, 248, 0.20);
+
+  /* Cool magenta — secondary city neon */
+  --accent-alt: #f472b6;
+
+  --border-subtle: rgba(180, 200, 240, 0.08);
+  --border-default: rgba(180, 200, 240, 0.14);
+
+  /* Smoky urban glass — opaque enough to read text over any FX */
+  --glass-bg: rgba(13, 19, 32, 0.62);
+  --glass-border: rgba(180, 200, 240, 0.10);
+  --glass-hover: rgba(22, 30, 47, 0.78);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 32px rgba(56, 189, 248, 0.12);
+
+  /* Page-level ambient gradient — soft city haze. */
+  --page-gradient:
+    radial-gradient(60% 50% at 12% 0%, rgba(56, 189, 248, 0.10), transparent 70%),
+    radial-gradient(60% 50% at 88% 100%, rgba(244, 114, 182, 0.08), transparent 70%),
+    linear-gradient(180deg, #06090f 0%, #050811 100%);
+}
+
+/* ─── DAY (beach) ─────────────────────────────────────────
+   Warm sand, ocean horizon, sun bleach. High readability
+   via deep navy ink on translucent cream glass. */
+.light {
+  --bg-primary: #fbf5e6;
+  --bg-secondary: #fff9ea;
+  --bg-elevated: #ffffff;
+  --text-primary: #0e2233;
+  --text-secondary: #3a5168;
+  --text-muted: #82909e;
+
+  /* Ocean teal */
+  --accent: #0e8aa1;
+  --accent-subtle: rgba(14, 138, 161, 0.10);
+  --accent-glow: rgba(14, 138, 161, 0.18);
+
+  /* Sunset coral — secondary */
+  --accent-alt: #f97362;
+
+  --border-subtle: rgba(14, 34, 51, 0.08);
+  --border-default: rgba(14, 34, 51, 0.14);
+
+  /* Sun-bleached cream glass */
+  --glass-bg: rgba(255, 247, 224, 0.55);
+  --glass-border: rgba(14, 34, 51, 0.10);
+  --glass-hover: rgba(255, 247, 224, 0.75);
+
+  --shadow-sm: 0 1px 2px rgba(14, 34, 51, 0.10);
+  --shadow-md: 0 6px 20px rgba(14, 34, 51, 0.10);
+  --shadow-lg: 0 16px 48px rgba(14, 34, 51, 0.16);
+  --shadow-glow: 0 0 32px rgba(14, 138, 161, 0.16);
+
+  /* Sky → sand horizon gradient */
+  --page-gradient:
+    radial-gradient(70% 50% at 20% 0%, rgba(255, 220, 150, 0.45), transparent 70%),
+    radial-gradient(60% 60% at 90% 30%, rgba(14, 138, 161, 0.18), transparent 70%),
+    linear-gradient(180deg, #ffe9b8 0%, #fbf5e6 35%, #f3e6c0 100%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page-gradient), var(--bg-primary);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  transition: background-color 600ms ease;
+}
+
+/* ─── Typography Scale ────────────────────────────────────── */
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 0.75em;
+}
+
+h2 {
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5em;
+}
+
+h3 {
+  font-size: 1.125rem;
+  letter-spacing: -0.015em;
+}
+
+p {
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+/* Subtle headings in body copy */
+.section-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Refined links */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: all 200ms ease;
+}
+a:hover {
+  opacity: 0.75;
+}
+
+/* ─── Selection ──────────────────────────────────────────── */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* ─── Glass card ────────────────────────────────────────── */
+/* Opaque enough to always read text over any FX layer beneath. */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  transition: background 300ms ease, box-shadow 300ms ease;
+}
+.glass-card p,
+.glass-card li {
+  color: var(--text-primary);
+}
+.glass-card a {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+.glass-card:hover {
+  background: var(--glass-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-card-sm {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* ─── Buttons ────────────────────────────────────────────── */
+.btn-ghost {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 200ms ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.btn-ghost:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-ghost.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── Image grid item ─────────────────────────────────────── */
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  transition: all 300ms ease;
+  cursor: pointer;
+}
+.gallery-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+.gallery-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+.gallery-item:hover img {
+  transform: scale(1.08);
+}
+.gallery-item .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.gallery-item:hover .overlay {
+  opacity: 1;
+}
+.gallery-item .caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: all 300ms ease;
+}
+.gallery-item:hover .caption {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── Smooth image loading ──────────────────────────────── */
+img {
+  transition: opacity 300ms ease;
+}
+img[loading="lazy"] {
+  opacity: 0;
+}
+img[loading="lazy"].loaded,
+img[loading="lazy"][complete] {
+  opacity: 1;
+}
+
+/* ─── FX Effects Panel — right-side slide-in (admin) ───── */
+.fx-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  z-index: 50;
+  background: rgba(14, 14, 14, 0.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-left: 1px solid #222;
+  overflow-y: auto;
+  padding: 12px 14px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #ddd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fx-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  background: rgba(14, 14, 14, 0.96);
+  border-bottom: 1px solid #222;
+  margin-bottom: 10px;
+  padding-top: 4px;
+  padding-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.fx-header-btns {
+  display: flex;
+  gap: 6px;
+}
+.fx-panel header button {
+  background: #111;
+  color: #aaa;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: inherit;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.fx-panel header button:hover {
+  color: #fff;
+  border-color: #444;
+}
+.fx-panel section {
+  border-bottom: 1px dashed #222;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+.fx-panel h4 {
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 10px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+.fx-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #ccc;
+}
+.fx-row > span {
+  color: #999;
+  font-size: 10px;
+}
+.fx-row em {
+  text-align: right;
+  color: #ffcf6a;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+}
+.fx-row input[type="range"] {
+  accent-color: #ffcf6a;
+  width: 100%;
+}
+.fx-row select,
+.fx-row input[type="text"] {
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 10px;
+  font-family: inherit;
+}
+.fx-empty {
+  color: #666;
+  margin: 6px 0;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.fx-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.fx-mode-pill {
+  background: #111;
+  color: #888;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 6px 0;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.fx-mode-pill:hover {
+  color: #fff;
+  border-color: #444;
+}
+.fx-mode-pill.active {
+  background: #3a2a00;
+  color: #ffcf6a;
+  border-color: #ffcf6a;
+}
+.fx-global {
+  border-color: #443 !important;
 }
