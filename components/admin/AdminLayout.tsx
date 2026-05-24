@@ -15,6 +15,7 @@ interface AdminLayoutProps {
 const navItems = [
   { href: "/admin", label: "Clips" },
   { href: "/admin/upload", label: "Upload" },
+  { href: "/admin/content", label: "Content" },
   { href: "/", label: "View site" },
 ];
 

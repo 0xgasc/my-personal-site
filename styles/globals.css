@@ -178,6 +178,18 @@ a:hover {
   color: var(--text-primary);
   transition: background 300ms ease, box-shadow 300ms ease;
 }
+/* Mobile: bump opacity hard. Backdrop-filter is spotty on iOS Safari +
+   GPU-throttled on small devices, which leaves the dither bleeding through
+   and tanking readability. Use a near-solid base under that breakpoint. */
+@media (max-width: 768px) {
+  .glass-card {
+    background: var(--bg-elevated);
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    padding: 22px;
+    border-radius: 12px;
+  }
+}
 .glass-card p,
 .glass-card li {
   color: var(--text-primary);
