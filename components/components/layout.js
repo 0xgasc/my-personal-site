@@ -74,6 +74,15 @@ export default function Layout({ children }) {
         >
           {GLASS_ICONS[glassLevel]}
         </button>
+
+        <button
+          onClick={() => typeof window !== 'undefined' && window.dispatchEvent(new CustomEvent('clip:next'))}
+          className="btn-ghost"
+          aria-label="Next background clip"
+          title="Next clip"
+        >
+          ✦
+        </button>
       </div>
 
       {/* Main content */}

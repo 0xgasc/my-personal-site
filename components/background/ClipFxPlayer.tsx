@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import FxCanvas from "./FxCanvas";
 import type { Clip } from "@/lib/clips/types";
+import type { FxMode } from "@/lib/fx/effects";
 
 function useIsIOS() {
   const [ios, setIos] = useState(false);
@@ -21,14 +22,28 @@ interface Props {
 const HARD_MAX_SEGMENT_SEC = 30;
 export const NEXT_CLIP_EVENT = "clip:next";
 
-function pickClip(clips: Clip[]): Clip {
-  const total = clips.reduce((s, c) => s + Math.max(1, c.weight), 0);
-  let r = Math.random() * total;
-  for (const c of clips) {
-    r -= Math.max(1, c.weight);
-    if (r <= 0) return c;
+// ── Shuffle queue — full cycle before any clip repeats ───────
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return clips[clips.length - 1];
+  return a;
+}
+
+/** CSS filter approximations for iOS (no WebGL). Not identical to the
+ *  shader effects but much better than no treatment at all. */
+function iosCssFilter(mode: FxMode): string {
+  switch (mode) {
+    case "crt":    return "contrast(1.2) brightness(0.82)";
+    case "vhs":    return "saturate(0.65) hue-rotate(-8deg) contrast(1.15)";
+    case "dream":  return "brightness(1.12) saturate(1.5)";
+    case "ascii":  return "grayscale(1) contrast(2.5)";
+    case "pixel":  return "contrast(1.3) saturate(0.7)";
+    case "dither": return "grayscale(1) contrast(1.8)";
+    default:       return "none";
+  }
 }
 
 function computeStartSec(clip: Clip): number {
@@ -54,21 +69,36 @@ function computeSegmentMs(clip: Clip): number {
 export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: Props) {
   const isIOS = useIsIOS();
 
+  // Shuffle queue: exhausts the full list before reshuffling.
+  const queueRef = useRef<Clip[]>([]);
+
+  function dequeue(lastId?: string): Clip {
+    if (queueRef.current.length === 0) {
+      queueRef.current = shuffle(clips);
+      // Avoid immediate back-to-back repeat at queue boundary.
+      if (lastId && queueRef.current[0]?.id === lastId && queueRef.current.length > 1) {
+        queueRef.current.push(queueRef.current.shift()!);
+      }
+    }
+    return queueRef.current.shift()!;
+  }
+
   const [active, setActive] = useState<Clip | null>(() =>
-    clips.length ? pickClip(clips) : null
+    clips.length ? dequeue() : null
   );
   const [jumpKey, setJumpKey] = useState(0);
   const [seekTarget, setSeekTarget] = useState<number>(() =>
     active ? computeStartSec(active) : 0
   );
-  // Pre-picked next clip — buffered while current plays so rotation is instant.
   const [queued, setQueued] = useState<Clip | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Keep active valid if the clips list changes.
   useEffect(() => {
     if (!active) {
       if (clips.length) {
-        const next = pickClip(clips);
+        queueRef.current = [];
+        const next = dequeue();
         setActive(next);
         setSeekTarget(computeStartSec(next));
         setJumpKey((k) => k + 1);
@@ -76,20 +106,25 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
       return;
     }
     if (!clips.find((c) => c.id === active.id)) {
-      const next = clips.length ? pickClip(clips) : null;
+      queueRef.current = [];
+      const next = clips.length ? dequeue() : null;
       setActive(next);
       if (next) {
         setSeekTarget(computeStartSec(next));
         setJumpKey((k) => k + 1);
       }
     }
-  }, [clips, active]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clips]);
 
-  // Pre-pick the next clip as soon as the current one starts so we have
-  // a full segment-length head-start to buffer it.
+  // Pre-pick next clip right when current one starts so it can buffer.
   useEffect(() => {
-    if (clips.length > 0) setQueued(pickClip(clips));
-  }, [jumpKey, clips]);
+    if (clips.length > 0 && active) {
+      // Peek without consuming — we'll consume in triggerJump.
+      setQueued(queueRef.current[0] ?? null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpKey]);
 
   useEffect(() => {
     onActiveClipChange?.(active);
@@ -97,13 +132,13 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
 
   const triggerJump = useCallback(() => {
     if (!clips.length) return;
-    // Use the pre-queued clip (already buffering) or pick a fresh one.
-    const next = queued ?? pickClip(clips);
+    const next = dequeue(active?.id);
     setActive(next);
     setSeekTarget(computeStartSec(next));
     setJumpKey((k) => k + 1);
     setQueued(null);
-  }, [clips, queued]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clips, active]);
 
   useEffect(() => {
     if (!active) return;
@@ -143,9 +178,10 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
             objectFit: "cover",
             zIndex,
             pointerEvents: "none",
+            filter: iosCssFilter(active.fxMode),
+            transition: "filter 600ms ease",
           }}
         />
-        {/* Pre-buffer next clip while current plays */}
         {queued && queued.videoUrl !== active.videoUrl && (
           <video
             key={`q:${queued.id}`}
@@ -175,7 +211,6 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
         zIndex={zIndex}
         initialSeekSec={seekTarget}
       />
-      {/* Pre-buffer next clip while current plays */}
       {queued && queued.videoUrl !== active.videoUrl && (
         <video
           key={`q:${queued.id}`}
