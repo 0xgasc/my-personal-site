@@ -42,15 +42,15 @@ export default function BackgroundMount() {
   return (
     <>
       {fxEnabled && backdrop === "clips" && (
-        <ClipFxPlayer clips={clips} zIndex={-2} onActiveClipChange={setActiveClip} />
+        <ClipFxPlayer clips={clips} zIndex={0} onActiveClipChange={setActiveClip} />
       )}
       {fxEnabled && backdrop === "yt" && (
-        <YouTubeBackground videoId={YT_BG_ID!} zIndex={-2} />
+        <YouTubeBackground videoId={YT_BG_ID!} zIndex={0} />
       )}
       {fxEnabled && backdrop === "scene" && <GenerativeShader />}
 
       {fxEnabled && (
-        <DitherOverlay zIndex={-1} blendMode={ditherBlend} opacity={ditherIntensity} />
+        <DitherOverlay zIndex={1} blendMode={ditherBlend} opacity={ditherIntensity} />
       )}
 
       {fxEnabled && backdrop === "clips" && clips.length > 0 && <NextClipButton />}

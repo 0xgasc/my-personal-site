@@ -200,7 +200,7 @@ export default function GenerativeShader({ overlay = false }: GenerativeShaderPr
         left: 0,
         width: "100vw",
         height: "100vh",
-        zIndex: -1,
+        zIndex: 0,
         pointerEvents: "none",
         display: "block",
         // Overlay mode: translucent + soft-light blend so the scene

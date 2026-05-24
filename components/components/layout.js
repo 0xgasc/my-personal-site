@@ -20,8 +20,11 @@ function routeToPageKey(pathname) {
   return m ? m[1] : null
 }
 
+const GLASS_LEVELS = [0.28, 0.10, 0.0]
+
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [glassLevel, setGlassLevel] = useState(0)
   const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
   const t = useTranslation(language)
   const router = useRouter()
@@ -61,6 +64,15 @@ export default function Layout({ children }) {
         </button>
 
         <SceneCycler darkMode={darkMode} />
+
+        <button
+          onClick={() => setGlassLevel((l) => (l + 1) % GLASS_LEVELS.length)}
+          className="btn-ghost"
+          aria-label="Toggle card opacity"
+          title={`Card opacity: ${Math.round(GLASS_LEVELS[glassLevel] * 100)}%`}
+        >
+          {glassLevel === 0 ? '◑' : glassLevel === 1 ? '◔' : '○'}
+        </button>
       </div>
 
       {/* Main content */}
@@ -70,8 +82,8 @@ export default function Layout({ children }) {
             className="glass-card"
             style={{
               background: darkMode
-                ? 'rgba(8, 12, 22, 0.38)'
-                : 'rgba(255, 247, 224, 0.28)',
+                ? `rgba(8, 12, 22, ${GLASS_LEVELS[glassLevel]})`
+                : `rgba(255, 247, 224, ${GLASS_LEVELS[glassLevel]})`,
             }}
           >
             {children}
