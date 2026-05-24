@@ -15,7 +15,12 @@ export type SectionType =
   | "divider"
   | "embed"
   | "gallery"
-  | "raw_html";
+  | "raw_html"
+  | "counter"
+  | "two_column"
+  | "accordion"
+  | "cta_button"
+  | "video_player";
 
 export interface Section {
   id: string;

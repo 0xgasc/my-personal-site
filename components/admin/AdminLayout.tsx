@@ -19,7 +19,6 @@ const navItems = [
   { href: "/admin/media", label: "Media" },
   { href: "/admin/sections", label: "Sections" },
   { href: "/admin/pages", label: "Pages" },
-  { href: "/", label: "View site" },
 ];
 
 export default function AdminLayout({
@@ -29,6 +28,12 @@ export default function AdminLayout({
   constrainWidth = true,
 }: AdminLayoutProps) {
   const router = useRouter();
+
+  function previewHref(): string {
+    const qPage = typeof router.query.page === "string" ? router.query.page : "";
+    if (qPage) return qPage === "home" ? "/" : `/${qPage}`;
+    return "/";
+  }
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -75,6 +80,15 @@ export default function AdminLayout({
               {storeMode}
             </span>
           )}
+          <a
+            href={previewHref()}
+            target="_blank"
+            rel="noreferrer"
+            className="px-2 py-1 rounded border border-gray-700 hover:border-gray-500 hover:text-white"
+            title="Open the live page in a new tab"
+          >
+            Preview ↗
+          </a>
           <button
             onClick={logout}
             className="px-2 py-1 rounded border border-gray-700 hover:border-gray-500"

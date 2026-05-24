@@ -180,6 +180,7 @@ export default function Photography() {
           items={lightboxOpen.items}
           initialIndex={lightboxOpen.index}
           onClose={() => setLightboxOpen(null)}
+          strings={t.lightbox}
         />
       )}
     </motion.div>

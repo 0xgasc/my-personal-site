@@ -19,13 +19,26 @@ interface Props {
   /** Index to open, or null to close */
   initialIndex?: number | null;
   onClose: () => void;
+  /** Optional translated strings (falls back to English). */
+  strings?: {
+    loading?: string;
+    falling?: string;
+    cannotLoad?: string;
+    viewOnChain?: string;
+  };
 }
 
 /**
  * Full-screen art lightbox with keyboard navigation, swipe gestures,
  * and smooth framer-motion transitions.
  */
-export default function Lightbox({ items, initialIndex, onClose }: Props) {
+export default function Lightbox({ items, initialIndex, onClose, strings }: Props) {
+  const s = {
+    loading: strings?.loading ?? "loading…",
+    falling: strings?.falling ?? "falling back to thumb…",
+    cannotLoad: strings?.cannotLoad ?? "Image couldn't load.",
+    viewOnChain: strings?.viewOnChain ?? "View on chain ↗",
+  };
   const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
   const [loaded, setLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -158,18 +171,27 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
                 style={{ objectFit: "contain" }}
               />
 
-              {/* Loading placeholder */}
+              {/* Loading skeleton */}
               {!loaded && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg overflow-hidden"
+                  style={{
+                    minWidth: "min(60vw, 480px)",
+                    minHeight: "min(50vh, 360px)",
+                    background:
+                      "linear-gradient(110deg, rgba(255,255,255,0.04) 8%, rgba(255,255,255,0.10) 18%, rgba(255,255,255,0.04) 33%)",
+                    backgroundSize: "200% 100%",
+                    animation: "lightboxShimmer 1.4s linear infinite",
+                  }}
+                >
                   <span className="text-[10px] uppercase tracking-widest text-white/40">
-                    {usingFallback ? "falling back to thumb…" : "loading…"}
+                    {usingFallback ? s.falling : s.loading}
                   </span>
                 </div>
               )}
               {imageError && loaded && (
                 <div className="text-center text-white/70 text-sm py-12 px-6">
-                  <p>Image couldn&apos;t load.</p>
+                  <p>{s.cannotLoad}</p>
                   {current.link && (
                     <a
                       href={current.link}
@@ -177,7 +199,7 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
                       rel="noreferrer"
                       className="inline-block mt-3 text-white/80 underline text-xs"
                     >
-                      View on chain ↗
+                      {s.viewOnChain}
                     </a>
                   )}
                 </div>
@@ -203,7 +225,7 @@ export default function Lightbox({ items, initialIndex, onClose }: Props) {
                   rel="noopener noreferrer"
                   className="text-white/50 hover:text-white text-xs underline underline-offset-2 transition-colors"
                 >
-                  View on chain ↗
+                  {s.viewOnChain}
                 </a>
               )}
               <span className="text-white/30 text-xs">

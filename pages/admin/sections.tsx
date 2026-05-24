@@ -1,6 +1,8 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import MediaPicker from "@/components/admin/MediaPicker";
 import { withAdminAuth } from "@/lib/admin/withAdminAuth";
 import { listAllSections, listAllPages, type Section, type SectionType, type PageRow } from "@/lib/cms/store";
 
@@ -13,6 +15,11 @@ const SECTION_TYPES: SectionType[] = [
   "embed",
   "gallery",
   "raw_html",
+  "counter",
+  "two_column",
+  "accordion",
+  "cta_button",
+  "video_player",
 ];
 
 const BUILTIN_PAGES = ["home", "career", "collection", "experiments", "tip"];
@@ -44,6 +51,11 @@ export default function AdminSectionsPage({ initialSections, initialPages }: Pro
   const [page, setPage] = useState<string>("home");
   const [newType, setNewType] = useState<SectionType>("paragraph");
   const debounce = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  /** When set, MediaPicker is open and onPick will write the URL into the
+   *  matching field of this section's data. */
+  const [pickFor, setPickFor] = useState<{ sectionId: string; field: string } | null>(null);
+  /** Drag state for native HTML5 reordering. */
+  const dragId = useRef<string | null>(null);
 
   const allPages = useMemo(() => {
     const fromDb = initialPages.map((p) => p.slug);
@@ -105,6 +117,46 @@ export default function AdminSectionsPage({ initialSections, initialPages }: Pro
     ]);
   }
 
+  function onDragStart(id: string, e: React.DragEvent) {
+    dragId.current = id;
+    e.dataTransfer.effectAllowed = "move";
+  }
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }
+  async function onDrop(targetId: string) {
+    const src = dragId.current;
+    dragId.current = null;
+    if (!src || src === targetId) return;
+    const srcIdx = pageSections.findIndex((s) => s.id === src);
+    const tgtIdx = pageSections.findIndex((s) => s.id === targetId);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+    // Recompute every sortOrder in the new order (10, 20, 30, …) so we
+    // don't end up with collisions or drift after many drags.
+    const next = [...pageSections];
+    const [moved] = next.splice(srcIdx, 1);
+    next.splice(tgtIdx, 0, moved);
+    await Promise.all(
+      next.map((s, i) => patch(s.id, { sortOrder: (i + 1) * 10 }))
+    );
+  }
+
+  function openPicker(sectionId: string, field: string) {
+    setPickFor({ sectionId, field });
+  }
+  function handlePicked(url: string) {
+    if (!pickFor) return;
+    const section = sections.find((s) => s.id === pickFor.sectionId);
+    if (!section) {
+      setPickFor(null);
+      return;
+    }
+    const nextData = { ...section.data, [pickFor.field]: url };
+    patch(pickFor.sectionId, { data: nextData });
+    setPickFor(null);
+  }
+
   return (
     <>
       <Head>
@@ -162,24 +214,37 @@ export default function AdminSectionsPage({ initialSections, initialPages }: Pro
         ) : (
           <ul className="space-y-3">
             {pageSections.map((s, i) => (
-              <li key={s.id} className="bg-gray-900 border border-gray-800 rounded-md p-3">
+              <li
+                key={s.id}
+                className="bg-gray-900 border border-gray-800 rounded-md p-3"
+                draggable
+                onDragStart={(e) => onDragStart(s.id, e)}
+                onDragOver={onDragOver}
+                onDrop={() => onDrop(s.id)}
+              >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="flex flex-col">
-                    <button
-                      onClick={() => move(s.id, -1)}
-                      disabled={i === 0}
-                      className="text-xs text-gray-500 hover:text-white disabled:opacity-30"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={() => move(s.id, 1)}
-                      disabled={i === pageSections.length - 1}
-                      className="text-xs text-gray-500 hover:text-white disabled:opacity-30"
-                    >
-                      ▼
-                    </button>
-                  </div>
+                  <span
+                    className="cursor-grab active:cursor-grabbing text-gray-500 select-none"
+                    title="drag to reorder"
+                  >
+                    ⋮⋮
+                  </span>
+                  <button
+                    onClick={() => move(s.id, -1)}
+                    disabled={i === 0}
+                    className="text-[10px] text-gray-500 hover:text-white disabled:opacity-30"
+                    aria-label="move up"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => move(s.id, 1)}
+                    disabled={i === pageSections.length - 1}
+                    className="text-[10px] text-gray-500 hover:text-white disabled:opacity-30"
+                    aria-label="move down"
+                  >
+                    ▼
+                  </button>
                   <span className="text-xs uppercase tracking-widest text-amber-400">{s.type}</span>
                   <label className="ml-auto flex items-center gap-2 text-xs">
                     <input
@@ -196,12 +261,28 @@ export default function AdminSectionsPage({ initialSections, initialPages }: Pro
                     del
                   </button>
                 </div>
-                <DataEditor section={s} onChange={(data) => patch(s.id, { data })} />
+                <DataEditor
+                  section={s}
+                  onChange={(data) => patch(s.id, { data })}
+                  onPickMedia={(field) => openPicker(s.id, field)}
+                />
               </li>
             ))}
           </ul>
         )}
       </AdminLayout>
+
+      {pickFor && (
+        <MediaPicker
+          value={
+            (sections.find((s) => s.id === pickFor.sectionId)?.data as Record<string, unknown>)?.[
+              pickFor.field
+            ] as string | undefined
+          }
+          onPick={(url) => handlePicked(url)}
+          onClose={() => setPickFor(null)}
+        />
+      )}
     </>
   );
 }
@@ -224,15 +305,32 @@ function defaultDataFor(t: SectionType): Record<string, unknown> {
       return { items: [] };
     case "raw_html":
       return { html: "<div>raw html</div>" };
+    case "counter":
+      return { from: 0, to: 100, prefix: "", suffix: "", durationMs: 1500, label: "" };
+    case "two_column":
+      return {
+        leftHeading: "Left",
+        leftText: "",
+        rightHeading: "Right",
+        rightText: "",
+      };
+    case "accordion":
+      return { items: [{ q: "Question?", a: "Answer." }] };
+    case "cta_button":
+      return { label: "Click me", href: "https://" };
+    case "video_player":
+      return { src: "", poster: "", controls: true, autoplay: false, muted: true, loop: false };
   }
 }
 
 function DataEditor({
   section,
   onChange,
+  onPickMedia,
 }: {
   section: Section;
   onChange: (data: Record<string, unknown>) => void;
+  onPickMedia: (field: string) => void;
 }) {
   const d = section.data ?? {};
   const set = (patch: Record<string, unknown>) => onChange({ ...d, ...patch });
@@ -274,7 +372,15 @@ function DataEditor({
     case "image":
       return (
         <div className="space-y-2">
-          <input value={text(d.src)} placeholder="image url" onChange={(e) => set({ src: e.target.value })} className={inputClass} />
+          <div className="flex gap-2">
+            <input value={text(d.src)} placeholder="image url" onChange={(e) => set({ src: e.target.value })} className={inputClass + " flex-1"} />
+            <button
+              onClick={() => onPickMedia("src")}
+              className="px-2 py-1 rounded bg-amber-500 text-black text-[10px] uppercase tracking-widest whitespace-nowrap"
+            >
+              pick
+            </button>
+          </div>
           <input value={text(d.alt)} placeholder="alt" onChange={(e) => set({ alt: e.target.value })} className={inputClass} />
         </div>
       );
@@ -290,7 +396,15 @@ function DataEditor({
     case "embed":
       return (
         <div className="space-y-2">
-          <input value={text(d.src)} placeholder="iframe src" onChange={(e) => set({ src: e.target.value })} className={inputClass} />
+          <div className="flex gap-2">
+            <input value={text(d.src)} placeholder="iframe src" onChange={(e) => set({ src: e.target.value })} className={inputClass + " flex-1"} />
+            <button
+              onClick={() => onPickMedia("src")}
+              className="px-2 py-1 rounded bg-amber-500 text-black text-[10px] uppercase tracking-widest whitespace-nowrap"
+            >
+              pick
+            </button>
+          </div>
           <input value={text(d.title, "embed")} placeholder="title" onChange={(e) => set({ title: e.target.value })} className={inputClass} />
           <input
             type="number"
@@ -349,5 +463,94 @@ function DataEditor({
           placeholder="<div>…</div>"
         />
       );
+    case "counter":
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <Labeled label="from"><input type="number" value={num(d.from, 0)} onChange={(e) => set({ from: parseFloat(e.target.value) || 0 })} className={inputClass} /></Labeled>
+          <Labeled label="to"><input type="number" value={num(d.to, 100)} onChange={(e) => set({ to: parseFloat(e.target.value) || 0 })} className={inputClass} /></Labeled>
+          <Labeled label="duration ms"><input type="number" value={num(d.durationMs, 1500)} onChange={(e) => set({ durationMs: parseInt(e.target.value, 10) || 1500 })} className={inputClass} /></Labeled>
+          <Labeled label="prefix"><input value={text(d.prefix)} onChange={(e) => set({ prefix: e.target.value })} className={inputClass} /></Labeled>
+          <Labeled label="suffix"><input value={text(d.suffix)} onChange={(e) => set({ suffix: e.target.value })} className={inputClass} /></Labeled>
+          <Labeled label="label"><input value={text(d.label)} onChange={(e) => set({ label: e.target.value })} className={inputClass} /></Labeled>
+        </div>
+      );
+    case "two_column":
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <input value={text(d.leftHeading)} placeholder="left heading" onChange={(e) => set({ leftHeading: e.target.value })} className={inputClass} />
+            <textarea value={text(d.leftText)} rows={4} placeholder="left text" onChange={(e) => set({ leftText: e.target.value })} className={inputClass + " resize-y"} />
+          </div>
+          <div className="space-y-2">
+            <input value={text(d.rightHeading)} placeholder="right heading" onChange={(e) => set({ rightHeading: e.target.value })} className={inputClass} />
+            <textarea value={text(d.rightText)} rows={4} placeholder="right text" onChange={(e) => set({ rightText: e.target.value })} className={inputClass + " resize-y"} />
+          </div>
+        </div>
+      );
+    case "accordion": {
+      const items = Array.isArray(d.items) ? (d.items as Array<Record<string, unknown>>) : [];
+      const updateItem = (i: number, patch: Record<string, unknown>) => {
+        set({ items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)) });
+      };
+      return (
+        <div className="space-y-2">
+          {items.map((it, i) => (
+            <div key={i} className="space-y-1 border border-gray-800 rounded p-2">
+              <div className="flex gap-2 items-center">
+                <input value={text(it.q)} placeholder="question" onChange={(e) => updateItem(i, { q: e.target.value })} className={inputClass + " flex-1"} />
+                <button
+                  onClick={() => set({ items: items.filter((_, idx) => idx !== i) })}
+                  className="text-[10px] uppercase tracking-widest text-red-300 border border-red-900 hover:border-red-700 px-2 py-1 rounded"
+                >
+                  del
+                </button>
+              </div>
+              <textarea value={text(it.a)} rows={2} placeholder="answer" onChange={(e) => updateItem(i, { a: e.target.value })} className={inputClass + " resize-y"} />
+            </div>
+          ))}
+          <button
+            onClick={() => set({ items: [...items, { q: "", a: "" }] })}
+            className="text-[10px] uppercase tracking-widest text-amber-400 border border-amber-700 hover:border-amber-500 px-2 py-1 rounded"
+          >
+            + add Q+A
+          </button>
+        </div>
+      );
+    }
+    case "cta_button":
+      return (
+        <div className="space-y-2">
+          <input value={text(d.label)} placeholder="button label" onChange={(e) => set({ label: e.target.value })} className={inputClass} />
+          <input value={text(d.href)} placeholder="href" onChange={(e) => set({ href: e.target.value })} className={inputClass} />
+        </div>
+      );
+    case "video_player":
+      return (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input value={text(d.src)} placeholder="video url (mp4 / webm)" onChange={(e) => set({ src: e.target.value })} className={inputClass + " flex-1"} />
+            <button onClick={() => onPickMedia("src")} className="px-2 py-1 rounded bg-amber-500 text-black text-[10px] uppercase tracking-widest whitespace-nowrap">pick</button>
+          </div>
+          <div className="flex gap-2">
+            <input value={text(d.poster)} placeholder="poster image url (optional)" onChange={(e) => set({ poster: e.target.value })} className={inputClass + " flex-1"} />
+            <button onClick={() => onPickMedia("poster")} className="px-2 py-1 rounded bg-amber-500 text-black text-[10px] uppercase tracking-widest whitespace-nowrap">pick</button>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-gray-400">
+            <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(d.controls ?? true)} onChange={(e) => set({ controls: e.target.checked })} /> controls</label>
+            <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(d.autoplay)} onChange={(e) => set({ autoplay: e.target.checked })} /> autoplay</label>
+            <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(d.muted ?? true)} onChange={(e) => set({ muted: e.target.checked })} /> muted</label>
+            <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(d.loop)} onChange={(e) => set({ loop: e.target.checked })} /> loop</label>
+          </div>
+        </div>
+      );
   }
+}
+
+function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[10px] uppercase tracking-widest text-gray-500">{label}</span>
+      {children}
+    </label>
+  );
 }

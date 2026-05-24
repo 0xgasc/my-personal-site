@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import type React from "react";
 import type { Section } from "@/lib/cms/store";
 
 interface Props {
@@ -134,7 +135,137 @@ function SectionRender({ section }: { section: Section }) {
           dangerouslySetInnerHTML={{ __html: asStr(d.html) }}
         />
       );
+    case "counter":
+      return (
+        <Counter
+          from={asNum(d.from, 0)}
+          to={asNum(d.to, 100)}
+          suffix={asStr(d.suffix, "")}
+          prefix={asStr(d.prefix, "")}
+          durationMs={asNum(d.durationMs, 1500)}
+          label={asStr(d.label, "")}
+        />
+      );
+    case "two_column":
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            {asStr(d.leftHeading) && <h3>{asStr(d.leftHeading)}</h3>}
+            <p className="whitespace-pre-wrap leading-relaxed">{asStr(d.leftText)}</p>
+          </div>
+          <div className="space-y-2">
+            {asStr(d.rightHeading) && <h3>{asStr(d.rightHeading)}</h3>}
+            <p className="whitespace-pre-wrap leading-relaxed">{asStr(d.rightText)}</p>
+          </div>
+        </div>
+      );
+    case "accordion": {
+      const items = Array.isArray(d.items) ? (d.items as Array<Record<string, unknown>>) : [];
+      return (
+        <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+          {items.map((it, i) => (
+            <details
+              key={i}
+              className="py-3 group"
+              style={{ borderTop: i === 0 ? `1px solid var(--border-subtle)` : undefined }}
+            >
+              <summary className="cursor-pointer font-medium select-none flex items-center justify-between">
+                {asStr(it.q, "Question")}
+                <span className="text-xs opacity-50 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <p className="mt-2 leading-relaxed whitespace-pre-wrap opacity-80">{asStr(it.a)}</p>
+            </details>
+          ))}
+        </div>
+      );
+    }
+    case "cta_button": {
+      const href = asStr(d.href, "#");
+      const label = asStr(d.label, "Click me");
+      const external = href.startsWith("http");
+      const style: React.CSSProperties = {
+        display: "inline-block",
+        padding: "14px 28px",
+        background: "var(--accent)",
+        color: "var(--bg-primary)",
+        borderRadius: 999,
+        fontWeight: 600,
+        textDecoration: "none",
+        boxShadow: "var(--shadow-md)",
+      };
+      if (external) {
+        return (
+          <a href={href} target="_blank" rel="noreferrer" style={style}>
+            {label} ↗
+          </a>
+        );
+      }
+      return (
+        <Link href={href} style={style}>
+          {label}
+        </Link>
+      );
+    }
+    case "video_player": {
+      const src = asStr(d.src);
+      if (!src) return null;
+      return (
+        <video
+          src={src}
+          poster={asStr(d.poster) || undefined}
+          controls={d.controls !== false}
+          autoPlay={Boolean(d.autoplay)}
+          muted={Boolean(d.muted)}
+          loop={Boolean(d.loop)}
+          playsInline
+          className="w-full rounded-xl"
+          style={{ border: "1px solid var(--border-subtle)" }}
+        />
+      );
+    }
     default:
       return null;
   }
+}
+
+/** Animated number counter for `counter` section type. */
+function Counter({
+  from,
+  to,
+  prefix,
+  suffix,
+  durationMs,
+  label,
+}: {
+  from: number;
+  to: number;
+  prefix: string;
+  suffix: string;
+  durationMs: number;
+  label: string;
+}) {
+  const [value, setValue] = useState(from);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    function step(now: number) {
+      const t = Math.min(1, (now - start) / Math.max(50, durationMs));
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      setValue(from + (to - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [from, to, durationMs]);
+  const display = Number.isFinite(value) ? Math.round(value).toLocaleString() : String(value);
+  return (
+    <div className="text-center py-4">
+      <div className="font-bold text-4xl tabular-nums" style={{ color: "var(--accent)" }}>
+        {prefix}
+        {display}
+        {suffix}
+      </div>
+      {label && <div className="text-sm opacity-70 mt-1">{label}</div>}
+    </div>
+  );
 }

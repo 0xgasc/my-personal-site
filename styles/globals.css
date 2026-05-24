@@ -461,3 +461,8 @@ img {
 .fx-global {
   border-color: #443 !important;
 }
+
+@keyframes lightboxShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
