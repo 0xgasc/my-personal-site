@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Sidebar from './Sidebar'
 import BackgroundMount from './BackgroundMount'
@@ -6,25 +6,6 @@ import SceneCycler from './SceneCycler'
 import SectionsRenderer from '@/components/cms/SectionsRenderer'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
-
-// matchMedia hook — defaults to false on SSR so initial paint matches.
-// On client, listens and re-renders when the device crosses 768px.
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return
-    const mql = window.matchMedia('(max-width: 768px)')
-    const update = () => setIsMobile(mql.matches)
-    update()
-    if (mql.addEventListener) mql.addEventListener('change', update)
-    else mql.addListener(update)
-    return () => {
-      if (mql.removeEventListener) mql.removeEventListener('change', update)
-      else mql.removeListener(update)
-    }
-  }, [])
-  return isMobile
-}
 
 // Map known top-level routes -> the page key used by /admin/sections.
 // Anything not in here falls back to `null` (no CMS sections rendered).
@@ -45,22 +26,6 @@ export default function Layout({ children }) {
   const t = useTranslation(language)
   const router = useRouter()
   const pageKey = routeToPageKey(router.pathname)
-  const isMobile = useIsMobile()
-
-  // Inline styles win over !important issues / Safari cache quirks. On
-  // mobile, force a solid card background + drop backdrop-filter so the
-  // FX layer can't bleed through and text stays crisp.
-  const glassStyle = isMobile
-    ? {
-        background: darkMode ? '#0a0f1d' : '#fffaee',
-        color: darkMode ? '#eef1f9' : '#0e2233',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-        border: darkMode
-          ? '1px solid rgba(180, 200, 240, 0.18)'
-          : '1px solid rgba(14, 34, 51, 0.16)',
-      }
-    : undefined
 
   return (
     <div className={`relative min-h-screen flex flex-col font-sans transition-colors duration-500 ${
@@ -93,7 +58,7 @@ export default function Layout({ children }) {
       {/* Main content */}
       <main className="relative z-10 flex-grow flex justify-center px-5 pt-24 pb-12">
         <div className="w-full max-w-3xl">
-          <div className="glass-card" style={glassStyle}>
+          <div className="glass-card">
             {children}
             {pageKey && <SectionsRenderer page={pageKey} />}
           </div>
