@@ -26,10 +26,6 @@ const HARD_MAX_SEGMENT_SEC = 30;
 
 export const NEXT_CLIP_EVENT = "clip:next";
 
-/** Extra pixels the background extends beyond viewport edges in every
- *  direction — gives the pan room to move without revealing empty space. */
-const MAX_PAN = 220;
-
 function pickClip(clips: Clip[]): Clip {
   const total = clips.reduce((s, c) => s + Math.max(1, c.weight), 0);
   let r = Math.random() * total;
@@ -60,10 +56,6 @@ function computeSegmentMs(clip: Clip): number {
   return (minS + Math.random() * (maxS - minS)) * 1000;
 }
 
-function clamp(v: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, v));
-}
-
 export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: Props) {
   const isIOS = useIsIOS();
 
@@ -76,16 +68,6 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
   );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Drag-to-pan state — reset on every clip rotation.
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
-  const isDragging = useRef(false);
-
-  useEffect(() => {
-    setPan({ x: 0, y: 0 });
-  }, [jumpKey]);
-
-  // If clips list changes, keep active in sync.
   useEffect(() => {
     if (!active) {
       if (clips.length) {
@@ -135,103 +117,43 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
     return () => window.removeEventListener(NEXT_CLIP_EVENT, handler);
   }, [triggerJump]);
 
-  // ── Pan handlers ────────────────────────────────────────
-  function onPointerDown(clientX: number, clientY: number) {
-    dragRef.current = { startX: clientX, startY: clientY, panX: pan.x, panY: pan.y };
-    isDragging.current = false;
-  }
-  function onPointerMove(clientX: number, clientY: number) {
-    if (!dragRef.current) return;
-    const dx = clientX - dragRef.current.startX;
-    const dy = clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) isDragging.current = true;
-    setPan({
-      x: clamp(dragRef.current.panX + dx, -MAX_PAN, MAX_PAN),
-      y: clamp(dragRef.current.panY + dy, -MAX_PAN, MAX_PAN),
-    });
-  }
-  function onPointerUp() {
-    dragRef.current = null;
-  }
-
-  /** Transparent overlay that sits between the background (z=0/1) and the
-   *  card content (z=10). Captures drag on visible background areas only —
-   *  card interaction is unaffected because the card has higher z-index. */
-  const dragOverlay = (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: zIndex + 2,
-        cursor: isDragging.current ? "grabbing" : "grab",
-        touchAction: "none",
-      }}
-      onMouseDown={(e) => onPointerDown(e.clientX, e.clientY)}
-      onMouseMove={(e) => onPointerMove(e.clientX, e.clientY)}
-      onMouseUp={onPointerUp}
-      onMouseLeave={onPointerUp}
-      onTouchStart={(e) => {
-        const t = e.touches[0];
-        onPointerDown(t.clientX, t.clientY);
-      }}
-      onTouchMove={(e) => {
-        const t = e.touches[0];
-        onPointerMove(t.clientX, t.clientY);
-      }}
-      onTouchEnd={onPointerUp}
-    />
-  );
-
   if (!active) return null;
 
-  // Background is rendered oversized (MAX_PAN px beyond each edge) so
-  // panning never reveals empty space.
-  const bgStyle: React.CSSProperties = {
-    position: "fixed",
-    top: -MAX_PAN + pan.y,
-    left: -MAX_PAN + pan.x,
-    width: `calc(100vw + ${2 * MAX_PAN}px)`,
-    height: `calc(100vh + ${2 * MAX_PAN}px)`,
-    zIndex,
-    pointerEvents: "none",
-  };
-
-  // iOS Safari: plain <video> — participates in CSS compositing so
-  // the transparent glass card shows it through.
   if (isIOS) {
     return (
-      <>
-        <video
-          key={`${active.id}:${jumpKey}`}
-          src={active.videoUrl}
-          autoPlay
-          muted
-          playsInline
-          loop
-          style={{ ...bgStyle, objectFit: "cover" }}
-        />
-        {dragOverlay}
-      </>
+      <video
+        key={`${active.id}:${jumpKey}`}
+        src={active.videoUrl}
+        autoPlay
+        muted
+        playsInline
+        loop
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex,
+          pointerEvents: "none",
+        }}
+      />
     );
   }
 
   return (
-    <>
-      <div style={bgStyle}>
-        <FxCanvas
-          key={`${active.id}:${jumpKey}`}
-          videoUrl={active.videoUrl}
-          videoOpacity={1}
-          videoBlur={0}
-          mode={active.fxMode}
-          params={active.fxParams}
-          wet={active.fxWet}
-          hover={active.hover}
-          fixed={false}
-          initialSeekSec={seekTarget}
-        />
-      </div>
-      {dragOverlay}
-    </>
+    <FxCanvas
+      key={`${active.id}:${jumpKey}`}
+      videoUrl={active.videoUrl}
+      videoOpacity={1}
+      videoBlur={0}
+      mode={active.fxMode}
+      params={active.fxParams}
+      wet={active.fxWet}
+      hover={active.hover}
+      fixed
+      zIndex={zIndex}
+      initialSeekSec={seekTarget}
+    />
   );
 }
