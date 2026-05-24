@@ -22,21 +22,14 @@ interface Props {
   onActiveClipChange?: (clip: Clip | null) => void;
 }
 
-/** Hard cap on how long any single clip plays before rotating, regardless
- *  of its segmentMaxSec setting. Keeps the bg feeling restless + magical. */
 const HARD_MAX_SEGMENT_SEC = 30;
 
-/** Custom DOM event a UI button anywhere on the page can fire to force
- *  an immediate clip rotation. */
 export const NEXT_CLIP_EVENT = "clip:next";
 
-/**
- * Uniform random pick across all clips — every clip has equal chance of
- * being chosen (when weight defaults to 1). We deliberately don't exclude
- * the current clip from the pool: a re-pick of the same clip just means
- * "jump to a new random spot in it", which keeps the per-clip frequency
- * stat truly uniform.
- */
+/** Extra pixels the background extends beyond viewport edges in every
+ *  direction — gives the pan room to move without revealing empty space. */
+const MAX_PAN = 220;
+
 function pickClip(clips: Clip[]): Clip {
   const total = clips.reduce((s, c) => s + Math.max(1, c.weight), 0);
   let r = Math.random() * total;
@@ -57,33 +50,42 @@ function computeStartSec(clip: Clip): number {
       return lo + Math.random() * (hi - lo);
     }
     default:
-      // "random" — let FxCanvas's loadedmetadata clamp it to (duration - 0.1).
       return Math.random() * 600;
   }
 }
 
-/** How long this segment plays before the next jump fires. Clamped to
- *  [3, HARD_MAX_SEGMENT_SEC] regardless of the clip's stored values. */
 function computeSegmentMs(clip: Clip): number {
   const minS = Math.max(3, Math.min(HARD_MAX_SEGMENT_SEC, clip.segmentMinSec));
   const maxS = Math.max(minS, Math.min(HARD_MAX_SEGMENT_SEC, clip.segmentMaxSec));
   return (minS + Math.random() * (maxS - minS)) * 1000;
 }
 
-export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }: Props) {
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: Props) {
   const isIOS = useIsIOS();
+
   const [active, setActive] = useState<Clip | null>(() =>
     clips.length ? pickClip(clips) : null
   );
-  /** Incrementing counter that force-remounts FxCanvas on every jump. */
   const [jumpKey, setJumpKey] = useState(0);
   const [seekTarget, setSeekTarget] = useState<number>(() =>
     active ? computeStartSec(active) : 0
   );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // If the input `clips` list changes (rare — public list refresh), make
-  // sure the active clip still exists.
+  // Drag-to-pan state — reset on every clip rotation.
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    setPan({ x: 0, y: 0 });
+  }, [jumpKey]);
+
+  // If clips list changes, keep active in sync.
   useEffect(() => {
     if (!active) {
       if (clips.length) {
@@ -104,7 +106,6 @@ export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }:
     }
   }, [clips, active]);
 
-  // Notify parent of active-clip changes.
   useEffect(() => {
     onActiveClipChange?.(active);
   }, [active, onActiveClipChange]);
@@ -117,7 +118,6 @@ export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }:
     setJumpKey((k) => k + 1);
   }, [clips]);
 
-  // Auto-jump scheduler.
   useEffect(() => {
     if (!active) return;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -128,8 +128,6 @@ export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }:
     };
   }, [active, jumpKey, triggerJump]);
 
-  // Listen for the global "skip" event from the easter button (or any UI
-  // that wants to nudge the rotation).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handler = () => triggerJump();
@@ -137,44 +135,103 @@ export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }:
     return () => window.removeEventListener(NEXT_CLIP_EVENT, handler);
   }, [triggerJump]);
 
+  // ── Pan handlers ────────────────────────────────────────
+  function onPointerDown(clientX: number, clientY: number) {
+    dragRef.current = { startX: clientX, startY: clientY, panX: pan.x, panY: pan.y };
+    isDragging.current = false;
+  }
+  function onPointerMove(clientX: number, clientY: number) {
+    if (!dragRef.current) return;
+    const dx = clientX - dragRef.current.startX;
+    const dy = clientY - dragRef.current.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) isDragging.current = true;
+    setPan({
+      x: clamp(dragRef.current.panX + dx, -MAX_PAN, MAX_PAN),
+      y: clamp(dragRef.current.panY + dy, -MAX_PAN, MAX_PAN),
+    });
+  }
+  function onPointerUp() {
+    dragRef.current = null;
+  }
+
+  /** Transparent overlay that sits between the background (z=0/1) and the
+   *  card content (z=10). Captures drag on visible background areas only —
+   *  card interaction is unaffected because the card has higher z-index. */
+  const dragOverlay = (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: zIndex + 2,
+        cursor: isDragging.current ? "grabbing" : "grab",
+        touchAction: "none",
+      }}
+      onMouseDown={(e) => onPointerDown(e.clientX, e.clientY)}
+      onMouseMove={(e) => onPointerMove(e.clientX, e.clientY)}
+      onMouseUp={onPointerUp}
+      onMouseLeave={onPointerUp}
+      onTouchStart={(e) => {
+        const t = e.touches[0];
+        onPointerDown(t.clientX, t.clientY);
+      }}
+      onTouchMove={(e) => {
+        const t = e.touches[0];
+        onPointerMove(t.clientX, t.clientY);
+      }}
+      onTouchEnd={onPointerUp}
+    />
+  );
+
   if (!active) return null;
 
-  // iOS Safari: plain <video> so CSS transparency composites correctly.
+  // Background is rendered oversized (MAX_PAN px beyond each edge) so
+  // panning never reveals empty space.
+  const bgStyle: React.CSSProperties = {
+    position: "fixed",
+    top: -MAX_PAN + pan.y,
+    left: -MAX_PAN + pan.x,
+    width: `calc(100vw + ${2 * MAX_PAN}px)`,
+    height: `calc(100vh + ${2 * MAX_PAN}px)`,
+    zIndex,
+    pointerEvents: "none",
+  };
+
+  // iOS Safari: plain <video> — participates in CSS compositing so
+  // the transparent glass card shows it through.
   if (isIOS) {
     return (
-      <video
-        key={`${active.id}:${jumpKey}`}
-        src={active.videoUrl}
-        autoPlay
-        muted
-        playsInline
-        loop
-        style={{
-          position: "fixed",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex,
-          pointerEvents: "none",
-        }}
-      />
+      <>
+        <video
+          key={`${active.id}:${jumpKey}`}
+          src={active.videoUrl}
+          autoPlay
+          muted
+          playsInline
+          loop
+          style={{ ...bgStyle, objectFit: "cover" }}
+        />
+        {dragOverlay}
+      </>
     );
   }
 
   return (
-    <FxCanvas
-      key={`${active.id}:${jumpKey}`}
-      videoUrl={active.videoUrl}
-      videoOpacity={1}
-      videoBlur={0}
-      mode={active.fxMode}
-      params={active.fxParams}
-      wet={active.fxWet}
-      hover={active.hover}
-      fixed
-      zIndex={zIndex}
-      initialSeekSec={seekTarget}
-    />
+    <>
+      <div style={bgStyle}>
+        <FxCanvas
+          key={`${active.id}:${jumpKey}`}
+          videoUrl={active.videoUrl}
+          videoOpacity={1}
+          videoBlur={0}
+          mode={active.fxMode}
+          params={active.fxParams}
+          wet={active.fxWet}
+          hover={active.hover}
+          fixed={false}
+          initialSeekSec={seekTarget}
+        />
+      </div>
+      {dragOverlay}
+    </>
   );
 }
