@@ -178,21 +178,33 @@ a:hover {
   color: var(--text-primary);
   transition: background 300ms ease, box-shadow 300ms ease;
 }
-/* Mobile: backdrop-filter is spotty / GPU-throttled, the dither bleeds
-   through, and readability tanks. Drop the glass effect entirely + force
-   a fully opaque card. */
+/* Mobile: backdrop-filter is unreliable on iOS Safari + GPU-throttled
+   on phones. Force a fully OPAQUE card with !important so no cached
+   stylesheet or specificity quirk can leak the FX layer through. */
 @media (max-width: 768px) {
-  .glass-card {
-    background: var(--bg-primary);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  .glass-card,
+  .light .glass-card,
+  .dark .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     padding: 22px;
     border-radius: 12px;
-    border-color: var(--border-default);
   }
-  /* Calm the bg layers on mobile so they don't fight the content. */
-  .psite-fx-mobile-dim {
-    opacity: 0.6;
+  /* Solid colors hardcoded (no CSS var) so they always paint opaquely
+     even if the cascade somehow resets glass-bg back to translucent. */
+  .light .glass-card {
+    background: #fffaee !important;
+    border: 1px solid rgba(14, 34, 51, 0.16) !important;
+    color: #0e2233 !important;
+  }
+  .dark .glass-card {
+    background: #0a0f1d !important;
+    border: 1px solid rgba(180, 200, 240, 0.18) !important;
+    color: #eef1f9 !important;
+  }
+  /* Fallback if neither theme class is on the wrapper. */
+  .glass-card {
+    background: var(--bg-primary) !important;
   }
 }
 .glass-card p,
