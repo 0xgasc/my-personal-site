@@ -58,7 +58,14 @@ export default function Layout({ children }) {
       {/* Main content */}
       <main className="relative z-10 flex-grow flex justify-center px-5 pt-24 pb-12">
         <div className="w-full max-w-3xl">
-          <div className="glass-card">
+          <div
+            className="glass-card"
+            style={{
+              background: darkMode
+                ? 'rgba(8, 12, 22, 0.38)'
+                : 'rgba(255, 247, 224, 0.28)',
+            }}
+          >
             {children}
             {pageKey && <SectionsRenderer page={pageKey} />}
           </div>

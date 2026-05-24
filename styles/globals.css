@@ -216,7 +216,6 @@ a:hover {
   text-decoration-color: var(--accent);
 }
 .glass-card:hover {
-  background: var(--glass-hover);
   box-shadow: var(--shadow-lg);
 }
 
