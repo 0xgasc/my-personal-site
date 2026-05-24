@@ -28,9 +28,17 @@ export default function Layout({ children }) {
   const pageKey = routeToPageKey(router.pathname)
 
   return (
-    <div className={`relative min-h-screen flex flex-col font-sans transition-colors duration-500 ${
-      darkMode ? 'dark' : 'light'
-    }`}>
+    <div
+      className={`relative min-h-screen flex flex-col font-sans transition-colors duration-500 ${
+        darkMode ? 'dark' : 'light'
+      }`}
+      style={{
+        background: darkMode
+          ? 'var(--page-gradient), var(--bg-primary)'
+          : 'var(--page-gradient), var(--bg-primary)',
+        backgroundAttachment: 'fixed',
+      }}
+    >
       {/* Background shader layer */}
       <BackgroundMount />
 

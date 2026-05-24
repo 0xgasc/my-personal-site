@@ -96,8 +96,7 @@ html {
 }
 
 body {
-  background: var(--page-gradient), var(--bg-primary);
-  background-attachment: fixed;
+  background: transparent;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   font-size: 15px;

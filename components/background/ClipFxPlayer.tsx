@@ -4,6 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import FxCanvas from "./FxCanvas";
 import type { Clip } from "@/lib/clips/types";
 
+/** iOS Safari composites WebGL canvases on a separate GPU layer that
+ *  CSS transparency cannot sample. Use a plain <video> there so the
+ *  glass card can genuinely show through. */
+function useIsIOS() {
+  const [ios, setIos] = useState(false);
+  useEffect(() => {
+    setIos(/iP(hone|od|ad)/.test(navigator.userAgent));
+  }, []);
+  return ios;
+}
+
 interface Props {
   clips: Clip[];
   zIndex?: number;
@@ -60,6 +71,7 @@ function computeSegmentMs(clip: Clip): number {
 }
 
 export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }: Props) {
+  const isIOS = useIsIOS();
   const [active, setActive] = useState<Clip | null>(() =>
     clips.length ? pickClip(clips) : null
   );
@@ -126,6 +138,29 @@ export default function ClipFxPlayer({ clips, zIndex = -2, onActiveClipChange }:
   }, [triggerJump]);
 
   if (!active) return null;
+
+  // iOS Safari: plain <video> so CSS transparency composites correctly.
+  if (isIOS) {
+    return (
+      <video
+        key={`${active.id}:${jumpKey}`}
+        src={active.videoUrl}
+        autoPlay
+        muted
+        playsInline
+        loop
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex,
+          pointerEvents: "none",
+        }}
+      />
+    );
+  }
 
   return (
     <FxCanvas
