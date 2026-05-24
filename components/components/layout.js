@@ -1,14 +1,31 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import Sidebar from './Sidebar'
 import BackgroundMount from './BackgroundMount'
 import SceneCycler from './SceneCycler'
+import SectionsRenderer from '@/components/cms/SectionsRenderer'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
+
+// Map known top-level routes -> the page key used by /admin/sections.
+// Anything not in here falls back to `null` (no CMS sections rendered).
+function routeToPageKey(pathname) {
+  if (pathname === '/') return 'home'
+  // Pages-router catch-all looks like `/[slug]` — the renderer there reads
+  // the slug from query and passes it explicitly, so we skip here.
+  if (pathname === '/[slug]') return null
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api')) return null
+  if (pathname.startsWith('/preview')) return null
+  const m = pathname.match(/^\/([a-z0-9-]+)$/)
+  return m ? m[1] : null
+}
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
   const t = useTranslation(language)
+  const router = useRouter()
+  const pageKey = routeToPageKey(router.pathname)
 
   return (
     <div className={`relative min-h-screen flex flex-col font-sans transition-colors duration-500 ${
@@ -43,6 +60,7 @@ export default function Layout({ children }) {
         <div className="w-full max-w-3xl">
           <div className="glass-card">
             {children}
+            {pageKey && <SectionsRenderer page={pageKey} />}
           </div>
         </div>
       </main>

@@ -16,6 +16,9 @@ const navItems = [
   { href: "/admin", label: "Clips" },
   { href: "/admin/upload", label: "Upload" },
   { href: "/admin/content", label: "Content" },
+  { href: "/admin/media", label: "Media" },
+  { href: "/admin/sections", label: "Sections" },
+  { href: "/admin/pages", label: "Pages" },
   { href: "/", label: "View site" },
 ];
 

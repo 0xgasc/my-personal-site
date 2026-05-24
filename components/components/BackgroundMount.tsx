@@ -50,10 +50,17 @@ export default function BackgroundMount() {
       {fxEnabled && backdrop === "scene" && <GenerativeShader />}
 
       {fxEnabled && (
-        <DitherOverlay zIndex={-1} blendMode={ditherBlend} opacity={ditherIntensity} />
+        <DitherOverlay zIndex={-1} blendMode={ditherBlend} opacity={ditherIntensity * mobileMul()} />
       )}
 
       {fxEnabled && backdrop === "clips" && clips.length > 0 && <NextClipButton />}
     </>
   );
+}
+
+/** 0.6× the dither intensity on touch / narrow-screen devices to relax the
+ *  overall contrast load on phones (where glass-card is solid anyway). */
+function mobileMul(): number {
+  if (typeof window === "undefined") return 1;
+  return window.matchMedia("(max-width: 768px)").matches ? 0.6 : 1;
 }
