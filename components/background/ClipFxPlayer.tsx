@@ -4,9 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import FxCanvas from "./FxCanvas";
 import type { Clip } from "@/lib/clips/types";
 
-/** iOS Safari composites WebGL canvases on a separate GPU layer that
- *  CSS transparency cannot sample. Use a plain <video> there so the
- *  glass card can genuinely show through. */
 function useIsIOS() {
   const [ios, setIos] = useState(false);
   useEffect(() => {
@@ -18,12 +15,10 @@ function useIsIOS() {
 interface Props {
   clips: Clip[];
   zIndex?: number;
-  /** Notified when the active clip changes (used by BackgroundMount). */
   onActiveClipChange?: (clip: Clip | null) => void;
 }
 
 const HARD_MAX_SEGMENT_SEC = 30;
-
 export const NEXT_CLIP_EVENT = "clip:next";
 
 function pickClip(clips: Clip[]): Clip {
@@ -66,6 +61,8 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
   const [seekTarget, setSeekTarget] = useState<number>(() =>
     active ? computeStartSec(active) : 0
   );
+  // Pre-picked next clip — buffered while current plays so rotation is instant.
+  const [queued, setQueued] = useState<Clip | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -88,17 +85,25 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
     }
   }, [clips, active]);
 
+  // Pre-pick the next clip as soon as the current one starts so we have
+  // a full segment-length head-start to buffer it.
+  useEffect(() => {
+    if (clips.length > 0) setQueued(pickClip(clips));
+  }, [jumpKey, clips]);
+
   useEffect(() => {
     onActiveClipChange?.(active);
   }, [active, onActiveClipChange]);
 
   const triggerJump = useCallback(() => {
     if (!clips.length) return;
-    const next = pickClip(clips);
+    // Use the pre-queued clip (already buffering) or pick a fresh one.
+    const next = queued ?? pickClip(clips);
     setActive(next);
     setSeekTarget(computeStartSec(next));
     setJumpKey((k) => k + 1);
-  }, [clips]);
+    setQueued(null);
+  }, [clips, queued]);
 
   useEffect(() => {
     if (!active) return;
@@ -121,39 +126,66 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
 
   if (isIOS) {
     return (
-      <video
-        key={`${active.id}:${jumpKey}`}
-        src={active.videoUrl}
-        autoPlay
-        muted
-        playsInline
-        loop
-        style={{
-          position: "fixed",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex,
-          pointerEvents: "none",
-        }}
-      />
+      <>
+        <video
+          key={`${active.id}:${jumpKey}`}
+          src={active.videoUrl}
+          autoPlay
+          muted
+          playsInline
+          loop
+          preload="auto"
+          style={{
+            position: "fixed",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex,
+            pointerEvents: "none",
+          }}
+        />
+        {/* Pre-buffer next clip while current plays */}
+        {queued && queued.videoUrl !== active.videoUrl && (
+          <video
+            key={`q:${queued.id}`}
+            src={queued.videoUrl}
+            preload="auto"
+            muted
+            playsInline
+            style={{ display: "none" }}
+          />
+        )}
+      </>
     );
   }
 
   return (
-    <FxCanvas
-      key={`${active.id}:${jumpKey}`}
-      videoUrl={active.videoUrl}
-      videoOpacity={1}
-      videoBlur={0}
-      mode={active.fxMode}
-      params={active.fxParams}
-      wet={active.fxWet}
-      hover={active.hover}
-      fixed
-      zIndex={zIndex}
-      initialSeekSec={seekTarget}
-    />
+    <>
+      <FxCanvas
+        key={`${active.id}:${jumpKey}`}
+        videoUrl={active.videoUrl}
+        videoOpacity={1}
+        videoBlur={0}
+        mode={active.fxMode}
+        params={active.fxParams}
+        wet={active.fxWet}
+        hover={active.hover}
+        fixed
+        zIndex={zIndex}
+        initialSeekSec={seekTarget}
+      />
+      {/* Pre-buffer next clip while current plays */}
+      {queued && queued.videoUrl !== active.videoUrl && (
+        <video
+          key={`q:${queued.id}`}
+          src={queued.videoUrl}
+          preload="auto"
+          muted
+          playsInline
+          style={{ display: "none" }}
+        />
+      )}
+    </>
   );
 }

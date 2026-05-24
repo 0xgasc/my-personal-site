@@ -20,7 +20,7 @@ function routeToPageKey(pathname) {
   return m ? m[1] : null
 }
 
-const GLASS_LEVELS = [0.10, 0.35, 0.65, 0.90]
+const GLASS_LEVELS = [0.03, 0.35, 0.65, 0.90]
 const GLASS_ICONS  = ['○', '◔', '◑', '◕']
 
 export default function Layout({ children }) {
