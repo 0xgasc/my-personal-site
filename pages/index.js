@@ -21,10 +21,12 @@ export default function Home() {
       initial="hidden"
       animate="visible"
     >
-      {/* Greeting */}
-      <motion.h1 variants={fadeUp}>
-        {t.home.greeting}
-      </motion.h1>
+      {/* Greeting — only shown when a CMS override is set */}
+      {t.home.greeting && (
+        <motion.h1 variants={fadeUp}>
+          {t.home.greeting}
+        </motion.h1>
+      )}
 
       <motion.p
         variants={fadeUp}
