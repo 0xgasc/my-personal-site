@@ -3,15 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import FxCanvas from "./FxCanvas";
 import type { Clip } from "@/lib/clips/types";
-import type { FxMode } from "@/lib/fx/effects";
-
-function useIsIOS() {
-  const [ios, setIos] = useState(false);
-  useEffect(() => {
-    setIos(/iP(hone|od|ad)/.test(navigator.userAgent));
-  }, []);
-  return ios;
-}
 
 interface Props {
   clips: Clip[];
@@ -30,20 +21,6 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-/** CSS filter approximations for iOS (no WebGL). Not identical to the
- *  shader effects but much better than no treatment at all. */
-function iosCssFilter(mode: FxMode): string {
-  switch (mode) {
-    case "crt":    return "contrast(1.2) brightness(0.82)";
-    case "vhs":    return "saturate(0.65) hue-rotate(-8deg) contrast(1.15)";
-    case "dream":  return "brightness(1.12) saturate(1.5)";
-    case "ascii":  return "grayscale(1) contrast(2.5)";
-    case "pixel":  return "contrast(1.3) saturate(0.7)";
-    case "dither": return "grayscale(1) contrast(1.8)";
-    default:       return "none";
-  }
 }
 
 function computeStartSec(clip: Clip): number {
@@ -67,8 +44,6 @@ function computeSegmentMs(clip: Clip): number {
 }
 
 export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: Props) {
-  const isIOS = useIsIOS();
-
   // Shuffle queue: exhausts the full list before reshuffling.
   const queueRef = useRef<Clip[]>([]);
 
@@ -158,43 +133,6 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
   }, [triggerJump]);
 
   if (!active) return null;
-
-  if (isIOS) {
-    return (
-      <>
-        <video
-          key={`${active.id}:${jumpKey}`}
-          src={active.videoUrl}
-          autoPlay
-          muted
-          playsInline
-          loop
-          preload="auto"
-          style={{
-            position: "fixed",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex,
-            pointerEvents: "none",
-            filter: iosCssFilter(active.fxMode),
-            transition: "filter 600ms ease",
-          }}
-        />
-        {queued && queued.videoUrl !== active.videoUrl && (
-          <video
-            key={`q:${queued.id}`}
-            src={queued.videoUrl}
-            preload="auto"
-            muted
-            playsInline
-            style={{ display: "none" }}
-          />
-        )}
-      </>
-    );
-  }
 
   return (
     <>
