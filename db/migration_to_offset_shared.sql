@@ -105,3 +105,20 @@ grant all on personal_site.scenes, personal_site.site_settings to service_role;
 -- Replace <OLD_PASSWORD> with the personal-site DB password,
 -- and <NEW_PASSWORD> with the offset-shared DB password
 -- (just shown to you in chat — save it in 1Password).
+
+-- ─── portfolio_items (added 2026-05-26) ─────────────────────────
+create table if not exists personal_site.portfolio_items (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in ('project', 'stretch_study', 'music')),
+  title text not null default '',
+  description text not null default '',
+  src text not null default '',
+  link text not null default '',
+  sort_order int not null default 0,
+  published bool not null default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+grant select on personal_site.portfolio_items to anon, authenticated;
+grant all on personal_site.portfolio_items to service_role;
