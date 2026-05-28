@@ -25,7 +25,7 @@ const GLASS_ICONS  = ['○', '◔', '◑', '◕']
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [glassLevel, setGlassLevel] = useState(0)
+  const [glassLevel, setGlassLevel] = useState(2)
   const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
   const t = useTranslation(language)
   const router = useRouter()
