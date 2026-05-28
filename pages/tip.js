@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/translations'
 
 const MERCHANT_ID =
   process.env.NEXT_PUBLIC_STABLEPAY_MERCHANT_ID ?? 'cmn979jnf0000110ntpw8x6fi'
-const STABLEPAY_API = 'https://stablepay-nine.vercel.app'
+const STABLEPAY_API = 'https://wetakestables.shop'
 
 const CHAIN_LABELS = {
   ETHEREUM_MAINNET: 'Ethereum',
