@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Script from 'next/script'
+import { motion } from 'framer-motion'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
@@ -16,30 +17,38 @@ const CHAIN_LABELS = {
   SOLANA_MAINNET: 'Solana',
 }
 
+const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
+}
+
+const TIERS = [
+  { icon: '*', label: 'coffee', amount: 5 },
+  { icon: '**', label: 'meal', amount: 15 },
+]
+
 export default function Tip() {
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
   const [selected, setSelected] = useState(null)
+  const [customAmount, setCustomAmount] = useState('')
   const [widgetReady, setWidgetReady] = useState(false)
   const [error, setError] = useState(null)
   const [merchant, setMerchant] = useState(null)
   const [showManual, setShowManual] = useState(false)
   const [copied, setCopied] = useState(null)
+  const customRef = useRef(null)
 
-  // Poll for widget global as a safety net.
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.StablePay) { setWidgetReady(true); return }
     const id = setInterval(() => {
-      if (window.StablePay) {
-        setWidgetReady(true)
-        clearInterval(id)
-      }
+      if (window.StablePay) { setWidgetReady(true); clearInterval(id) }
     }, 200)
     return () => clearInterval(id)
   }, [])
 
-  // Fetch merchant + wallet info upfront so manual fallback is always available.
   useEffect(() => {
     let cancel = false
     fetch(`${STABLEPAY_API}/api/embed/chains?merchantId=${MERCHANT_ID}`)
@@ -49,13 +58,39 @@ export default function Tip() {
     return () => { cancel = true }
   }, [])
 
-  const tiers = [
-    { emoji: '☕', amount: 5,   key: 'coffee' },
-    { emoji: '🍕', amount: 10,  key: 'slice' },
-    { emoji: '🍽️', amount: 25,  key: 'meal' },
-    { emoji: '🚀', amount: 100, key: 'rocket' },
-  ]
-  const formatAmount = (a) => `$${a.toFixed(2)}`
+  const effectiveAmount = selected === 'custom'
+    ? parseFloat(customAmount) || 0
+    : selected?.amount ?? 0
+
+  const effectiveLabel = selected === 'custom'
+    ? `$${effectiveAmount.toFixed(2)}`
+    : selected
+      ? `${t.tip?.[selected.label] ?? selected.label} — $${selected.amount.toFixed(2)}`
+      : ''
+
+  function selectTier(tier) {
+    setSelected(tier)
+    setError(null)
+    setShowManual(false)
+  }
+
+  function selectCustom() {
+    setSelected('custom')
+    setCustomAmount('')
+    setError(null)
+    setShowManual(false)
+    setTimeout(() => customRef.current?.focus(), 50)
+  }
+
+  function goBack() {
+    if (selected) {
+      setSelected(null)
+      setError(null)
+      setShowManual(false)
+    } else {
+      window.history.back()
+    }
+  }
 
   const handleStablepay = () => {
     setError(null)
@@ -63,25 +98,25 @@ export default function Tip() {
       setError('Payment widget still loading — try again in a moment.')
       return
     }
-    if (!selected) return
+    if (effectiveAmount < 1) {
+      setError('Minimum amount is $1.')
+      return
+    }
     try {
       window.StablePay.checkout({
         merchantId: MERCHANT_ID,
-        amount: selected.amount,
-        productName: `Tip Gabriel — ${t.tip[selected.key]}`,
-        onSuccess: (data) => {
-          console.log('[stablepay] paid', data)
+        amount: effectiveAmount,
+        productName: `Tip — ${effectiveLabel}`,
+        onSuccess: () => {
           setSelected(null)
-          alert(t.tip.thankYou)
+          alert(t.tip?.thankYou ?? 'Thank you!')
         },
-        onCancel: () => console.log('[stablepay] cancelled'),
+        onCancel: () => {},
         onError: (err) => {
-          console.error('[stablepay] widget error', err)
-          setError(err?.message ?? 'Payment failed inside widget')
+          setError(err?.message ?? 'Payment failed')
         },
       })
     } catch (err) {
-      console.error('[stablepay] threw', err)
       setError(err instanceof Error ? err.message : 'Unable to open checkout')
     }
   }
@@ -89,61 +124,15 @@ export default function Tip() {
   function copy(text, label) {
     navigator.clipboard?.writeText(text)
       .then(() => { setCopied(label); setTimeout(() => setCopied(null), 1500) })
-      .catch(() => setError('Copy failed — long-press to select.'))
+      .catch(() => setError('Copy failed'))
   }
 
-  // Manual wallet panel — works even if the widget is dead.
-  const renderManual = () => {
-    if (!merchant?.wallets?.length) {
-      return (
-        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          Loading wallet info…
-        </p>
-      )
-    }
-    return (
-      <div className="flex flex-col gap-2">
-        {merchant.wallets.map((w) => (
-          <div
-            key={w.chain}
-            className={`p-3 rounded-lg border ${
-              darkMode ? 'border-gray-700 bg-gray-800/40' : 'border-gray-200 bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wider opacity-80">
-                {CHAIN_LABELS[w.chain] ?? w.chain}
-              </span>
-              <span className="text-[10px] opacity-60">
-                {w.supportedTokens.join(' · ')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="text-[11px] font-mono break-all flex-1 leading-tight">
-                {w.address}
-              </code>
-              <button
-                onClick={() => copy(w.address, w.chain)}
-                className={`text-[10px] px-2 py-1 rounded border whitespace-nowrap ${
-                  darkMode
-                    ? 'border-gray-700 hover:border-gray-500'
-                    : 'border-gray-300 hover:border-gray-500'
-                }`}
-              >
-                {copied === w.chain ? '✓' : 'copy'}
-              </button>
-            </div>
-          </div>
-        ))}
-        {selected && (
-          <p className={`text-xs text-center mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Send <span className="font-semibold">{formatAmount(selected.amount)}</span> of USDC or USDT — any chain above.
-          </p>
-        )}
-      </div>
-    )
-  }
+  const muted = darkMode ? 'text-gray-400' : 'text-gray-600'
+  const mutedFaint = darkMode ? 'text-gray-500' : 'text-gray-400'
+  const cardBorder = darkMode ? 'border-gray-700' : 'border-gray-200'
+  const cardBg = darkMode ? 'bg-gray-800/50' : 'bg-gray-50'
 
+  // ── Payment view ──
   if (selected) {
     return (
       <div className="w-full max-w-lg mx-auto">
@@ -155,84 +144,146 @@ export default function Tip() {
         />
 
         <button
-          onClick={() => setSelected(null)}
-          className="text-sm underline mb-6 opacity-70 hover:opacity-100"
-          style={{ color: 'var(--accent)' }}
+          onClick={goBack}
+          className={`text-sm underline mb-8 ${mutedFaint} hover:opacity-100`}
         >
-          {t.tip.goBack}
+          {t.tip?.goBack ?? 'back'}
         </button>
 
-        <div className={`text-center p-6 rounded-lg border-2 mb-8 ${
-          darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
-        }`}>
-          <span className="text-4xl">{selected.emoji}</span>
-          <h2 className="text-2xl font-bold mt-3">
-            {t.tip[selected.key]} — {formatAmount(selected.amount)}
-          </h2>
+        <div
+          className={`text-center p-8 rounded-xl border mb-8 ${cardBorder} ${cardBg}`}
+        >
+          <p className="text-3xl font-bold mb-1">
+            ${effectiveAmount.toFixed(2)}
+          </p>
+          <p className={`text-sm ${muted}`}>{effectiveLabel}</p>
         </div>
 
-        <h3 className="text-lg font-semibold mb-4">{t.tip.chooseMethod}</h3>
+        {selected === 'custom' && (
+          <div className="mb-6">
+            <label className={`block text-xs uppercase tracking-widest mb-2 ${mutedFaint}`}>
+              Amount (USD)
+            </label>
+            <div className="flex items-center gap-2">
+              <span className={`text-lg font-medium ${muted}`}>$</span>
+              <input
+                ref={customRef}
+                type="number"
+                min="1"
+                step="1"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="0"
+                className={`flex-1 text-2xl font-bold bg-transparent border-b-2 pb-1 outline-none transition-colors ${
+                  darkMode
+                    ? 'border-gray-600 focus:border-white text-white'
+                    : 'border-gray-300 focus:border-gray-900 text-gray-900'
+                }`}
+                style={{ appearance: 'textfield' }}
+              />
+            </div>
+          </div>
+        )}
+
+        <h3 className={`text-xs uppercase tracking-widest mb-4 ${mutedFaint}`}>
+          {t.tip?.chooseMethod ?? 'Choose payment method'}
+        </h3>
 
         <div className="flex flex-col gap-3">
           <button
             onClick={handleStablepay}
-            disabled={!widgetReady}
-            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-              widgetReady ? 'cursor-pointer' : 'cursor-wait opacity-60'
-            } ${
-              darkMode
-                ? 'border-gray-700 bg-gray-800/50 hover:border-green-500 hover:bg-gray-800'
-                : 'border-gray-200 bg-gray-50 hover:border-green-500 hover:bg-green-50'
-            }`}
+            disabled={!widgetReady || effectiveAmount < 1}
+            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+              widgetReady && effectiveAmount >= 1 ? 'cursor-pointer' : 'cursor-wait opacity-50'
+            } ${cardBorder} ${cardBg}`}
+            style={{ borderColor: widgetReady ? undefined : 'var(--border-subtle)' }}
+            onMouseEnter={(e) => { if (widgetReady) e.currentTarget.style.borderColor = 'var(--accent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '' }}
           >
-            <span className="font-medium">
-              {widgetReady ? '💳 Pay with Crypto (widget)' : 'Loading payment widget…'}
+            <span className="font-medium text-sm">
+              {widgetReady ? 'Pay with crypto' : 'Loading widget...'}
             </span>
             <span className={`text-xs px-2 py-1 rounded ${
-              darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
+              darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
             }`}>USDC / USDT</span>
           </button>
 
           <button
             onClick={() => setShowManual((v) => !v)}
-            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-pointer ${
-              darkMode
-                ? 'border-gray-700 bg-gray-800/50 hover:border-blue-500'
-                : 'border-gray-200 bg-gray-50 hover:border-blue-500'
-            }`}
+            className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${cardBorder} ${cardBg}`}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '' }}
           >
-            <span className="font-medium">
-              {showManual ? '▼' : '▸'} 🪙 Send manually to wallet
+            <span className="font-medium text-sm">
+              {showManual ? 'Hide' : 'Show'} wallet addresses
             </span>
-            <span className="text-xs opacity-70">
-              {merchant?.wallets?.length ?? '…'} chains
+            <span className={`text-xs ${mutedFaint}`}>
+              {merchant?.wallets?.length ?? '...'} chains
             </span>
           </button>
 
-          {showManual && renderManual()}
+          {showManual && (
+            <div className="flex flex-col gap-2 mt-1">
+              {merchant?.wallets?.length ? merchant.wallets.map((w) => (
+                <div
+                  key={w.chain}
+                  className={`p-3 rounded-lg border ${cardBorder} ${cardBg}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${muted}`}>
+                      {CHAIN_LABELS[w.chain] ?? w.chain}
+                    </span>
+                    <span className={`text-[10px] ${mutedFaint}`}>
+                      {w.supportedTokens.join(' / ')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="text-[11px] font-mono break-all flex-1 leading-tight">
+                      {w.address}
+                    </code>
+                    <button
+                      onClick={() => copy(w.address, w.chain)}
+                      className={`text-[10px] px-2 py-1 rounded border whitespace-nowrap ${cardBorder}`}
+                    >
+                      {copied === w.chain ? 'copied' : 'copy'}
+                    </button>
+                  </div>
+                </div>
+              )) : (
+                <p className={`text-xs ${mutedFaint}`}>Loading wallet info...</p>
+              )}
+              {effectiveAmount > 0 && (
+                <p className={`text-xs text-center mt-2 ${muted}`}>
+                  Send <span className="font-semibold">${effectiveAmount.toFixed(2)}</span> of USDC or USDT on any chain above.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {error && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${
-            darkMode ? 'bg-red-900/30 border border-red-800 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'
+          <div className={`mt-4 p-3 rounded-xl text-sm ${
+            darkMode ? 'bg-red-900/20 border border-red-800/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'
           }`}>
-            <div className="font-semibold mb-1">Widget error:</div>
-            <div className="text-xs">{error}</div>
-            <div className="text-xs mt-2 opacity-80">
-              Use the manual option above — wallet addresses work directly.
-            </div>
+            <p className="text-xs">{error}</p>
           </div>
         )}
 
-        <div className={`mt-6 text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          <p>{t.tip.moreMethodsSoon}</p>
-        </div>
+        <p className={`mt-8 text-center text-xs ${mutedFaint}`}>
+          {t.tip?.note ?? 'All tips go directly toward building open-source tools and creative experiments.'}
+        </p>
       </div>
     )
   }
 
+  // ── Tier selection view ──
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <motion.div
+      className="w-full max-w-lg mx-auto"
+      variants={stagger}
+      initial="hidden"
+      animate="visible"
+    >
       <Script
         src="https://wetakestables.shop/js/stablepay-widget.js"
         strategy="afterInteractive"
@@ -240,44 +291,88 @@ export default function Tip() {
         onError={() => setError('Failed to load payment widget')}
       />
 
-      <h1 className="text-3xl font-bold mb-2">{t.tip.title}</h1>
-      <p className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-        {t.tip.subtitle}
-      </p>
+      <motion.h1 variants={fadeUp} className="text-2xl font-semibold mb-2">
+        {t.tip?.title ?? 'Tip Me'}
+      </motion.h1>
+      <motion.p variants={fadeUp} className={`mb-10 leading-relaxed ${muted}`}>
+        {t.tip?.subtitle ?? 'If you enjoy my work, consider buying me a coffee.'}
+      </motion.p>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        {tiers.map((tier) => (
+      <motion.div variants={fadeUp} className="flex flex-col gap-3 mb-6">
+        {TIERS.map((tier) => (
           <button
-            key={tier.key}
-            onClick={() => setSelected(tier)}
-            className={`flex flex-col items-center justify-center p-6 rounded-lg border-2 transition-all cursor-pointer ${
-              darkMode
-                ? 'border-gray-700 bg-gray-800/50 hover:border-blue-500 hover:bg-gray-800'
-                : 'border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50'
-            }`}
+            key={tier.label}
+            onClick={() => selectTier(tier)}
+            className={`flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group ${cardBorder} ${cardBg}`}
+            style={{ background: 'var(--glass-bg)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.background = 'var(--glass-hover)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = ''
+              e.currentTarget.style.background = 'var(--glass-bg)'
+            }}
           >
-            <span className="text-3xl mb-2">{tier.emoji}</span>
-            <span className="text-lg font-semibold">{formatAmount(tier.amount)}</span>
-            <span className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {t.tip[tier.key]}
+            <span
+              className="text-lg font-bold w-8 text-center shrink-0"
+              style={{ color: 'var(--accent)' }}
+            >
+              {tier.icon}
+            </span>
+            <span className="flex-1 text-left">
+              <span className="block text-sm font-medium">
+                {t.tip?.[tier.label] ?? tier.label}
+              </span>
+            </span>
+            <span className="text-lg font-semibold tabular-nums">
+              ${tier.amount}
             </span>
           </button>
         ))}
-      </div>
 
-      <div className={`mt-8 text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-        <p>{t.tip.note}</p>
-      </div>
+        <button
+          onClick={selectCustom}
+          className={`flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group ${cardBorder} ${cardBg}`}
+          style={{ background: 'var(--glass-bg)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--accent)'
+            e.currentTarget.style.background = 'var(--glass-hover)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = ''
+            e.currentTarget.style.background = 'var(--glass-bg)'
+          }}
+        >
+          <span
+            className="text-lg font-bold w-8 text-center shrink-0"
+            style={{ color: 'var(--accent)' }}
+          >
+            +
+          </span>
+          <span className="flex-1 text-left">
+            <span className="block text-sm font-medium">
+              {t.tip?.custom ?? 'Custom amount'}
+            </span>
+          </span>
+          <span className={`text-sm ${mutedFaint}`}>
+            $...
+          </span>
+        </button>
+      </motion.div>
 
-      <div className="mt-8">
+      <motion.p variants={fadeUp} className={`text-xs text-center ${mutedFaint}`}>
+        {t.tip?.note ?? 'All tips go directly toward building open-source tools and creative experiments.'}
+      </motion.p>
+
+      <motion.div variants={fadeUp} className="mt-8">
         <button
           onClick={() => window.history.back()}
-          className="text-sm underline opacity-70 hover:opacity-100"
-          style={{ color: 'var(--accent)' }}
+          className={`text-sm underline ${mutedFaint} hover:opacity-100`}
         >
-          {t.tip.goBack}
+          {t.tip?.goBack ?? 'back'}
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
