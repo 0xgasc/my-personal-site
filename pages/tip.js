@@ -111,12 +111,8 @@ export default function Tip() {
 
       <motion.div variants={fadeUp} className="flex flex-col gap-3 mb-6">
         {TIERS.map((tier) => {
-          const shared = {
-            className: "flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group no-underline",
-            style: { borderColor: 'var(--border-subtle)', background: 'var(--glass-bg)', color: 'inherit', textDecoration: 'none' },
-            onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--glass-hover)' },
-            onMouseLeave: (e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--glass-bg)' },
-          }
+          const hoverIn = (e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--glass-hover)' }
+          const hoverOut = (e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--glass-bg)' }
           const inner = (
             <>
               <span className="text-lg font-bold w-8 text-center shrink-0" style={{ color: 'var(--accent)' }}>{tier.icon}</span>
@@ -124,10 +120,34 @@ export default function Tip() {
               <span className="text-lg font-semibold tabular-nums">${tier.amount}</span>
             </>
           )
-          return tier.payUrl ? (
-            <a key={tier.label} href={tier.payUrl} target="_blank" rel="noreferrer" {...shared}>{inner}</a>
-          ) : (
-            <button key={tier.label} onClick={() => handleWidgetTier(tier)} disabled={!widgetReady} {...shared} style={{ ...shared.style, opacity: widgetReady ? 1 : 0.5 }}>{inner}</button>
+          if (tier.payUrl) {
+            return (
+              <a
+                key={tier.label}
+                href={tier.payUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--glass-bg)', color: 'inherit', textDecoration: 'none' }}
+                onMouseEnter={hoverIn}
+                onMouseLeave={hoverOut}
+              >
+                {inner}
+              </a>
+            )
+          }
+          return (
+            <button
+              key={tier.label}
+              onClick={() => handleWidgetTier(tier)}
+              disabled={!widgetReady}
+              className="flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--glass-bg)', opacity: widgetReady ? 1 : 0.5 }}
+              onMouseEnter={hoverIn}
+              onMouseLeave={hoverOut}
+            >
+              {inner}
+            </button>
           )
         })}
 
