@@ -14,8 +14,8 @@ const fadeUp = {
 }
 
 const TIERS = [
-  { icon: '*', label: 'coffee', amount: 5 },
-  { icon: '**', label: 'meal', amount: 15 },
+  { icon: '*',  label: 'coffee', amount: 5,  mode: 'widget' },
+  { icon: '**', label: 'meal',   amount: 15, payUrl: 'https://wetakestables.shop/pay/15b411b6' },
 ]
 
 export default function Tip() {
@@ -36,21 +36,16 @@ export default function Tip() {
     return () => clearInterval(id)
   }, [])
 
-  function openCheckout(amount, label) {
+  function openCustomCheckout() {
     setError(null)
-    if (!window.StablePay) {
-      setError('Payment widget still loading — try again in a moment.')
-      return
-    }
-    if (amount < 1) {
-      setError('Minimum amount is $1.')
-      return
-    }
+    const amount = parseFloat(customAmount) || 0
+    if (amount < 1) { setError('Minimum amount is $1.'); return }
+    if (!window.StablePay) { setError('Payment widget still loading.'); return }
     try {
       window.StablePay.checkout({
         merchantId: MERCHANT_ID,
         amount,
-        productName: `Tip — ${label}`,
+        productName: `Tip — $${amount.toFixed(2)}`,
         theme: darkMode ? 'dark' : 'light',
         onSuccess: () => {
           setCustomMode(false)
@@ -58,23 +53,29 @@ export default function Tip() {
           alert(t.tip?.thankYou ?? 'Thank you!')
         },
         onCancel: () => {},
-        onError: (err) => {
-          setError(err?.message ?? 'Payment failed')
-        },
+        onError: (err) => setError(err?.message ?? 'Payment failed'),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to open checkout')
     }
   }
 
-  function handleTier(tier) {
-    const label = `${t.tip?.[tier.label] ?? tier.label} ($${tier.amount})`
-    openCheckout(tier.amount, label)
-  }
-
-  function handleCustom() {
-    const amount = parseFloat(customAmount) || 0
-    openCheckout(amount, `$${amount.toFixed(2)}`)
+  function handleWidgetTier(tier) {
+    setError(null)
+    if (!window.StablePay) { setError('Payment widget still loading.'); return }
+    try {
+      window.StablePay.checkout({
+        merchantId: MERCHANT_ID,
+        amount: tier.amount,
+        productName: `Tip — ${t.tip?.[tier.label] ?? tier.label} ($${tier.amount})`,
+        theme: darkMode ? 'dark' : 'light',
+        onSuccess: () => alert(t.tip?.thankYou ?? 'Thank you!'),
+        onCancel: () => {},
+        onError: (err) => setError(err?.message ?? 'Payment failed'),
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to open checkout')
+    }
   }
 
   function enterCustom() {
@@ -109,52 +110,34 @@ export default function Tip() {
       </motion.p>
 
       <motion.div variants={fadeUp} className="flex flex-col gap-3 mb-6">
-        {TIERS.map((tier) => (
-          <button
-            key={tier.label}
-            onClick={() => handleTier(tier)}
-            disabled={!widgetReady}
-            className="flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              background: 'var(--glass-bg)',
-              opacity: widgetReady ? 1 : 0.5,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
-              e.currentTarget.style.background = 'var(--glass-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)'
-              e.currentTarget.style.background = 'var(--glass-bg)'
-            }}
-          >
-            <span
-              className="text-lg font-bold w-8 text-center shrink-0"
-              style={{ color: 'var(--accent)' }}
-            >
-              {tier.icon}
-            </span>
-            <span className="flex-1 text-left">
-              <span className="block text-sm font-medium">
-                {t.tip?.[tier.label] ?? tier.label}
-              </span>
-            </span>
-            <span className="text-lg font-semibold tabular-nums">
-              ${tier.amount}
-            </span>
-          </button>
-        ))}
+        {TIERS.map((tier) => {
+          const shared = {
+            className: "flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group no-underline",
+            style: { borderColor: 'var(--border-subtle)', background: 'var(--glass-bg)', color: 'inherit', textDecoration: 'none' },
+            onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--glass-hover)' },
+            onMouseLeave: (e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--glass-bg)' },
+          }
+          const inner = (
+            <>
+              <span className="text-lg font-bold w-8 text-center shrink-0" style={{ color: 'var(--accent)' }}>{tier.icon}</span>
+              <span className="flex-1 text-left"><span className="block text-sm font-medium">{t.tip?.[tier.label] ?? tier.label}</span></span>
+              <span className="text-lg font-semibold tabular-nums">${tier.amount}</span>
+            </>
+          )
+          return tier.payUrl ? (
+            <a key={tier.label} href={tier.payUrl} target="_blank" rel="noreferrer" {...shared}>{inner}</a>
+          ) : (
+            <button key={tier.label} onClick={() => handleWidgetTier(tier)} disabled={!widgetReady} {...shared} style={{ ...shared.style, opacity: widgetReady ? 1 : 0.5 }}>{inner}</button>
+          )
+        })}
 
         {!customMode ? (
           <button
             onClick={enterCustom}
-            disabled={!widgetReady}
             className="flex items-center gap-4 px-5 py-5 rounded-xl border transition-all cursor-pointer group"
             style={{
               borderColor: 'var(--border-subtle)',
               background: 'var(--glass-bg)',
-              opacity: widgetReady ? 1 : 0.5,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'var(--accent)'
@@ -191,7 +174,7 @@ export default function Tip() {
               step="1"
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleCustom() }}
+              onKeyDown={(e) => { if (e.key === 'Enter') openCustomCheckout() }}
               placeholder="0"
               className={`flex-1 text-xl font-bold bg-transparent outline-none ${
                 darkMode ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-300'
@@ -199,12 +182,12 @@ export default function Tip() {
               style={{ appearance: 'textfield' }}
             />
             <button
-              onClick={handleCustom}
-              disabled={!customAmount || parseFloat(customAmount) < 1}
+              onClick={openCustomCheckout}
+              disabled={!widgetReady || !customAmount || parseFloat(customAmount) < 1}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-30"
               style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
             >
-              Pay
+              {widgetReady ? 'Pay' : '...'}
             </button>
             <button
               onClick={() => setCustomMode(false)}
@@ -215,12 +198,6 @@ export default function Tip() {
           </div>
         )}
       </motion.div>
-
-      {!widgetReady && (
-        <motion.p variants={fadeUp} className={`text-xs text-center mb-4 ${mutedFaint}`}>
-          Loading payment widget...
-        </motion.p>
-      )}
 
       {error && (
         <motion.div
