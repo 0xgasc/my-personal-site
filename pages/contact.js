@@ -51,7 +51,7 @@ export default function Contact() {
               href={s.href(c[s.key])}
               target={s.key === "email" ? undefined : "_blank"}
               rel="noreferrer"
-              className="flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-200 group"
+              className="flex items-center gap-4 px-5 py-4 rounded-sm transition-all duration-200 group"
               style={{
                 border: "1px solid var(--border-subtle)",
                 background: "var(--glass-bg)",
