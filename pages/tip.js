@@ -39,7 +39,7 @@ export default function Tip() {
   function openCustomCheckout() {
     setError(null)
     const amount = parseFloat(customAmount) || 0
-    if (amount < 1) { setError('Minimum amount is $1.'); return }
+    if (amount < 0.05) { setError('Minimum amount is $0.05.'); return }
     if (!window.StablePay) { setError('Payment widget still loading.'); return }
     try {
       window.StablePay.checkout({
@@ -165,8 +165,8 @@ export default function Tip() {
             <input
               ref={customRef}
               type="number"
-              min="1"
-              step="1"
+              min="0.05"
+              step="0.01"
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') openCustomCheckout() }}
@@ -178,7 +178,7 @@ export default function Tip() {
             />
             <button
               onClick={openCustomCheckout}
-              disabled={!widgetReady || !customAmount || parseFloat(customAmount) < 1}
+              disabled={!widgetReady || !customAmount || parseFloat(customAmount) < 0.05}
               className="px-4 py-2 rounded-sm text-sm font-medium transition-opacity disabled:opacity-30"
               style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
             >
