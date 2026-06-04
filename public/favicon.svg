@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- s-o-l-o.fun favicon — dithered orb on the city/beach palette.
+  <!-- s-o-l-o.xyz favicon — dithered orb on the city/beach palette.
        Neon cyan dot at the center, fading through magenta + cream
        via a Bayer-quantized pixel halo. Single SVG, theme-agnostic. -->
   <rect width="32" height="32" fill="#06090f"/>

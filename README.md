@@ -2,7 +2,7 @@
 
 Personal portfolio site built with Next.js, featuring multi-language support and dark mode.
 
-**Live Site:** [https://www.s-o-l-o.fun](https://www.s-o-l-o.fun)
+**Live Site:** [https://www.s-o-l-o.xyz](https://www.s-o-l-o.xyz)
 
 ## Features
 
@@ -114,7 +114,7 @@ export default function MyComponent() {
 
 ## Deploy on Vercel
 
-Currently deployed at [https://www.s-o-l-o.fun](https://www.s-o-l-o.fun)
+Currently deployed at [https://www.s-o-l-o.xyz](https://www.s-o-l-o.xyz)
 
 Connected to GitHub - automatic deployments on push to main branch.
 

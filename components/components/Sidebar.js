@@ -103,7 +103,7 @@ export default function Sidebar({ isOpen, onClose, darkMode }) {
                 className="text-xs tracking-wider uppercase"
                 style={{ color: 'var(--text-muted)' }}
               >
-                <p>s-o-l-o.fun</p>
+                <p>s-o-l-o.xyz</p>
               </div>
             </div>
           </motion.div>
