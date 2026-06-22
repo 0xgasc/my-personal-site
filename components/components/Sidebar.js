@@ -16,7 +16,8 @@ export default function Sidebar({ isOpen, onClose, darkMode }) {
     { name: t.nav.collection, href: '/collection' },
     { name: t.nav.experiments, href: '/experiments' },
     { name: t.nav.tip, href: '/tip' },
-    { name: t.nav.contact, href: '/contact' }
+    { name: t.nav.contact, href: '/contact' },
+    { name: t.nav.tests, href: '/tests' }
   ]
 
   return (
