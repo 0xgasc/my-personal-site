@@ -1,18 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/tests',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://contentlocker.xyz; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://contentlocker.xyz; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss:; frame-src 'self' https://contentlocker.xyz;",
-          },
-        ],
-      },
-    ];
-  },
   images: {
     remotePatterns: [
       {
