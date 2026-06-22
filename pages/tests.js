@@ -44,7 +44,12 @@ export default function Tests() {
         Exclusive content locked behind a paywall.
       </motion.p>
 
-      <motion.div variants={fadeUp} className="mb-12 space-y-6">
+      {/* Content locker mounts its overlay inside this div */}
+      <motion.div variants={fadeUp} className="mb-12">
+        <div id="cl-locked-content"></div>
+      </motion.div>
+
+      <motion.div variants={fadeUp} className="space-y-6">
         <div
           className="p-6 rounded-sm"
           style={{
