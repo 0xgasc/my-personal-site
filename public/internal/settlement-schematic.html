@@ -680,23 +680,23 @@
   </div>
 
   <h2 class="sect-title" style="margin-top:44px">Treasury structure &amp; key rotation</h2>
-  <p class="sect-sub">Two independent controls. The hot/cold split caps how much is exposed at any moment; the rotation cadence caps how long any single key protects the cold store. Both reduce blast radius — neither fragments the trail, because each new wallet is recorded as the same entity in your books.</p>
+  <p class="sect-sub">Two questions: "how much can I lose if a key gets stolen?" and "how long does one key matter?" The hot/cold split answers the first. Rotation answers the second. They work together but are configured independently.</p>
 
   <div class="tiers">
     <div class="tier tier-hot">
       <div class="tier-head">
-        <span class="tier-name">Hot · settlement float</span>
+        <span class="tier-name">Hot wallet</span>
         <span class="tier-cap" id="t-hot">$—</span>
       </div>
-      <p class="tier-desc">Sized to a few days of payouts. Single-sig or 2-of-3, automated, feeds NOWPayments. If this key leaks, the loss is capped at the float — not the balance sheet.</p>
+      <p class="tier-desc">A small buffer that funds daily merchant payouts. Automated, single-sig or 2-of-3. If this key leaks, you lose only this amount — a few days of payouts, not your full balance.</p>
       <div class="tier-bar"><div class="tier-fill tier-fill-hot" id="fill-hot"></div></div>
     </div>
     <div class="tier tier-cold">
       <div class="tier-head">
-        <span class="tier-name">Cold · treasury</span>
+        <span class="tier-name">Cold wallet</span>
         <span class="tier-cap" id="t-cold">$—</span>
       </div>
-      <p class="tier-desc">Everything above the hot cap sweeps here. Multisig (3-of-5), hardware-backed, no automated spend path. This is what rotation protects.</p>
+      <p class="tier-desc">Everything else. Multisig (3-of-5), hardware keys, no automated spending. Money only moves out manually to refill the hot wallet. Rotation protects this one.</p>
       <div class="tier-bar"><div class="tier-fill tier-fill-cold" id="fill-cold"></div></div>
     </div>
   </div>
@@ -717,15 +717,15 @@
   </div>
 
   <div class="rot-flow">
-    <div class="rot-step"><span class="rot-i">1</span> Generate fresh multisig cold wallet, new signer set, offline ceremony</div>
-    <div class="rot-step"><span class="rot-i">2</span> Sweep full cold balance old → new in one recorded transaction</div>
-    <div class="rot-step"><span class="rot-i">3</span> Log rotation in your ledger: same entity, new custody key, timestamped</div>
-    <div class="rot-step"><span class="rot-i">4</span> Retire old signers, verify empty, keep address in records for audit continuity</div>
+    <div class="rot-step"><span class="rot-i">1</span> Create a brand-new cold wallet (fresh keys, fresh signers, done offline)</div>
+    <div class="rot-step"><span class="rot-i">2</span> Move everything from old cold wallet → new cold wallet in one transaction</div>
+    <div class="rot-step"><span class="rot-i">3</span> Record the swap in your books — same company, new address, date stamped</div>
+    <div class="rot-step"><span class="rot-i">4</span> Deactivate old signers, confirm old wallet is empty, keep the address on file for audits</div>
   </div>
 
-  <p class="footnote" style="border-left-color:var(--good)"><b>Why this is hygiene, not fragmentation.</b> Rotation here is triggered by <em>time</em> and moves the <em>entire</em> balance to a fresh key in one auditable hop, logged as the same entity. Nothing about the trail gets harder to follow — a regulator reads one clean chain of custody handoffs. That is the opposite of volume-triggered rotation, which would scatter flows to defeat aggregation. Same tool, and the trigger is the whole difference.</p>
+  <p class="footnote" style="border-left-color:var(--good)"><b>This is routine security, not money laundering.</b> The difference: you rotate on a fixed schedule (every 90 days) and move the <em>entire</em> balance in one visible hop. A regulator following the trail sees a clean chain of custody handoffs — "same entity, new key, here's why, here's when." That's the opposite of splitting money across wallets to hide volume. Same tool, opposite intent — the trigger (time vs. volume) is what distinguishes them.</p>
 
-  <p class="footnote"><b>The custody flag, stated once.</b> Sweeping into a treasury you control means you hold merchant funds between collection and payout. That is the licensing trigger — MSB registration in the US, VASP equivalents elsewhere — and it comes with recordkeeping obligations that on-chain data alone does not satisfy. It is a solvable, licensable problem, but "on-chain records only" is the assumption that turns a legal business into an unlicensed one.</p>
+  <p class="footnote"><b>You are holding merchant funds.</b> The moment you sweep deposits into a treasury you control, you're a custodian. In the US that means MSB registration (FinCEN). Elsewhere, the equivalent VASP/PSP license. This is solvable and legal — you apply, you register, you keep records. But on-chain data alone does not satisfy the recordkeeping requirements. You need your own books mapping wallets to merchants, transactions to invoices, and payouts to settlement dates.</p>
 </div>
 
 <script>
