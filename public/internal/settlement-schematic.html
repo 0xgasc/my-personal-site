@@ -25,6 +25,7 @@
     --darkmute:#8D83A7;
     --darkrule:#3B3252;
     --violet:#9B84D4;
+    --c-sol:#7B65C0;--c-base:#1F5C8B;--c-bnb:#C09B1A;--c-eth:#5A6B7F;--c-tron:#C2452D;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -224,6 +225,49 @@
   .cp-btn:hover{border-color:var(--mute);color:var(--ink)}
   .cp-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .cp-btn:focus-visible{outline:2px solid var(--clear);outline-offset:2px}
+
+  /* ---------- global chain picker ---------- */
+  .global-chainpick{padding:0 0 24px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+  .gcp-label{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;
+  }
+  .gcp-row{display:flex;flex-wrap:wrap;gap:6px}
+  .gcp-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    padding:8px 14px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;border-radius:2px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .gcp-btn:hover{border-color:var(--mute);color:var(--ink)}
+  .gcp-btn.active{border-color:var(--cc);color:var(--ink);font-weight:500;background:#fff}
+  .gcp-btn:focus-visible{outline:2px solid var(--clear);outline-offset:2px}
+  .gcp-dot{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    background:var(--cc);opacity:.4;transition:opacity .15s ease;
+  }
+  .gcp-btn.active .gcp-dot{opacity:1}
+
+  /* ---------- chain-meta rows in flow steps ---------- */
+  .chain-meta{margin-top:10px}
+  .cm-row{
+    display:flex;flex-wrap:wrap;gap:4px 12px;
+    padding:6px 0;align-items:baseline;
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mute);
+  }
+  .cm-row+.cm-row{border-top:1px solid var(--rule)}
+  .cm-dot{
+    width:7px;height:7px;border-radius:50%;flex-shrink:0;
+    display:inline-block;position:relative;top:-1px;
+  }
+  .cm-chain{font-weight:500;min-width:74px}
+  .cm-val b{font-weight:500;color:var(--ink)}
+  .cm-empty{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    color:var(--mute);font-style:italic;padding:5px 0;
+  }
+
   .verdict-bar{
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     padding:11px 14px;margin-bottom:20px;border-radius:2px;
@@ -330,12 +374,33 @@
       <p class="lede">Single-use deposit addresses, atomic sweep into one shared treasury, merchant-choice payout (direct USDC default, XMR opt-in via licensed intermediary). Fee model, treasury structure, and key rotation across chains.</p>
     </header>
 
+    <div class="global-chainpick" id="global-chainpick">
+      <p class="gcp-label">Compare chains</p>
+      <div class="gcp-row">
+        <button class="gcp-btn" data-chain="solana" style="--cc:var(--c-sol)">
+          <span class="gcp-dot"></span>Solana
+        </button>
+        <button class="gcp-btn" data-chain="base" style="--cc:var(--c-base)">
+          <span class="gcp-dot"></span>Base (L2)
+        </button>
+        <button class="gcp-btn" data-chain="bnb" style="--cc:var(--c-bnb)">
+          <span class="gcp-dot"></span>BNB
+        </button>
+        <button class="gcp-btn" data-chain="ethereum" style="--cc:var(--c-eth)">
+          <span class="gcp-dot"></span>Ethereum
+        </button>
+        <button class="gcp-btn" data-chain="tron" style="--cc:var(--c-tron)">
+          <span class="gcp-dot"></span>Tron
+        </button>
+      </div>
+    </div>
+
     <article class="stage">
       <div class="idx">01</div>
       <div>
         <h3>Payer wallet</h3>
         <p>Client sends stablecoin (USDC or USDT) on any supported chain against an invoice. Chain is set per merchant or per invoice — see chain strategies below for cost tradeoffs. No KYC below your de-minimis threshold.</p>
-        <div class="meta"><span><b>multi-chain</b> Solana / Base / BNB / ETH / Tron</span><span><b>fee varies</b> by chain</span></div>
+        <div class="chain-meta" id="meta-01"></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
@@ -347,7 +412,8 @@
       <div>
         <h3>Single-use deposit address</h3>
         <p>Derived per invoice, receives exactly once, never reused. On Solana, an Associated Token Account is created (rent reclaimable on close). On EVM chains, a standard address — no rent.</p>
-        <div class="meta"><span><b>1</b> payment, then retired</span><span><b>cost</b> varies by chain (see below)</span></div>
+        <div class="meta"><span><b>1 payment</b>, then retired</span></div>
+        <div class="chain-meta" id="meta-02"></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
@@ -359,7 +425,8 @@
       <div>
         <h3>Sweep to treasury</h3>
         <p>Collects deposit into the shared treasury. On Solana: atomic <span class="mono">transfer</span> + <span class="mono">closeAccount</span> (the close returns the rent — never split them). On EVM chains: EIP-3009 gasless sweep or relayer-paid transfer. A reaper job catches any that fail.</p>
-        <div class="meta"><span><b>cost</b> varies by chain</span><span><b>batched</b> where possible</span><span><b>reaper</b> retries failures</span></div>
+        <div class="meta"><span><b>reaper</b> retries failures</span></div>
+        <div class="chain-meta" id="meta-03"></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
@@ -674,42 +741,59 @@
   var CHAINS = {
     solana: {
       label:"Solana", asset:"USDC", sweep:0.0018, perAddr:0.37, refundable:true,
-      riskModel:"rent", ctl:"fail", tone:"good",
+      riskModel:"rent", ctl:"fail", tone:"good", color:"#7B65C0",
       badge:"Best fit for single-use",
       note:"Rent refundable on close; failed closes are the only real leak.",
-      opsName:"Solana ops cost", opsSub:"sweeps, annual"
+      opsName:"Solana ops cost", opsSub:"sweeps, annual",
+      step01:["<b>~$0.0009</b> tx fee","<b>~400ms</b> settle","USDC"],
+      step02:["<b>$0.37</b> ATA rent","refundable on close"],
+      step03:["<b>~$0.0018</b> sweep","transfer + closeAccount","rent reclaimed"]
     },
     base: {
       label:"Base (L2)", asset:"USDC", sweep:0.012, perAddr:0, refundable:false,
-      riskModel:"none", ctl:null, tone:"good",
+      riskModel:"none", ctl:null, tone:"good", color:"#1F5C8B",
       badge:"Best tooling + USDC depth",
       note:"Cents per sweep, native USDC, EIP-3009 gasless. No rent, nothing to strand.",
-      opsName:"Base ops cost", opsSub:"gasless sweeps, annual"
+      opsName:"Base ops cost", opsSub:"gasless sweeps, annual",
+      step01:["<b>~$0.01</b> tx fee","<b>~2s</b> settle","USDC"],
+      step02:["<b>$0</b> no rent","standard address"],
+      step03:["<b>~$0.01</b> sweep","EIP-3009 gasless","batched"]
     },
     bnb: {
       label:"BNB", asset:"USDT", sweep:0.07, perAddr:0, refundable:false,
-      riskModel:"none", ctl:null, tone:"good",
+      riskModel:"none", ctl:null, tone:"good", color:"#C09B1A",
       badge:"Cheap, stable, centralized",
       note:"~$0.05–0.10 per sweep, stable. EIP-3009 gasless works. Watch validator centralization.",
-      opsName:"BNB ops cost", opsSub:"gasless sweeps, annual"
+      opsName:"BNB ops cost", opsSub:"gasless sweeps, annual",
+      step01:["<b>~$0.07</b> tx fee","<b>~3s</b> settle","USDT"],
+      step02:["<b>$0</b> no rent","standard address"],
+      step03:["<b>~$0.07</b> sweep","signed auth + relayer","batched"]
     },
     ethereum: {
       label:"Ethereum L1", asset:"USDC", sweep:5, perAddr:0, refundable:false,
-      riskModel:"gas", ctl:"gas", tone:"warn",
+      riskModel:"gas", ctl:"gas", tone:"warn", color:"#5A6B7F",
       badge:"Large tickets only",
       note:"Gas priced live — use the slider. A $5 sweep on a small ticket eats the margin whole.",
-      opsName:"Ethereum gas cost", opsSub:"at set gas price, annual"
+      opsName:"Ethereum gas cost", opsSub:"at set gas price, annual",
+      step01:["<b>$0.50–$15</b> tx fee","<b>~12s</b> settle","USDC"],
+      step02:["<b>$0</b> no rent","standard address"],
+      step03:["<b>$0.50–$15</b> sweep","EIP-3009 gasless","volatile gas"]
     },
     tron: {
       label:"Tron", asset:"USDT", sweep:2.89, perAddr:0, refundable:false,
-      riskModel:"penalty", ctl:null, tone:"bad",
+      riskModel:"penalty", ctl:null, tone:"bad", color:"#C2452D",
       badge:"Wrong fit for single-use",
       note:"Every fresh deposit address pays the double-energy penalty (~$2.89 rented). Rewards reuse, not single-use.",
-      opsName:"Tron energy cost", opsSub:"fresh-wallet transfers, annual"
+      opsName:"Tron energy cost", opsSub:"fresh-wallet transfers, annual",
+      step01:["<b>~$2.89</b> fresh-wallet tx","<b>~3s</b> settle","USDT"],
+      step02:["<b>$0</b> but 2× energy penalty","standard address"],
+      step03:["<b>~$2.89</b> sweep","delegate energy","no gasless equiv."]
     }
   };
 
   var current = "solana";
+  var selected = new Set(["solana"]);
+  var chainOrder = ["solana","base","bnb","ethereum","tron"];
   var el = function(id){ return document.getElementById(id); };
 
   function usd(n, dp){
@@ -826,8 +910,52 @@
     el("v-rot").textContent = rotLabels[+el("rot").value];
   }
 
-  // chain selector
-  var btns = document.querySelectorAll(".cp-btn");
+  // global multi-select chain picker (steps 01-03)
+  function renderChainMetas(){
+    ["01","02","03"].forEach(function(step){
+      var container = el("meta-"+step);
+      if(!container) return;
+      container.innerHTML = "";
+      if(selected.size === 0){
+        container.innerHTML = '<div class="cm-empty">Select chains above to compare</div>';
+        return;
+      }
+      chainOrder.forEach(function(key){
+        if(!selected.has(key)) return;
+        var c = CHAINS[key];
+        var data = c["step"+step];
+        var row = document.createElement("div");
+        row.className = "cm-row";
+        var html = '<span class="cm-dot" style="background:'+c.color+'"></span>';
+        html += '<span class="cm-chain" style="color:'+c.color+'">'+c.label+'</span>';
+        data.forEach(function(d){
+          html += '<span class="cm-val">'+d+'</span>';
+        });
+        row.innerHTML = html;
+        container.appendChild(row);
+      });
+    });
+  }
+
+  var gBtns = document.querySelectorAll("#global-chainpick .gcp-btn");
+  gBtns.forEach(function(b){
+    b.addEventListener("click", function(){
+      var chain = b.getAttribute("data-chain");
+      if(selected.has(chain)){
+        selected.delete(chain);
+        b.classList.remove("active");
+      } else {
+        selected.add(chain);
+        b.classList.add("active");
+      }
+      renderChainMetas();
+    });
+  });
+  document.querySelector('#global-chainpick .gcp-btn[data-chain="solana"]').classList.add("active");
+  renderChainMetas();
+
+  // unit economics chain selector (single-select)
+  var btns = document.querySelectorAll("#chainpick .cp-btn");
   btns.forEach(function(b){
     b.addEventListener("click", function(){
       current = b.getAttribute("data-chain");
