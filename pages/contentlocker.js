@@ -2,7 +2,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 const MAX_READS = 3
-const EXPIRES_AT = new Date('2026-07-07T00:00:00Z')
+const EXPIRES_AT = new Date('2026-07-28T06:00:00Z')
 
 let readCount = 0
 
@@ -51,7 +51,7 @@ export default function ContentLocker({ expired, html, reads }) {
         style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#141C24', color: '#DFE4E8', padding: '6px 16px', fontSize: '11px', fontFamily: '"IBM Plex Mono", monospace', display: 'flex', justifyContent: 'space-between' }}
       >
         <span>CONFIDENTIAL — read {reads}/{MAX_READS}</span>
-        <span>expires Monday Jul 7</span>
+        <span>expires Monday Jul 28</span>
       </div>
       <div dangerouslySetInnerHTML={{ __html: html }} style={{ paddingTop: '28px' }} />
     </>
