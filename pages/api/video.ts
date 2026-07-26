@@ -15,6 +15,7 @@ const ALLOWED_HOSTS = [
   /^https:\/\/[a-z0-9-]+\.devnet-1\.datasprite-cdn\.com\//,
   /^https:\/\/arweave\.net\//,
   /^https:\/\/[a-z0-9-]+\.arweave\.net\//,
+  /^https:\/\/stash-production-47fc\.up\.railway\.app\//,
 ];
 
 export const config = {
