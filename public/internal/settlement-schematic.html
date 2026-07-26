@@ -520,7 +520,7 @@
     <div class="ctl">
       <label>
         <span class="ctl-top"><span class="ctl-name">Monthly volume</span><span class="ctl-val" id="v-vol">$250k</span></span>
-        <input type="range" id="vol" min="25000" max="2000000" step="25000" value="250000">
+        <input type="range" id="vol" min="1000" max="2000000" step="1000" value="250000">
       </label>
     </div>
     <div class="ctl">
@@ -678,6 +678,87 @@
   <div class="chain-verdict">
     <b>Ranking for a single-use + sweep design:</b> Solana (close your ATAs) → an Ethereum L2 like Base (best tooling and USDC liquidity) → BNB (cheap, stable, watch centralization) → Ethereum L1 (large tickets only) → Tron (only if you abandon single-use for reused addresses). Tron's cheap reputation is real but it's earned on reused wallets — it does not transfer to your model.
   </div>
+
+  <h2 class="sect-title" style="margin-top:44px">Address pool &amp; replenishment</h2>
+  <p class="sect-sub">Each invoice gets a fresh deposit address. Those addresses come from a pool of pre-derived ones, ready to assign. When the pool runs low, the system generates more in a batch. Here's the full lifecycle.</p>
+
+  <div class="flow-table">
+    <div class="row is-gross">
+      <span class="row-name">Derivation method</span>
+      <span class="row-val">HD wallet (BIP-44) per chain</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Solana<span class="row-note">ATA from (treasury, mint, index)</span></span>
+      <span class="row-val">deterministic, rent on creation</span>
+    </div>
+    <div class="row">
+      <span class="row-name">EVM (Base, BNB, ETH)<span class="row-note">m/44'/60'/0'/0/{index}</span></span>
+      <span class="row-val">deterministic, no cost until funded</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Tron (TRC-20)<span class="row-note">m/44'/195'/0'/0/{index}</span></span>
+      <span class="row-val">deterministic, energy penalty on first use</span>
+    </div>
+  </div>
+
+  <div class="flow-table" style="margin-top:12px">
+    <div class="row is-gross">
+      <span class="row-name">Pool management</span>
+      <span class="row-val">per chain, independent</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Pool floor (refill trigger)<span class="row-note">when available addresses drop below this</span></span>
+      <span class="row-val">50</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Batch size<span class="row-note">how many to generate per refill</span></span>
+      <span class="row-val">200</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Refill trigger<span class="row-note">how the system knows to generate more</span></span>
+      <span class="row-val">cron every 5 min + on-demand if pool &lt; floor</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Max derivations per seed<span class="row-note">when to rotate to a fresh seed</span></span>
+      <span class="row-val">10,000</span>
+    </div>
+  </div>
+
+  <div class="flow-table" style="margin-top:12px">
+    <div class="row is-gross">
+      <span class="row-name">Address lifecycle</span>
+      <span class="row-val">5 states</span>
+    </div>
+    <div class="row">
+      <span class="row-name">1. Derived<span class="row-note">address computed, stored in DB, not yet assigned</span></span>
+      <span class="row-val">available</span>
+    </div>
+    <div class="row">
+      <span class="row-name">2. Assigned<span class="row-note">linked to an invoice, waiting for payment</span></span>
+      <span class="row-val">watching</span>
+    </div>
+    <div class="row">
+      <span class="row-name">3. Funded<span class="row-note">payment received, awaiting sweep</span></span>
+      <span class="row-val">pending sweep</span>
+    </div>
+    <div class="row">
+      <span class="row-name">4. Swept<span class="row-note">funds moved to treasury, address retired</span></span>
+      <span class="row-val">done</span>
+    </div>
+    <div class="row">
+      <span class="row-name">5. Expired<span class="row-note">invoice timed out, no payment received</span></span>
+      <span class="row-val">recyclable</span>
+    </div>
+  </div>
+
+  <div class="footnote" style="margin-top:20px"><b>When to generate a new seed (not just new addresses):</b><br>
+    1. Every 10,000 derivations from one seed (precautionary limit — HD derivation is safe far beyond this, but smaller sets are easier to audit).<br>
+    2. If a seed is suspected compromised — rotate immediately, sweep all funded addresses from that seed.<br>
+    3. On the quarterly key rotation schedule (alongside cold wallet rotation).<br>
+    4. When onboarding a new chain (one seed per chain, never shared across chains).</p>
+  </div>
+
+  <div class="footnote"><b>Expired addresses:</b> If an invoice expires without payment, the address was never funded. On EVM chains it's free to recycle (just reassign it). On Solana, if the ATA was pre-created, the rent is stranded until you close it — run a reaper to close unfunded ATAs and reclaim rent. Don't reuse addresses even if they were never funded; single-use means single-use.</div>
 
   <h2 class="sect-title" style="margin-top:44px">Treasury structure &amp; key rotation</h2>
   <p class="sect-sub">Two questions: "how much can I lose if a key gets stolen?" and "how long does one key matter?" The hot/cold split answers the first. Rotation answers the second. They work together but are configured independently.</p>
