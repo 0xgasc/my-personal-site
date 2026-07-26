@@ -327,7 +327,7 @@
     <header>
       <p class="eyebrow">Wallet opsec documentation</p>
       <h1>Wallet opsec &amp; settlement</h1>
-      <p class="lede">Single-use deposit addresses, atomic sweep into one shared treasury, payout converted through a licensed intermediary. Fee model, treasury structure, and key rotation across chains.</p>
+      <p class="lede">Single-use deposit addresses, atomic sweep into one shared treasury, merchant-choice payout (direct USDC default, XMR opt-in via licensed intermediary). Fee model, treasury structure, and key rotation across chains.</p>
     </header>
 
     <article class="stage">
@@ -393,21 +393,33 @@
     <article class="stage">
       <div class="idx">05</div>
       <div>
-        <h3>NOWPayments conversion</h3>
-        <p>Licensed intermediary converts USDC → XMR and forwards to the merchant's own wallet. They absorb the conversion and AML burden; you stay an orchestration layer. Adult and gaming MCCs already supported.</p>
-        <div class="meta"><span><b>0.5%</b> processing</span><span><b>~1%</b> conversion</span><span><b>self-custody</b> payout</span></div>
+        <h3>Merchant payout — merchant's choice</h3>
+        <p>Merchant selects their preferred payout method at onboarding. The shared treasury settles to them in whichever form they choose. The privacy boundary (step 04) holds regardless of payout chain — commingling in the shared treasury is the load-bearing privacy step, not the payout method.</p>
+        <div class="meta"><span><b>payout</b> = merchant config</span><span><b>self-custody</b> always</span></div>
       </div>
-      <div class="vis v-opaque">Breaks</div>
+      <div class="vis v-agg">Configurable</div>
+    </article>
+
+    <div class="link"></div>
+
+    <article class="stage">
+      <div class="idx">05a</div>
+      <div>
+        <h3>Direct USDC payout (default)</h3>
+        <p>Treasury sends USDC directly to the merchant's wallet on their preferred chain (Solana, Base, etc.). No intermediary, no conversion fee. Simplest path — most merchants will choose this.</p>
+        <div class="meta"><span><b>0%</b> conversion</span><span><b>~$0.002</b> tx fee</span><span><b>public</b> payout address</span></div>
+      </div>
+      <div class="vis v-public">Public</div>
     </article>
 
     <div class="link"></div>
 
     <article class="stage is-xmr">
-      <div class="idx">06</div>
+      <div class="idx">05b</div>
       <div>
-        <h3>Merchant XMR wallet</h3>
-        <p>Stealth address means the merchant publishes one address and every payout lands at a unique one-time address. Ring signatures hide the sender, RingCT hides the amount.</p>
-        <div class="meta"><span><b>~20 min</b> confirmations</span><span><b>$0.01</b> network fee</span><span><b>off-ramp</b> = the weak point</span></div>
+        <h3>XMR payout via NOWPayments (opt-in)</h3>
+        <p>For merchants who want maximum opacity: licensed intermediary converts USDC → XMR and forwards to the merchant's wallet. Stealth addresses, ring signatures, hidden amounts. They absorb the conversion and AML burden; you stay an orchestration layer.</p>
+        <div class="meta"><span><b>0.5%</b> processing</span><span><b>~1%</b> conversion</span><span><b>~20 min</b> confirmations</span><span><b>off-ramp</b> = merchant's problem</span></div>
       </div>
       <div class="vis v-opaque">Opaque</div>
     </article>
@@ -474,15 +486,15 @@
       <span class="row-val" id="r-take">−$0.23</span>
     </div>
     <div class="row">
-      <span class="row-name">NOWPayments<span class="row-note">0.5% processing</span></span>
+      <span class="row-name">NOWPayments<span class="row-note">0.5% — XMR opt-in only, $0 for direct USDC</span></span>
       <span class="row-val" id="r-np">−$0.08</span>
     </div>
     <div class="row">
-      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1%</span></span>
+      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1% — XMR opt-in only, $0 for direct USDC</span></span>
       <span class="row-val" id="r-conv">−$0.15</span>
     </div>
     <div class="row">
-      <span class="row-name">XMR network fee</span>
+      <span class="row-name">XMR network fee<span class="row-note">XMR opt-in only</span></span>
       <span class="row-val" id="r-xmr">−$0.01</span>
     </div>
     <div class="row is-net">
