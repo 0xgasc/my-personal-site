@@ -21,7 +21,7 @@ export default function App({ Component, pageProps, overrides }) {
 
   const router = useRouter()
   const isFullscreen =
-    router.pathname.startsWith('/admin') || router.pathname.startsWith('/preview')
+    router.pathname.startsWith('/admin') || router.pathname.startsWith('/preview') || router.pathname === '/contentlocker'
 
   if (isFullscreen) {
     return (
