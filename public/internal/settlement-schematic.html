@@ -334,8 +334,8 @@
       <div class="idx">01</div>
       <div>
         <h3>Payer wallet</h3>
-        <p>Unverified client sends USDC on Solana against an invoice. No KYC below your de-minimis threshold.</p>
-        <div class="meta"><span><b>$0.0009</b> tx fee</span><span><b>~1s</b> settle</span><span><b>$0.37</b> ATA rent if payer-created</span></div>
+        <p>Client sends stablecoin (USDC or USDT) on any supported chain against an invoice. Chain is set per merchant or per invoice — see chain strategies below for cost tradeoffs. No KYC below your de-minimis threshold.</p>
+        <div class="meta"><span><b>multi-chain</b> Solana / Base / BNB / ETH / Tron</span><span><b>fee varies</b> by chain</span></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
@@ -346,8 +346,8 @@
       <div class="idx">02</div>
       <div>
         <h3>Single-use deposit address</h3>
-        <p>Derived per invoice, receives exactly once, never reused. Associated Token Account created to hold USDC.</p>
-        <div class="meta"><span><b>$0.37</b> rent, reclaimable</span><span><b>1</b> payment, then retired</span></div>
+        <p>Derived per invoice, receives exactly once, never reused. On Solana, an Associated Token Account is created (rent reclaimable on close). On EVM chains, a standard address — no rent.</p>
+        <div class="meta"><span><b>1</b> payment, then retired</span><span><b>cost</b> varies by chain (see below)</span></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
@@ -357,9 +357,9 @@
     <article class="stage">
       <div class="idx">03</div>
       <div>
-        <h3>Atomic sweep</h3>
-        <p>One transaction: <span class="mono">transfer</span> + <span class="mono">closeAccount</span>. Never split them — the close is what returns the rent. A reaper job catches any that fail.</p>
-        <div class="meta"><span><b>$0.0018</b> per sweep</span><span><b>~10</b> per tx, sig-limited</span><span><b>rent →</b> treasury</span></div>
+        <h3>Sweep to treasury</h3>
+        <p>Collects deposit into the shared treasury. On Solana: atomic <span class="mono">transfer</span> + <span class="mono">closeAccount</span> (the close returns the rent — never split them). On EVM chains: EIP-3009 gasless sweep or relayer-paid transfer. A reaper job catches any that fail.</p>
+        <div class="meta"><span><b>cost</b> varies by chain</span><span><b>batched</b> where possible</span><span><b>reaper</b> retries failures</span></div>
       </div>
       <div class="vis v-public">Public</div>
     </article>
