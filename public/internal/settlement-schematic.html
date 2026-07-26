@@ -937,6 +937,15 @@
     });
   }
 
+  function syncUnitEcon(chain){
+    current = chain;
+    var btns = document.querySelectorAll("#chainpick .cp-btn");
+    btns.forEach(function(x){ x.classList.remove("active"); });
+    var match = document.querySelector('#chainpick .cp-btn[data-chain="'+chain+'"]');
+    if(match) match.classList.add("active");
+    render();
+  }
+
   var gBtns = document.querySelectorAll("#global-chainpick .gcp-btn");
   gBtns.forEach(function(b){
     b.addEventListener("click", function(){
@@ -947,6 +956,7 @@
       } else {
         selected.add(chain);
         b.classList.add("active");
+        syncUnitEcon(chain);
       }
       renderChainMetas();
     });
@@ -955,17 +965,17 @@
   renderChainMetas();
 
   // unit economics chain selector (single-select)
-  var btns = document.querySelectorAll("#chainpick .cp-btn");
-  btns.forEach(function(b){
+  var ueBtns = document.querySelectorAll("#chainpick .cp-btn");
+  ueBtns.forEach(function(b){
     b.addEventListener("click", function(){
       current = b.getAttribute("data-chain");
-      btns.forEach(function(x){ x.classList.remove("active"); });
+      ueBtns.forEach(function(x){ x.classList.remove("active"); });
       b.classList.add("active");
       render();
     });
   });
   // default active
-  document.querySelector('.cp-btn[data-chain="solana"]').classList.add("active");
+  document.querySelector('#chainpick .cp-btn[data-chain="solana"]').classList.add("active");
 
   // sliders
   ["ticket","vol","take","fail","gas","days","rot"].forEach(function(id){
