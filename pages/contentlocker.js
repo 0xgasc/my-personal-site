@@ -5,7 +5,7 @@ import { createHash } from 'crypto'
 import { parse } from 'cookie'
 
 const MAX_READS = 25
-const EXPIRES_AT = new Date('2026-07-28T06:00:00Z')
+const EXPIRES_AT = new Date('2026-08-15T06:00:00Z')
 
 let readCount = 0
 
@@ -101,7 +101,7 @@ export default function ContentLocker({ state, html, reads }) {
     <>
       <div style={styles.banner}>
         <span>CONFIDENTIAL — read {reads}/{MAX_READS}</span>
-        <span>expires Monday Jul 28</span>
+        <span>expires Friday Aug 15</span>
       </div>
       <div dangerouslySetInnerHTML={{ __html: html }} style={{ paddingTop: '28px' }} />
     </>
