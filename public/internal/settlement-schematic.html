@@ -268,6 +268,41 @@
     color:var(--mute);font-style:italic;padding:5px 0;
   }
 
+  /* ---------- price bar ---------- */
+  .price-bar{
+    display:flex;flex-wrap:wrap;gap:8px 14px;
+    padding:11px 14px;margin-bottom:18px;
+    background:var(--card);border:1px solid var(--rule);
+    align-items:center;font-family:"IBM Plex Mono",monospace;
+  }
+  .pb-label{
+    font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--mute);width:100%;margin-bottom:2px;
+  }
+  .pb-price{font-size:12px;display:inline-flex;align-items:baseline;gap:4px}
+  .pb-sym{color:var(--mute);font-size:10px;letter-spacing:.05em}
+  .pb-val{font-weight:500;font-variant-numeric:tabular-nums}
+  .pb-refresh{
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 9px;border:1px solid var(--rule);background:transparent;
+    color:var(--mute);cursor:pointer;transition:all .15s ease;
+    font-family:inherit;margin-left:auto;
+  }
+  .pb-refresh:hover{border-color:var(--ink);color:var(--ink)}
+  .pb-age{font-size:10px;color:var(--mute)}
+  .pb-stale{color:var(--xmr)}
+
+  /* ---------- payout toggle ---------- */
+  .payout-toggle{display:flex;gap:0;margin-bottom:16px}
+  .pt-btn{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    padding:8px 14px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;
+  }
+  .pt-btn+.pt-btn{border-left:0}
+  .pt-btn:hover{color:var(--ink)}
+  .pt-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
   .verdict-bar{
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     padding:11px 14px;margin-bottom:20px;border-radius:2px;
@@ -424,7 +459,7 @@
       <div class="idx">03</div>
       <div>
         <h3>Sweep to treasury</h3>
-        <p>Collects deposit into the shared treasury. On Solana: atomic <span class="mono">transfer</span> + <span class="mono">closeAccount</span> (the close returns the rent — never split them). On EVM chains: EIP-3009 gasless sweep or relayer-paid transfer. A reaper job catches any that fail.</p>
+        <p>Collects deposit into the shared treasury. On Solana: atomic <span class="mono">transfer</span> + <span class="mono">closeAccount</span> (the close returns the rent — never split them). On chains with EIP-3009 (Base, Ethereum): gasless sweep, relayer pays. On BNB/Tron: fund address with native gas first. A reaper job catches any that fail.</p>
         <div class="meta"><span><b>reaper</b> retries failures</span></div>
         <div class="chain-meta" id="meta-03"></div>
       </div>
@@ -495,7 +530,17 @@
 
 <div class="wrap model">
   <h2 class="sect-title">Unit economics</h2>
-  <p class="sect-sub">Pick a chain and the on-chain costs, ops totals, and per-invoice drag update live. The merchant-facing waterfall barely moves between chains — collection cost is operator opex, so the real chain differences show up in the ops and risk cards.</p>
+  <p class="sect-sub">Pick a chain and payout method — all figures compute live from token prices (auto-fetched, refreshable). The merchant waterfall barely moves between chains; collection cost is your opex. Toggle Direct USDC vs XMR to see the real cost difference.</p>
+
+  <div class="price-bar" id="price-bar">
+    <span class="pb-label">Token prices (all fees computed from these)</span>
+    <span class="pb-price"><span class="pb-sym">SOL</span> <span class="pb-val" id="p-sol">$74</span></span>
+    <span class="pb-price"><span class="pb-sym">ETH</span> <span class="pb-val" id="p-eth">$1,872</span></span>
+    <span class="pb-price"><span class="pb-sym">BNB</span> <span class="pb-val" id="p-bnb">$600</span></span>
+    <span class="pb-price"><span class="pb-sym">TRX</span> <span class="pb-val" id="p-trx">$0.330</span></span>
+    <button class="pb-refresh" id="pb-refresh">Refresh</button>
+    <span class="pb-age" id="pb-age">defaults</span>
+  </div>
 
   <div class="chainpick" id="chainpick">
     <button class="cp-btn" data-chain="solana">Solana</button>
@@ -503,6 +548,11 @@
     <button class="cp-btn" data-chain="bnb">BNB</button>
     <button class="cp-btn" data-chain="ethereum">Ethereum L1</button>
     <button class="cp-btn" data-chain="tron">Tron</button>
+  </div>
+
+  <div class="payout-toggle" id="payout-toggle">
+    <button class="pt-btn active" data-mode="usdc">Direct USDC payout</button>
+    <button class="pt-btn" data-mode="xmr">XMR via NOWPayments</button>
   </div>
 
   <div class="verdict-bar" id="verdict-bar">
@@ -537,8 +587,8 @@
     </div>
     <div class="ctl" id="ctl-gas" style="display:none">
       <label>
-        <span class="ctl-top"><span class="ctl-name">Gas / sweep</span><span class="ctl-val" id="v-gas">$5.00</span></span>
-        <input type="range" id="gas" min="0.5" max="30" step="0.5" value="5">
+        <span class="ctl-top"><span class="ctl-name">Gas price</span><span class="ctl-val" id="v-gas">1.0 gwei</span></span>
+        <input type="range" id="gas" min="0.1" max="50" step="0.1" value="1">
       </label>
     </div>
   </div>
@@ -553,16 +603,16 @@
       <span class="row-val" id="r-take">−$0.23</span>
     </div>
     <div class="row">
-      <span class="row-name">NOWPayments<span class="row-note">0.5% — XMR opt-in only, $0 for direct USDC</span></span>
+      <span class="row-name">NOWPayments<span class="row-note">0.5% — XMR path only</span></span>
       <span class="row-val" id="r-np">−$0.08</span>
     </div>
     <div class="row">
-      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1% — XMR opt-in only, $0 for direct USDC</span></span>
+      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1.8% all-in (NP + ChangeNOW + spread) — XMR path only</span></span>
       <span class="row-val" id="r-conv">−$0.15</span>
     </div>
     <div class="row">
-      <span class="row-name">XMR network fee<span class="row-note">XMR opt-in only</span></span>
-      <span class="row-val" id="r-xmr">−$0.01</span>
+      <span class="row-name">XMR network fee<span class="row-note">~$0.015 — XMR path only</span></span>
+      <span class="row-val" id="r-xmr">−$0.02</span>
     </div>
     <div class="row is-net">
       <span class="row-name">Merchant nets</span>
@@ -605,12 +655,12 @@
       </div>
       <div class="chain-mech">Account-rent model. Fee payer is a separate account, so the treasury funds every sweep — deposit addresses never need pre-funding.</div>
       <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.0018</td></tr>
-        <tr><td>Per-address cost</td><td>$0.37 ATA rent, <b>refundable</b></td></tr>
+        <tr><td>Sweep tx</td><td>~$0.001–0.005</td></tr>
+        <tr><td>Per-address cost</td><td>0.00204 SOL ATA rent, <b>refundable</b></td></tr>
         <tr><td>Sweep method</td><td><span class="mono">transfer</span> + <span class="mono">closeAccount</span>, atomic</td></tr>
-        <tr><td>Gotcha</td><td class="warn">Failed close = $0.37 stranded/invoice</td></tr>
+        <tr><td>Gotcha</td><td class="warn">Failed close = rent stranded (SOL-price dependent)</td></tr>
       </table>
-      <div class="chain-note">USDC is legacy SPL, not Token-2022 — confidential transfers unavailable. Reclaim rent on every sweep and this is the cheapest option.</div>
+      <div class="chain-note">USDC is legacy SPL, not Token-2022 — confidential transfers unavailable. Reclaim rent on every sweep and this is the cheapest option. Rent in USD tracks SOL price.</div>
     </div>
 
     <div class="chain">
@@ -625,37 +675,37 @@
         <tr><td>Sweep method</td><td>EIP-3009, relayer pays, batched</td></tr>
         <tr><td>Gotcha</td><td class="warn">L2 fees track L1 data prices</td></tr>
       </table>
-      <div class="chain-note">You said you don't need Base — included for weighting. It's the strongest all-round choice if you ever want off Solana: same USDC, mature infra, no rent bookkeeping.</div>
+      <div class="chain-note">Strongest all-round choice after Solana: native Circle USDC, EIP-3009 gasless, mature infra, no rent bookkeeping. Fees track L1 data prices via EIP-4844 blobs.</div>
     </div>
 
     <div class="chain">
       <div class="chain-head">
         <span class="chain-name">BNB Chain (BEP-20)</span>
-        <span class="chain-tag tag-good">Solid EVM fit</span>
+        <span class="chain-tag tag-warn">Needs gas funding</span>
       </div>
-      <div class="chain-mech">Standard EVM gas, but cheap and stable. Gasless sweeps via EIP-3009 / permit work exactly as on other EVM chains — no per-address funding.</div>
+      <div class="chain-mech">Standard EVM gas, cheap and stable. <b>Neither USDT nor USDC on BNB supports EIP-3009 or permit</b> — both are Binance-pegged wrappers, not Circle-native. Each deposit address needs BNB to sweep.</div>
       <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.05–0.10</td></tr>
-        <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
-        <tr><td>Sweep method</td><td>signed authorization, relayer pays</td></tr>
-        <tr><td>Gotcha</td><td class="warn">Few validators — centralization risk</td></tr>
+        <tr><td>Fund + sweep</td><td>~$0.10–0.20</td></tr>
+        <tr><td>Per-address cost</td><td>BNB gas funding required</td></tr>
+        <tr><td>Sweep method</td><td>fund BNB → transferFrom → collect</td></tr>
+        <tr><td>Gotcha</td><td class="warn">No gasless path; centralization risk</td></tr>
       </table>
-      <div class="chain-note">Fees stay well under $0.50 even in heavy use. Confirm whether you're taking USDT or USDC on BEP-20; both exist, USDT is deeper.</div>
+      <div class="chain-note">USDT is deeper on BNB but neither stablecoin supports gasless sweeps. Circle does not issue native USDC on BNB. Per-address gas funding adds ops complexity vs chains with EIP-3009.</div>
     </div>
 
     <div class="chain">
       <div class="chain-head">
         <span class="chain-name">Ethereum L1 (ERC-20)</span>
-        <span class="chain-tag tag-warn">Large tickets only</span>
+        <span class="chain-tag tag-warn">Viable, still volatile</span>
       </div>
-      <div class="chain-mech">Gas priced by live demand — the one chain whose per-sweep cost you cannot predict. Needs EIP-3009 gasless or deposit addresses require ETH to sweep.</div>
+      <div class="chain-mech">Post-Dencun gas has dropped dramatically — typical 2026 fees are ~1 gwei, not 30+. EIP-3009 gasless sweeps work for Circle USDC (native). Still the most volatile fee environment.</div>
       <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.50–15, spikes $30+</td></tr>
+        <tr><td>Sweep tx</td><td>~$0.01–2.00, rare spikes $5+</td></tr>
         <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
         <tr><td>Sweep method</td><td>EIP-3009 gasless, batched</td></tr>
-        <tr><td>Gotcha</td><td class="warn">A $5 gas sweep on a $15 ticket = 33%</td></tr>
+        <tr><td>Gotcha</td><td class="warn">Fee spikes still possible during congestion</td></tr>
       </table>
-      <div class="chain-note">Disqualified for micro-tickets by volatility alone. If you want the Ethereum ecosystem, use an L2 (Base, Arbitrum) — same USDC, cents per sweep.</div>
+      <div class="chain-note">Much cheaper than 2024 but still the widest variance. L2s (Base, Arbitrum) give you the same USDC + EIP-3009 with tighter cost bounds. Use L1 only if counterparties insist on mainnet.</div>
     </div>
 
     <div class="chain">
@@ -663,12 +713,12 @@
         <span class="chain-name">Tron (TRC-20)</span>
         <span class="chain-tag tag-bad">Wrong fit for single-use</span>
       </div>
-      <div class="chain-mech">Energy/bandwidth model, not per-tx gas. The trap: sending to a wallet that has never held the token costs <b>double energy</b> (~130k vs ~65k units) — and every single-use deposit address is, by definition, a fresh wallet.</div>
+      <div class="chain-mech">Energy/bandwidth model, not per-tx gas. The trap: sending to a wallet that has never held the token costs <b>double energy</b> (~130k vs ~65k units) — and every single-use deposit address is, by definition, a fresh wallet. Proposal #104 (Aug 2025) halved energy unit prices, but TRX price rose to offset it.</div>
       <table class="chain-tbl">
-        <tr><td>Transfer (fresh wallet)</td><td>~$2.89 rented / ~$3.90 burned</td></tr>
+        <tr><td>Transfer (fresh wallet)</td><td>~$3.08 rented / ~$4.42 burned</td></tr>
         <tr><td>Per-address cost</td><td class="warn">the double-energy penalty, every time</td></tr>
         <tr><td>Sweep method</td><td>delegate energy or fund TRX per address</td></tr>
-        <tr><td>Gotcha</td><td class="warn">No clean gasless equivalent to EIP-3009</td></tr>
+        <tr><td>Gotcha</td><td class="warn">Protocol-level energy delegation, not token-level gasless</td></tr>
       </table>
       <div class="chain-note">Tron rewards the opposite of your design: <b>reused</b> deposit addresses with a staked-TRX energy pool. If you want Tron, that means giving up single-use — a direct trade of privacy for cost. USDT dominates here; USDC is thin.</div>
     </div>
@@ -676,7 +726,7 @@
   </div>
 
   <div class="chain-verdict">
-    <b>Ranking for a single-use + sweep design:</b> Solana (close your ATAs) → an Ethereum L2 like Base (best tooling and USDC liquidity) → BNB (cheap, stable, watch centralization) → Ethereum L1 (large tickets only) → Tron (only if you abandon single-use for reused addresses). Tron's cheap reputation is real but it's earned on reused wallets — it does not transfer to your model.
+    <b>Ranking for a single-use + sweep design:</b> Solana (close your ATAs, cheapest when rent is reclaimed) → Base (best tooling, native USDC, EIP-3009 gasless) → Ethereum L1 (viable post-Dencun at ~1 gwei, but still volatile) → BNB (cheap but no gasless — both stablecoins are Binance-pegged) → Tron (only if you abandon single-use for reused addresses). Tron's cheap reputation is earned on reused wallets with staked energy — it does not transfer to single-use.
   </div>
 
   <h2 class="sect-title" style="margin-top:44px">Address pool &amp; replenishment</h2>
@@ -811,192 +861,286 @@
 
 <script>
 (function(){
-  var NP = 0.005, CONV = 0.01, XMRFEE = 0.01;
+  var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
+  var priceTs = 0;
+  var NP = 0.005, CONV = 0.018, XMRFEE = 0.015;
+  var payoutMode = 'usdc';
+  var current = 'solana';
+  var selected = new Set(['solana']);
+  var chainOrder = ['solana','base','bnb','ethereum','tron'];
 
-  // Per-chain economics. Figures are early-2026 order-of-magnitude; re-check live.
-  //  sweep      : $ on-chain cost to collect + move one deposit (the "network fee" per invoice)
-  //  perAddr    : $ locked per deposit address (rent). refundable=true means recovered on close
-  //  riskModel  : how the risk KPI behaves — 'rent' (stranded on failed close),
-  //               'gas' (volatility band), 'penalty' (fresh-wallet energy tax), 'none'
-  //  ctl        : which conditional slider to show — 'fail' | 'gas' | null
   var CHAINS = {
     solana: {
-      label:"Solana", asset:"USDC", sweep:0.0018, perAddr:0.37, refundable:true,
-      riskModel:"rent", ctl:"fail", tone:"good", color:"#7B65C0",
-      badge:"Best fit for single-use",
-      note:"Rent refundable on close; failed closes are the only real leak.",
-      opsName:"Solana ops cost", opsSub:"sweeps, annual",
-      step01:["<b>~$0.0009</b> tx fee","<b>~400ms</b> settle","USDC"],
-      step02:["<b>$0.37</b> ATA rent","refundable on close"],
-      step03:["<b>~$0.0018</b> sweep","transfer + closeAccount","rent reclaimed"]
+      label:'Solana', asset:'USDC', refundable:true,
+      riskModel:'rent', ctl:'fail', tone:'good', color:'#7B65C0',
+      sweepNative:0.000015, rentNative:0.00203928,
+      badge:'Best fit for single-use',
+      note:'Rent refundable on close; failed closes are the only real leak.',
+      opsName:'Solana ops cost', opsSub:'sweeps, annual'
     },
     base: {
-      label:"Base (L2)", asset:"USDC", sweep:0.012, perAddr:0, refundable:false,
-      riskModel:"none", ctl:null, tone:"good", color:"#1F5C8B",
-      badge:"Best tooling + USDC depth",
-      note:"Cents per sweep, native USDC, EIP-3009 gasless. No rent, nothing to strand.",
-      opsName:"Base ops cost", opsSub:"gasless sweeps, annual",
-      step01:["<b>~$0.01</b> tx fee","<b>~2s</b> settle","USDC"],
-      step02:["<b>$0</b> no rent","standard address"],
-      step03:["<b>~$0.01</b> sweep","EIP-3009 gasless","batched"]
+      label:'Base (L2)', asset:'USDC', refundable:false,
+      riskModel:'none', ctl:null, tone:'good', color:'#1F5C8B',
+      sweepGas:51000, sweepGwei:0.1, l1DataUsd:0.008,
+      badge:'Best tooling + USDC depth',
+      note:'Cents per sweep, native USDC, EIP-3009 gasless. No rent, nothing to strand.',
+      opsName:'Base ops cost', opsSub:'gasless sweeps, annual'
     },
     bnb: {
-      label:"BNB", asset:"USDT", sweep:0.07, perAddr:0, refundable:false,
-      riskModel:"none", ctl:null, tone:"good", color:"#C09B1A",
-      badge:"Cheap, stable, centralized",
-      note:"~$0.05–0.10 per sweep, stable. EIP-3009 gasless works. Watch validator centralization.",
-      opsName:"BNB ops cost", opsSub:"gasless sweeps, annual",
-      step01:["<b>~$0.07</b> tx fee","<b>~3s</b> settle","USDT"],
-      step02:["<b>$0</b> no rent","standard address"],
-      step03:["<b>~$0.07</b> sweep","signed auth + relayer","batched"]
+      label:'BNB', asset:'USDT', refundable:false,
+      riskModel:'gasfund', ctl:null, tone:'warn', color:'#C09B1A',
+      fundGas:21000, sweepGas:65000, gasGwei:3,
+      badge:'Cheap but needs gas funding',
+      note:'Neither USDT nor USDC supports gasless sweeps on BNB (both Binance-pegged). Each address needs BNB.',
+      opsName:'BNB ops cost', opsSub:'fund + sweep, annual'
     },
     ethereum: {
-      label:"Ethereum L1", asset:"USDC", sweep:5, perAddr:0, refundable:false,
-      riskModel:"gas", ctl:"gas", tone:"warn", color:"#5A6B7F",
-      badge:"Large tickets only",
-      note:"Gas priced live — use the slider. A $5 sweep on a small ticket eats the margin whole.",
-      opsName:"Ethereum gas cost", opsSub:"at set gas price, annual",
-      step01:["<b>$0.50–$15</b> tx fee","<b>~12s</b> settle","USDC"],
-      step02:["<b>$0</b> no rent","standard address"],
-      step03:["<b>$0.50–$15</b> sweep","EIP-3009 gasless","volatile gas"]
+      label:'Ethereum L1', asset:'USDC', refundable:false,
+      riskModel:'gas', ctl:'gas', tone:'warn', color:'#5A6B7F',
+      sweepGas:65000,
+      badge:'Viable post-Dencun, still volatile',
+      note:'Gas is low in 2026 (~1 gwei avg) but still spikes. Use the slider.',
+      opsName:'Ethereum gas cost', opsSub:'at set gas price, annual'
     },
     tron: {
-      label:"Tron", asset:"USDT", sweep:2.89, perAddr:0, refundable:false,
-      riskModel:"penalty", ctl:null, tone:"bad", color:"#C2452D",
-      badge:"Wrong fit for single-use",
-      note:"Every fresh deposit address pays the double-energy penalty (~$2.89 rented). Rewards reuse, not single-use.",
-      opsName:"Tron energy cost", opsSub:"fresh-wallet transfers, annual",
-      step01:["<b>~$2.89</b> fresh-wallet tx","<b>~3s</b> settle","USDT"],
-      step02:["<b>$0</b> but 2× energy penalty","standard address"],
-      step03:["<b>~$2.89</b> sweep","delegate energy","no gasless equiv."]
+      label:'Tron', asset:'USDT', refundable:false,
+      riskModel:'penalty', ctl:null, tone:'bad', color:'#C2452D',
+      sweepTrx:9.33,
+      badge:'Wrong fit for single-use',
+      note:'Every fresh deposit address pays the double-energy penalty. Rewards reuse, not single-use.',
+      opsName:'Tron energy cost', opsSub:'fresh-wallet transfers, annual'
     }
   };
 
-  var current = "solana";
-  var selected = new Set(["solana"]);
-  var chainOrder = ["solana","base","bnb","ethereum","tron"];
   var el = function(id){ return document.getElementById(id); };
 
   function usd(n, dp){
     if(dp === undefined) dp = 2;
-    return "$" + n.toLocaleString(undefined,{minimumFractionDigits:dp, maximumFractionDigits:dp});
+    return '$' + n.toLocaleString(undefined,{minimumFractionDigits:dp, maximumFractionDigits:dp});
   }
   function big(n){
-    if(n >= 1000000) return "$" + (n/1000000).toFixed(2) + "M";
-    if(n >= 1000) return "$" + Math.round(n/1000) + "k";
-    return "$" + n.toFixed(0);
+    if(n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+    if(n >= 1000) return '$' + Math.round(n/1000) + 'k';
+    return '$' + n.toFixed(0);
+  }
+
+  function getSweep(key){
+    var c = CHAINS[key];
+    switch(key){
+      case 'solana':   return c.sweepNative * PRICES.solana;
+      case 'base':     return (c.sweepGas * c.sweepGwei * 1e-9) * PRICES.ethereum + c.l1DataUsd;
+      case 'bnb':      return ((c.fundGas + c.sweepGas) * c.gasGwei * 1e-9) * PRICES.binancecoin;
+      case 'ethereum': return (c.sweepGas * (+el('gas').value) * 1e-9) * PRICES.ethereum;
+      case 'tron':     return c.sweepTrx * PRICES.tron;
+    }
+    return 0;
+  }
+  function getRent(key){
+    if(key === 'solana') return CHAINS.solana.rentNative * PRICES.solana;
+    return 0;
+  }
+
+  function getStepData(key, step){
+    var sp = PRICES.solana, ep = PRICES.ethereum, bp = PRICES.binancecoin, tp = PRICES.tron;
+    var d = {
+      solana:{
+        '01':['<b>~'+usd(0.000009*sp,4)+'</b> tx fee','<b>~400ms</b> settle','USDC'],
+        '02':['<b>'+usd(0.00203928*sp)+'</b> ATA rent','refundable on close'],
+        '03':['<b>~'+usd(0.000015*sp,4)+'</b> sweep','transfer + closeAccount','rent reclaimed']
+      },
+      base:{
+        '01':['<b>~'+usd(getSweep('base'),3)+'</b> tx fee','<b>~2s</b> settle','USDC'],
+        '02':['<b>$0</b> no rent','standard address'],
+        '03':['<b>~'+usd(getSweep('base'),3)+'</b> sweep','EIP-3009 gasless','batched']
+      },
+      bnb:{
+        '01':['<b>~'+usd((65000*3*1e-9)*bp)+'</b> tx fee','<b>~3s</b> settle','USDT'],
+        '02':['<b>$0</b> no rent','needs BNB gas to sweep'],
+        '03':['<b>~'+usd(getSweep('bnb'))+'</b> fund+sweep','no gasless for USDT','per address']
+      },
+      ethereum:{
+        '01':['<b>'+usd(getSweep('ethereum'))+'</b> tx fee','<b>~12s</b> settle','USDC'],
+        '02':['<b>$0</b> no rent','standard address'],
+        '03':['<b>'+usd(getSweep('ethereum'))+'</b> sweep','EIP-3009 gasless','gas varies']
+      },
+      tron:{
+        '01':['<b>~'+usd(9.33*tp)+'</b> fresh-wallet tx','<b>~3s</b> settle','USDT'],
+        '02':['<b>$0</b> but 2× energy penalty','standard address'],
+        '03':['<b>~'+usd(9.33*tp)+'</b> sweep','delegate energy','no gasless equiv.']
+      }
+    };
+    return d[key] && d[key][step] ? d[key][step] : [];
+  }
+
+  function fetchPrices(){
+    var btn = el('pb-refresh');
+    if(btn) btn.textContent = '...';
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum,binancecoin,tron&vs_currencies=usd')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.solana) PRICES.solana = data.solana.usd;
+        if(data.ethereum) PRICES.ethereum = data.ethereum.usd;
+        if(data.binancecoin) PRICES.binancecoin = data.binancecoin.usd;
+        if(data.tron) PRICES.tron = data.tron.usd;
+        priceTs = Date.now();
+        try{
+          localStorage.setItem('sp_prices', JSON.stringify(PRICES));
+          localStorage.setItem('sp_priceTs', String(priceTs));
+        }catch(e){}
+        updatePriceBar();
+        render();
+        renderChainMetas();
+      })
+      .catch(function(){
+        updatePriceBar();
+      });
+  }
+
+  function loadCachedPrices(){
+    try{
+      var cached = JSON.parse(localStorage.getItem('sp_prices'));
+      var ts = parseInt(localStorage.getItem('sp_priceTs'), 10);
+      if(cached && ts && cached.solana){
+        PRICES = cached;
+        priceTs = ts;
+      }
+    }catch(e){}
+    var age = priceTs ? Date.now() - priceTs : Infinity;
+    if(age > 24*3600*1000) fetchPrices();
+    else updatePriceBar();
+  }
+
+  function updatePriceBar(){
+    el('p-sol').textContent = '$' + PRICES.solana.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-eth').textContent = '$' + PRICES.ethereum.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-bnb').textContent = '$' + PRICES.binancecoin.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-trx').textContent = '$' + PRICES.tron.toFixed(3);
+    var btn = el('pb-refresh');
+    if(btn) btn.textContent = 'Refresh';
+    if(!priceTs){ el('pb-age').textContent = 'defaults'; return; }
+    var mins = Math.round((Date.now()-priceTs)/60000);
+    var txt;
+    if(mins < 1) txt = 'just now';
+    else if(mins < 60) txt = mins + 'm ago';
+    else if(mins < 1440) txt = Math.round(mins/60) + 'h ago';
+    else txt = Math.round(mins/1440) + 'd ago';
+    var ageEl = el('pb-age');
+    ageEl.textContent = txt;
+    ageEl.className = 'pb-age' + (mins > 1440 ? ' pb-stale' : '');
   }
 
   function render(){
     var c = CHAINS[current];
-    var T = +el("ticket").value;
-    var V = +el("vol").value;
-    var r = +el("take").value / 100;
-    var f = +el("fail").value / 100;
-    var gas = +el("gas").value;
+    var T = +el('ticket').value;
+    var V = +el('vol').value;
+    var r = +el('take').value / 100;
+    var f = +el('fail').value / 100;
 
     var invYr = (V * 12) / T;
+    var sweep = getSweep(current);
+    var perAddr = getRent(current);
 
-    // effective per-invoice on-chain cost
-    var sweep = c.riskModel === "gas" ? gas : c.sweep;
-
+    var isXmr = payoutMode === 'xmr';
     var take = T * r;
-    var np = T * NP;
-    var conv = T * CONV;
-    var net = T - take - np - conv - XMRFEE;
+    var np = isXmr ? T * NP : 0;
+    var conv = isXmr ? T * CONV : 0;
+    var xmrFee = isXmr ? XMRFEE : 0;
+    var net = T - take - np - conv - xmrFee;
 
-    // control labels
-    el("v-ticket").textContent = "$" + T;
-    el("v-vol").textContent = big(V);
-    el("v-take").textContent = (r*100).toFixed(2) + "%";
-    el("v-fail").textContent = (f*100).toFixed(1) + "%";
-    el("v-gas").textContent = usd(gas);
+    el('v-ticket').textContent = '$' + T;
+    el('v-vol').textContent = big(V);
+    el('v-take').textContent = (r*100).toFixed(2) + '%';
+    el('v-fail').textContent = (f*100).toFixed(1) + '%';
+    el('v-gas').textContent = (+el('gas').value).toFixed(1) + ' gwei';
 
-    // waterfall (merchant-facing)
-    el("r-gross").textContent = usd(T);
-    el("r-take").textContent = "−" + usd(take);
-    el("r-np").textContent = "−" + usd(np);
-    el("r-asset").textContent = c.asset;
-    el("r-conv").textContent = "−" + usd(conv);
-    el("r-xmr").textContent = "−" + usd(XMRFEE);
-    el("r-net").textContent = usd(net);
+    el('r-gross').textContent = usd(T);
+    el('r-take').textContent = '−' + usd(take);
+    el('r-np').textContent = isXmr ? '−' + usd(np) : '$0.00';
+    el('r-asset').textContent = c.asset;
+    el('r-conv').textContent = isXmr ? '−' + usd(conv) : '$0.00';
+    el('r-xmr').textContent = isXmr ? '−' + usd(xmrFee) : '$0.00';
+    el('r-net').textContent = usd(net);
+
+    el('r-np').parentNode.style.opacity = isXmr ? '1' : '0.35';
+    el('r-conv').parentNode.style.opacity = isXmr ? '1' : '0.35';
+    el('r-xmr').parentNode.style.opacity = isXmr ? '1' : '0.35';
 
     var rev = take * invYr;
     var ops = sweep * invYr;
 
-    // revenue
-    el("k-rev").textContent = big(rev);
-    el("k-rev-sub").textContent = Math.round(invYr).toLocaleString() + " invoices/yr";
+    el('k-rev').textContent = big(rev);
+    el('k-rev-sub').textContent = Math.round(invYr).toLocaleString() + ' invoices/yr';
 
-    // ops cost
-    el("k-ops-name").textContent = c.opsName;
-    el("k-ops").textContent = ops < 1000 ? usd(ops, 0) : big(ops);
-    el("k-ops-sub").textContent = usd(sweep, 4) + " per invoice";
+    el('k-ops-name').textContent = c.opsName;
+    el('k-ops').textContent = ops < 1000 ? usd(ops, 0) : big(ops);
+    el('k-ops-sub').textContent = usd(sweep, 4) + ' per invoice';
 
-    // risk card — behavior depends on chain
-    var leakCard = el("k-drag-card"); // reused below; keep drag separate
-    if(c.riskModel === "rent"){
-      var leak = c.perAddr * f * invYr;
-      el("k-leak-name").textContent = "Stranded rent";
-      el("k-leak").textContent = usd(leak, 0);
-      el("k-leak-sub").textContent = leak > rev * 0.05
-        ? "material — " + ((leak/rev)*100).toFixed(1) + "% of revenue"
-        : "lost to failed closes, annual";
-    } else if(c.riskModel === "gas"){
-      var lo = 0.5 * invYr, hi = 15 * invYr;
-      el("k-leak-name").textContent = "Gas volatility band";
-      el("k-leak").textContent = big(lo) + "–" + big(hi);
-      el("k-leak-sub").textContent = "annual range, calm vs congested";
-    } else if(c.riskModel === "penalty"){
-      el("k-leak-name").textContent = "Fresh-wallet penalty";
-      el("k-leak").textContent = big(ops);
-      el("k-leak-sub").textContent = "the whole ops line IS the penalty";
+    if(c.riskModel === 'rent'){
+      var leak = perAddr * f * invYr;
+      el('k-leak-name').textContent = 'Stranded rent';
+      el('k-leak').textContent = usd(leak, 0);
+      el('k-leak-sub').textContent = leak > rev * 0.05
+        ? 'material — ' + ((leak/rev)*100).toFixed(1) + '% of revenue'
+        : 'lost to failed closes, annual';
+    } else if(c.riskModel === 'gas'){
+      var loGwei = 0.1, hiGwei = 30;
+      var lo = (c.sweepGas * loGwei * 1e-9) * PRICES.ethereum * invYr;
+      var hi = (c.sweepGas * hiGwei * 1e-9) * PRICES.ethereum * invYr;
+      el('k-leak-name').textContent = 'Gas volatility band';
+      el('k-leak').textContent = big(lo) + '–' + big(hi);
+      el('k-leak-sub').textContent = 'annual range, 0.1–30 gwei';
+    } else if(c.riskModel === 'penalty'){
+      el('k-leak-name').textContent = 'Fresh-wallet penalty';
+      el('k-leak').textContent = big(ops);
+      el('k-leak-sub').textContent = 'the whole ops line IS the penalty';
+    } else if(c.riskModel === 'gasfund'){
+      el('k-leak-name').textContent = 'Gas funding overhead';
+      el('k-leak').textContent = big(ops);
+      el('k-leak-sub').textContent = 'each address needs BNB to sweep';
     } else {
-      el("k-leak-name").textContent = "Strand risk";
-      el("k-leak").textContent = "—";
-      el("k-leak-sub").textContent = "no rent, nothing to strand";
+      el('k-leak-name').textContent = 'Strand risk';
+      el('k-leak').textContent = '—';
+      el('k-leak-sub').textContent = 'no rent, nothing to strand';
     }
 
-    // drag per ticket
     var drag = sweep / T;
-    el("k-drag").textContent = (drag*100).toFixed(drag >= 0.01 ? 1 : 3) + "%";
-    var dcard = el("k-drag-card");
-    dcard.classList.remove("is-risk","is-good");
-    if(drag > 0.05){ dcard.classList.add("is-risk"); el("k-drag-sub").textContent = "on-chain cost eats the margin"; }
-    else if(drag < 0.005){ dcard.classList.add("is-good"); el("k-drag-sub").textContent = "negligible drag"; }
-    else { el("k-drag-sub").textContent = "on-chain cost ÷ ticket"; }
+    el('k-drag').textContent = (drag*100).toFixed(drag >= 0.01 ? 1 : 3) + '%';
+    var dcard = el('k-drag-card');
+    dcard.classList.remove('is-risk','is-good');
+    if(drag > 0.05){ dcard.classList.add('is-risk'); el('k-drag-sub').textContent = 'on-chain cost eats the margin'; }
+    else if(drag < 0.005){ dcard.classList.add('is-good'); el('k-drag-sub').textContent = 'negligible drag'; }
+    else { el('k-drag-sub').textContent = 'on-chain cost ÷ ticket'; }
 
-    // verdict bar
-    var vb = el("verdict-bar");
-    vb.className = "verdict-bar tone-" + c.tone;
-    el("vb-badge").textContent = c.badge;
-    el("vb-note").textContent = c.note;
+    var vb = el('verdict-bar');
+    vb.className = 'verdict-bar tone-' + c.tone;
+    el('vb-badge').textContent = c.badge;
+    var note = c.note;
+    if(current === 'solana') note = 'Rent (' + usd(perAddr) + ') refundable on close; failed closes are the only real leak.';
+    if(current === 'tron') note = 'Every fresh deposit pays ~' + usd(sweep) + ' double-energy penalty. Rewards reuse, not single-use.';
+    el('vb-note').textContent = note;
 
-    // conditional slider visibility
-    el("ctl-fail").style.display = c.ctl === "fail" ? "" : "none";
-    el("ctl-gas").style.display  = c.ctl === "gas" ? "" : "none";
+    el('ctl-fail').style.display = c.ctl === 'fail' ? '' : 'none';
+    el('ctl-gas').style.display  = c.ctl === 'gas' ? '' : 'none';
 
-    // hot / cold split (chain-independent)
-    var days = +el("days").value;
+    var days = +el('days').value;
     var hotCap = (V / 30) * days;
     var coldBal = Math.max(V - hotCap, 0);
     var total = hotCap + coldBal || 1;
-    el("v-days").textContent = days + (days === 1 ? " day" : " days");
-    el("t-hot").textContent = big(hotCap);
-    el("t-cold").textContent = big(coldBal);
-    el("fill-hot").style.width = (100 * hotCap / total).toFixed(1) + "%";
-    el("fill-cold").style.width = (100 * coldBal / total).toFixed(1) + "%";
+    el('v-days').textContent = days + (days === 1 ? ' day' : ' days');
+    el('t-hot').textContent = big(hotCap);
+    el('t-cold').textContent = big(coldBal);
+    el('fill-hot').style.width = (100 * hotCap / total).toFixed(1) + '%';
+    el('fill-cold').style.width = (100 * coldBal / total).toFixed(1) + '%';
 
-    var rotLabels = ["Monthly", "Quarterly", "Semi-annual", "Annual"];
-    el("v-rot").textContent = rotLabels[+el("rot").value];
+    var rotLabels = ['Monthly', 'Quarterly', 'Semi-annual', 'Annual'];
+    el('v-rot').textContent = rotLabels[+el('rot').value];
   }
 
-  // global multi-select chain picker (steps 01-03)
   function renderChainMetas(){
-    ["01","02","03"].forEach(function(step){
-      var container = el("meta-"+step);
+    ['01','02','03'].forEach(function(step){
+      var container = el('meta-'+step);
       if(!container) return;
-      container.innerHTML = "";
+      container.innerHTML = '';
       if(selected.size === 0){
         container.innerHTML = '<div class="cm-empty">Select chains above to compare</div>';
         return;
@@ -1004,14 +1148,12 @@
       chainOrder.forEach(function(key){
         if(!selected.has(key)) return;
         var c = CHAINS[key];
-        var data = c["step"+step];
-        var row = document.createElement("div");
-        row.className = "cm-row";
+        var data = getStepData(key, step);
+        var row = document.createElement('div');
+        row.className = 'cm-row';
         var html = '<span class="cm-dot" style="background:'+c.color+'"></span>';
         html += '<span class="cm-chain" style="color:'+c.color+'">'+c.label+'</span>';
-        data.forEach(function(d){
-          html += '<span class="cm-val">'+d+'</span>';
-        });
+        data.forEach(function(d){ html += '<span class="cm-val">'+d+'</span>'; });
         row.innerHTML = html;
         container.appendChild(row);
       });
@@ -1020,51 +1162,62 @@
 
   function syncUnitEcon(chain){
     current = chain;
-    var btns = document.querySelectorAll("#chainpick .cp-btn");
-    btns.forEach(function(x){ x.classList.remove("active"); });
+    var btns = document.querySelectorAll('#chainpick .cp-btn');
+    btns.forEach(function(x){ x.classList.remove('active'); });
     var match = document.querySelector('#chainpick .cp-btn[data-chain="'+chain+'"]');
-    if(match) match.classList.add("active");
+    if(match) match.classList.add('active');
     render();
   }
 
-  var gBtns = document.querySelectorAll("#global-chainpick .gcp-btn");
+  var gBtns = document.querySelectorAll('#global-chainpick .gcp-btn');
   gBtns.forEach(function(b){
-    b.addEventListener("click", function(){
-      var chain = b.getAttribute("data-chain");
+    b.addEventListener('click', function(){
+      var chain = b.getAttribute('data-chain');
       if(selected.has(chain)){
         selected.delete(chain);
-        b.classList.remove("active");
+        b.classList.remove('active');
       } else {
         selected.add(chain);
-        b.classList.add("active");
+        b.classList.add('active');
         syncUnitEcon(chain);
       }
       renderChainMetas();
     });
   });
-  document.querySelector('#global-chainpick .gcp-btn[data-chain="solana"]').classList.add("active");
+  document.querySelector('#global-chainpick .gcp-btn[data-chain="solana"]').classList.add('active');
   renderChainMetas();
 
-  // unit economics chain selector (single-select)
-  var ueBtns = document.querySelectorAll("#chainpick .cp-btn");
+  var ueBtns = document.querySelectorAll('#chainpick .cp-btn');
   ueBtns.forEach(function(b){
-    b.addEventListener("click", function(){
-      current = b.getAttribute("data-chain");
-      ueBtns.forEach(function(x){ x.classList.remove("active"); });
-      b.classList.add("active");
+    b.addEventListener('click', function(){
+      current = b.getAttribute('data-chain');
+      ueBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
       render();
     });
   });
-  // default active
-  document.querySelector('#chainpick .cp-btn[data-chain="solana"]').classList.add("active");
+  document.querySelector('#chainpick .cp-btn[data-chain="solana"]').classList.add('active');
 
-  // sliders
-  ["ticket","vol","take","fail","gas","days","rot"].forEach(function(id){
-    el(id).addEventListener("input", render);
+  var ptBtns = document.querySelectorAll('#payout-toggle .pt-btn');
+  ptBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      payoutMode = b.getAttribute('data-mode');
+      ptBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      render();
+    });
   });
 
+  ['ticket','vol','take','fail','gas','days','rot'].forEach(function(id){
+    el(id).addEventListener('input', render);
+  });
+
+  el('pb-refresh').addEventListener('click', fetchPrices);
+
+  loadCachedPrices();
   render();
 })();
+
 </script>
 </body>
 </html>
