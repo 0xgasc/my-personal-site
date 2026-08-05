@@ -394,6 +394,22 @@
     .vis{grid-column:2;margin-top:10px;justify-self:start}
     .link{margin-left:calc(17px + 3px)}
   }
+  .sc-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .sc-btn{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;
+    padding:9px 16px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;
+    letter-spacing:.06em;text-transform:uppercase;font-weight:500;
+  }
+  .sc-btn:hover{border-color:var(--mute);color:var(--ink)}
+  .sc-btn.active{background:var(--clear);color:#fff;border-color:var(--clear)}
+  .sc-note{
+    font-size:13px;line-height:1.5;color:var(--mute);
+    margin:-10px 0 20px;padding:10px 14px;
+    background:var(--card);border-left:3px solid var(--clear);
+  }
+  .sc-note b{color:var(--ink);font-weight:600}
+
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important}
   }
@@ -860,7 +876,15 @@
 
   <!-- ── OPS SCENARIO PLANNER ──────────────────── -->
   <h2 class="sect-title" style="margin-top:44px">Operations scenario planner</h2>
-  <p class="sect-sub">Configure settlement frequency, invoice timeout, and merchant count. Cascading effects on costs, pool burn, and treasury sizing update live from the chain and volume you set above.</p>
+  <p class="sect-sub">Pick a scenario or drag the sliders. Everything cascades from the chain and volume you set above.</p>
+
+  <div class="sc-row">
+    <button class="sc-btn" data-sc="launch">Launch</button>
+    <button class="sc-btn" data-sc="growth">Growth</button>
+    <button class="sc-btn" data-sc="scale">Scale</button>
+    <button class="sc-btn" data-sc="enterprise">Enterprise</button>
+  </div>
+  <div class="sc-note" id="sc-note" style="display:none"></div>
 
   <div class="controls">
     <div class="ctl"><label>
@@ -1350,6 +1374,13 @@
     });
   }
 
+  var SCENARIOS = {
+    launch:     {vol:10000,  ticket:25, freq:2, timeout:2, merchants:5,   success:80, note:'Low volume — daily payouts, ops cost ~pennies/day. The blocker is licensing, not code.'},
+    growth:     {vol:100000, ticket:35, freq:1, timeout:1, merchants:50,  success:88, note:'4h batches balance merchant wait vs payout tx count. Pool burn is real — monitor the cron.'},
+    scale:      {vol:500000, ticket:50, freq:1, timeout:0, merchants:200, success:93, note:'Pool refills multiple times/day. Dedicated monitoring + hot wallet sizing become critical.'},
+    enterprise: {vol:2000000,ticket:100,freq:0, timeout:0, merchants:500, success:97, note:'Real-time settlement expected at this tier. Hot wallet must cover burst volume. Multi-sig ops team.'}
+  };
+
   function renderOps(){
     var T = +el('ticket').value;
     var V = +el('vol').value;
@@ -1468,8 +1499,31 @@
     });
   });
 
+  document.querySelectorAll('.sc-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var sc = SCENARIOS[b.getAttribute('data-sc')];
+      if(!sc) return;
+      el('vol').value = sc.vol;
+      el('ticket').value = sc.ticket;
+      el('freq').value = sc.freq;
+      el('timeout').value = sc.timeout;
+      el('merchants').value = sc.merchants;
+      el('success').value = sc.success;
+      document.querySelectorAll('.sc-btn').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      var noteEl = el('sc-note');
+      noteEl.textContent = sc.note;
+      noteEl.style.display = '';
+      render();
+    });
+  });
+
   ['ticket','vol','take','fail','gas','days','rot','freq','timeout','merchants','success'].forEach(function(id){
-    el(id).addEventListener('input', render);
+    el(id).addEventListener('input', function(){
+      document.querySelectorAll('.sc-btn').forEach(function(x){ x.classList.remove('active'); });
+      el('sc-note').style.display = 'none';
+      render();
+    });
   });
 
   el('pb-refresh').addEventListener('click', fetchPrices);
