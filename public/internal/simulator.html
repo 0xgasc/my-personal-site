@@ -76,8 +76,14 @@
   .loss-banner{margin:0 0 20px;padding:12px 16px;background:rgba(196,89,11,.1);border:1px solid var(--xmr);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--xmr);line-height:1.5;display:none}
   .loss-banner b{color:var(--ink)}
 
-  .embed-mode header,.embed-mode .back,.embed-mode .price-bar{display:none}
+  .embed-mode header,.embed-mode .back,.embed-mode .price-bar,.embed-mode .sc-row,.embed-mode #chainpick,.embed-mode #payout-toggle,.embed-mode #sweep-callout,.embed-mode .synced-controls{display:none!important}
   .embed-mode .wrap{padding-top:10px!important}
+  .embed-mode h3.presets-h{display:none}
+  .synced-bar{display:none;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;background:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.5;color:var(--paper)}
+  .embed-mode .synced-bar{display:flex!important;flex-wrap:wrap}
+  .sb-tag{font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:2px 7px;border:1px solid rgba(255,255,255,.2);color:#8A95A0;flex-shrink:0}
+  .sb-vals{color:var(--paper);opacity:.85}
+  .sim-only-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:20px}
 
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:20px}
   .kpi{border:1px solid var(--rule);background:var(--card);padding:14px}
@@ -176,7 +182,7 @@
     <span class="pb-age" id="pb-age">defaults</span>
   </div>
 
-  <h3 style="margin-top:0">Presets</h3>
+  <h3 style="margin-top:0" class="presets-h">Presets</h3>
   <div class="sc-row">
     <button class="sc-btn" data-sc="bootstrap">Bootstrap</button>
     <button class="sc-btn" data-sc="steady">Steady</button>
@@ -199,7 +205,12 @@
     <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
   </div>
 
-  <div class="controls">
+  <div class="synced-bar" id="synced-bar">
+    <span class="sb-tag">Synced</span>
+    <span class="sb-vals" id="sb-vals"></span>
+  </div>
+
+  <div class="controls synced-controls">
     <div class="ctl"><label>
       <span class="ctl-top"><span class="ctl-name">Starting volume</span><span class="ctl-val" id="v-vol">$50k</span></span>
       <input type="range" id="vol" min="1000" max="2000000" step="1000" value="50000">
@@ -213,16 +224,19 @@
       <input type="range" id="take" min="0" max="5" step="0.1" value="1.5">
     </label></div>
     <div class="ctl"><label>
-      <span class="ctl-top"><span class="ctl-name">Monthly growth</span><span class="ctl-val" id="v-growth">+15%</span></span>
-      <input type="range" id="growth" min="-10" max="50" step="1" value="15">
-    </label></div>
-    <div class="ctl"><label>
       <span class="ctl-top"><span class="ctl-name">Payout frequency</span><span class="ctl-val" id="v-freq">Daily</span></span>
       <input type="range" id="freq" min="0" max="2" step="1" value="0">
     </label></div>
     <div class="ctl"><label>
       <span class="ctl-top"><span class="ctl-name">Merchants</span><span class="ctl-val" id="v-merchants">25</span></span>
       <input type="range" id="merchants" min="1" max="500" step="1" value="25">
+    </label></div>
+  </div>
+
+  <div class="sim-only-controls">
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Monthly growth</span><span class="ctl-val" id="v-growth">+15%</span></span>
+      <input type="range" id="growth" min="-10" max="50" step="1" value="15">
     </label></div>
     <div class="ctl"><label>
       <span class="ctl-top"><span class="ctl-name">Token price &Delta;/yr</span><span class="ctl-val" id="v-tokdelta">0%</span></span>
@@ -774,7 +788,7 @@
   };
 
   var stickyBar = el('sticky-bar');
-  var controlsEl = document.querySelector('.controls');
+  var controlsEl = document.querySelector('.synced-controls') || document.querySelector('.sim-only-controls');
   if('IntersectionObserver' in window){
     var obs = new IntersectionObserver(function(entries){
       entries.forEach(function(e){
@@ -785,9 +799,42 @@
     obs.observe(controlsEl);
   }
 
-  if(window !== window.top){
+  var isEmbed = window !== window.top;
+  if(isEmbed){
     document.querySelector('.wrap').classList.add('embed-mode');
     stickyBar.style.display = 'none';
+
+    var CHAIN_NAMES = {solana:'Solana',bnb:'BNB',ethereum:'Ethereum',tron:'Tron',base:'Base'};
+    function updateSyncedBar(){
+      var sb = el('sb-vals');
+      if(!sb) return;
+      sb.textContent = el('v-vol').textContent + ' vol · ' + el('v-ticket').textContent + ' ticket · ' + el('v-take').textContent + ' take · ' + FREQ_LABELS[+el('freq').value] + ' · ' + el('v-merchants').textContent + ' merchants · ' + (CHAIN_NAMES[current]||current) + ' · ' + (payoutMode==='nowpay'?'NP':'Direct');
+    }
+
+    window.addEventListener('message', function(e){
+      if(!e.data || e.data.type !== 'sim-sync') return;
+      var d = e.data;
+      el('vol').value = d.vol;
+      el('ticket').value = d.ticket;
+      el('take').value = d.take;
+      el('freq').value = d.freq;
+      el('merchants').value = d.merchants;
+      if(d.chain && d.chain !== current){
+        current = d.chain;
+        var chainBtns = document.querySelectorAll('#chainpick .cp-btn');
+        chainBtns.forEach(function(x){ x.classList.remove('active'); });
+        var cb = document.querySelector('#chainpick .cp-btn[data-chain="'+d.chain+'"]');
+        if(cb) cb.classList.add('active');
+      }
+      if(d.mode && d.mode !== payoutMode){
+        payoutMode = d.mode;
+      }
+      render();
+      updateSyncedBar();
+    });
+
+    var origRenderEmbed = render;
+    render = function(){ origRenderEmbed(); updateSyncedBar(); };
   }
 
   var resizeTimer;

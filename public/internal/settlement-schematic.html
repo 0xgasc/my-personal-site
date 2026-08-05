@@ -1102,6 +1102,28 @@
 
   el('pb-refresh').addEventListener('click', fetchPrices);
 
+  function syncToSim(){
+    var iframe = document.getElementById('sim-iframe');
+    if(!iframe || !iframe.contentWindow) return;
+    try{
+      iframe.contentWindow.postMessage({
+        type:'sim-sync',
+        vol: +el('vol').value,
+        ticket: +el('ticket').value,
+        take: +el('take').value,
+        freq: +el('freq').value,
+        merchants: +el('merchants').value,
+        chain: current,
+        mode: payoutMode
+      }, '*');
+    }catch(e){}
+  }
+
+  var _origRender = render;
+  render = function(){ _origRender(); syncToSim(); };
+  var _origRenderOps = renderOps;
+  renderOps = function(){ _origRenderOps(); syncToSim(); };
+
   loadCachedPrices();
   render();
 })();
