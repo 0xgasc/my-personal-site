@@ -4,7 +4,6 @@ import { join } from 'path'
 import { createHash } from 'crypto'
 import { parse } from 'cookie'
 
-const MAX_READS = 25
 const EXPIRES_AT = new Date('2026-08-15T06:00:00Z')
 
 const DOCS = {
@@ -15,7 +14,7 @@ const DOCS = {
 let readCount = 0
 
 export async function getServerSideProps({ req, query }) {
-  const expired = new Date() >= EXPIRES_AT || readCount >= MAX_READS
+  const expired = new Date() >= EXPIRES_AT
   if (expired) {
     return { props: { state: 'expired', html: null, reads: readCount } }
   }
@@ -50,9 +49,7 @@ export default function ContentLocker({ state, html, reads }) {
       <div style={styles.container}>
         <h1 style={styles.code}>410</h1>
         <p style={styles.msg}>This document has self-destructed.</p>
-        <p style={styles.sub}>
-          Expired after {reads >= MAX_READS ? `${MAX_READS} reads` : 'scheduled deadline'}.
-        </p>
+        <p style={styles.sub}>Expired after scheduled deadline.</p>
       </div>
     )
   }
@@ -84,7 +81,7 @@ export default function ContentLocker({ state, html, reads }) {
         <div style={styles.lock}>
           <p style={styles.eyebrow}>CONFIDENTIAL DOCUMENT</p>
           <h1 style={styles.title}>Enter password</h1>
-          <p style={styles.sub}>This document is password-protected and will self-destruct after {MAX_READS} reads.</p>
+          <p style={styles.sub}>This document is password-protected.</p>
           <form onSubmit={handleSubmit} style={styles.form}>
             <input
               type="password"
@@ -107,7 +104,7 @@ export default function ContentLocker({ state, html, reads }) {
   return (
     <>
       <div style={styles.banner}>
-        <span>CONFIDENTIAL — read {reads}/{MAX_READS}</span>
+        <span>CONFIDENTIAL</span>
         <span>expires Friday Aug 15</span>
       </div>
       <div dangerouslySetInnerHTML={{ __html: html }} style={{ paddingTop: '28px' }} />

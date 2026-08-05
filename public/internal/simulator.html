@@ -252,6 +252,10 @@
       <span class="ctl-top"><span class="ctl-name">Monthly growth</span><span class="ctl-val" id="v-growth">+15%</span></span>
       <input type="range" id="growth" min="-10" max="50" step="1" value="15">
     </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Token price &Delta;/yr</span><span class="ctl-val" id="v-tokdelta">0%</span></span>
+      <input type="range" id="tokdelta" min="-50" max="100" step="5" value="0">
+    </label></div>
   </div>
 
   <h3 style="margin:0 0 10px;font-size:15px;font-weight:700">Exit strategy</h3>
@@ -266,6 +270,8 @@
       <option value="xmr_exit">XMR conversion (~1.5%)</option>
       <option value="tornado">Tornado Cash (0.5%)</option>
     </select>
+    <input type="number" id="exit-freq" min="1" max="30" value="1" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 6px;border:1px solid var(--rule);background:var(--card);color:var(--ink);text-align:center">
+    <span class="ctl-name" style="margin:0">&times;/mo</span>
   </div>
 
   <div class="shift-row" id="shift-row">
@@ -318,7 +324,7 @@
 
   <div class="cards" id="summary-cards"></div>
 
-  <p class="footnote"><b>How to read this:</b> Revenue is your platform fee (take rate &times; volume). Ops is on-chain sweep costs. Exit is the cost of moving money out of the treasury (method-dependent). Net = revenue &minus; ops &minus; exit. Growth compounds monthly.</p>
+  <p class="footnote"><b>How to read this:</b> Revenue is your platform fee (take rate &times; volume). Ops is on-chain sweep costs &mdash; affected by token price &Delta; (e.g. if SOL doubles, sweep cost doubles). Exit is the cost of moving money out of treasury (flat fees &times; exits/mo, or % of revenue). Net = revenue &minus; ops &minus; exit. Growth and token price change both compound monthly.</p>
 </div>
 
 <script>
@@ -376,14 +382,15 @@
     return neg ? '-' + s : s;
   }
 
-  function getSweep(key){
+  function getSweep(key, priceMult){
+    var pm = priceMult || 1;
     var c = CHAINS[key];
     switch(key){
-      case 'solana':   return c.sweepNative * PRICES.solana;
-      case 'base':     return (c.sweepGas * c.sweepGwei * 1e-9) * PRICES.ethereum + c.l1DataUsd;
-      case 'bnb':      return ((c.fundGas + c.sweepGas) * c.gasGwei * 1e-9) * PRICES.binancecoin;
-      case 'ethereum': return (c.sweepGas * c.defaultGwei * 1e-9) * PRICES.ethereum;
-      case 'tron':     return c.sweepTrx * PRICES.tron;
+      case 'solana':   return c.sweepNative * PRICES.solana * pm;
+      case 'base':     return (c.sweepGas * c.sweepGwei * 1e-9) * PRICES.ethereum * pm + c.l1DataUsd;
+      case 'bnb':      return ((c.fundGas + c.sweepGas) * c.gasGwei * 1e-9) * PRICES.binancecoin * pm;
+      case 'ethereum': return (c.sweepGas * c.defaultGwei * 1e-9) * PRICES.ethereum * pm;
+      case 'tron':     return c.sweepTrx * PRICES.tron * pm;
     }
     return 0;
   }
@@ -444,8 +451,10 @@
     var T = +el('ticket').value;
     var r = +el('take').value / 100;
     var g = +el('growth').value / 100;
-    var sweep = getSweep(current);
+    var tokDelta = +el('tokdelta').value / 100;
+    var tokMonthly = Math.pow(1 + tokDelta, 1/12);
     var isNP = payoutMode === 'nowpay';
+    var exitFreq = Math.max(1, +el('exit-freq').value || 1);
 
     var exitA = el('exit-a').value;
     var shiftEnabled = el('shift-check').checked;
@@ -456,6 +465,7 @@
     el('v-ticket').textContent = '$' + T;
     el('v-take').textContent = (r*100).toFixed(2) + '%';
     el('v-growth').textContent = (g >= 0 ? '+' : '') + (g*100).toFixed(0) + '%';
+    el('v-tokdelta').textContent = (tokDelta >= 0 ? '+' : '') + (tokDelta*100).toFixed(0) + '%';
 
     var months = [];
     var cumProfit = 0;
@@ -466,11 +476,13 @@
       var inv = Math.max(1, Math.round(vol / T));
       var rev = vol * r;
       var npCost = isNP ? vol * NP : 0;
+      var priceMult = Math.pow(tokMonthly, m - 1);
+      var sweep = getSweep(current, priceMult);
       var ops = inv * sweep;
 
       var exitKey = (shiftEnabled && m >= shiftMonth) ? exitB : exitA;
       var ex = EXIT_METHODS[exitKey];
-      var exitCost = (ex.pct * rev) + ex.flat;
+      var exitCost = (ex.pct * rev) + (ex.flat * exitFreq);
 
       var net = rev - ops - exitCost - npCost;
       cumProfit += net;
@@ -666,7 +678,7 @@
     });
   });
 
-  ['vol','ticket','take','growth'].forEach(function(id){
+  ['vol','ticket','take','growth','tokdelta'].forEach(function(id){
     el(id).addEventListener('input', function(){
       clearPreset();
       render();
@@ -676,6 +688,7 @@
   el('exit-a').addEventListener('change', function(){ clearPreset(); render(); });
   el('exit-b').addEventListener('change', function(){ clearPreset(); render(); });
   el('shift-month').addEventListener('change', function(){ clearPreset(); render(); });
+  el('exit-freq').addEventListener('input', function(){ clearPreset(); render(); });
 
   el('shift-check').addEventListener('change', function(){
     var on = this.checked;
