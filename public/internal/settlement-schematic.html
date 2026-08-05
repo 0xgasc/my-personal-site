@@ -166,6 +166,7 @@
     letter-spacing:.13em;text-transform:uppercase;color:var(--mute);
   }
   .ctl-val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500}
+  .ctl-hint{display:block;font-size:11px;color:var(--mute);margin-top:2px;line-height:1.4}
   input[type=range]{width:100%;accent-color:var(--clear);height:20px}
   input[type=range]:focus-visible{outline:2px solid var(--clear);outline-offset:3px}
 
@@ -410,6 +411,34 @@
   }
   .sc-note b{color:var(--ink);font-weight:600}
 
+  .split-wrap{margin-top:10px}
+  .split-bar{display:flex;height:28px;border-radius:3px;overflow:hidden;font-size:0}
+  .split-seg{display:flex;align-items:center;justify-content:center;
+    font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;
+    color:#fff;min-width:2px;transition:width .3s ease}
+  .split-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px}
+  .split-item{font-size:13px;line-height:1.5;color:var(--mute);display:flex;align-items:baseline;gap:6px}
+  .split-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+  .split-amt{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+  .split-pct{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mute)}
+  .split-label{color:var(--mute)}
+  .split-summary{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;
+    margin-top:16px;padding:14px 16px;background:var(--card);border:1px solid var(--rule);
+  }
+  .split-line{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+  .split-line-label{color:var(--mute)}
+  .split-line-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+  .split-line.is-you .split-line-val{color:var(--good)}
+  .split-line.is-merchant .split-line-val{color:var(--clear)}
+  .split-line.is-ops .split-line-val{color:var(--custody)}
+  .split-line.is-np .split-line-val{color:var(--mute)}
+  .split-big{
+    grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;
+    padding-top:10px;border-top:1px solid var(--rule);font-size:15px;
+  }
+  .split-big .split-line-val{font-size:18px}
+
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important}
   }
@@ -598,8 +627,9 @@
     </div>
     <div class="ctl" id="ctl-fail">
       <label>
-        <span class="ctl-top"><span class="ctl-name">Close failures</span><span class="ctl-val" id="v-fail">1.0%</span></span>
+        <span class="ctl-top"><span class="ctl-name">ATA close failures (Solana only)</span><span class="ctl-val" id="v-fail">1.0%</span></span>
         <input type="range" id="fail" min="0" max="10" step="0.1" value="1">
+        <span class="ctl-hint">% of swept deposit ATAs that fail to close — strands ~$0.15 rent each</span>
       </label>
     </div>
     <div class="ctl" id="ctl-gas" style="display:none">
@@ -659,6 +689,17 @@
       <div class="kpi-sub" id="k-drag-sub">on-chain cost ÷ ticket</div>
     </div>
   </div>
+
+  <h3 style="margin:32px 0 6px;font-size:15px;font-weight:700;letter-spacing:-.01em">Where the money goes</h3>
+  <p style="font-size:13px;color:var(--mute);margin:0 0 12px;line-height:1.5">Per invoice at current sliders. The stacked bar is proportional.</p>
+
+  <div class="split-wrap">
+    <div class="split-bar" id="split-bar"></div>
+    <div class="split-summary" id="split-summary"></div>
+  </div>
+
+  <h3 style="margin:28px 0 6px;font-size:15px;font-weight:700;letter-spacing:-.01em">Annual P&amp;L at scale</h3>
+  <div class="split-summary" id="split-annual"></div>
 
   <h2 class="sect-title" style="margin-top:44px">Chain strategies</h2>
   <p class="sect-sub">The single-use-address-then-sweep model is not chain-neutral — each chain's fee mechanic reacts to it differently. The headline: Tron is the cheapest chain for <em>reused</em> addresses and one of the worst for single-use, because every fresh deposit address triggers a first-transfer energy penalty. Figures are order-of-magnitude at early-2026 prices and move with native-token price and congestion — re-check live before committing.</p>
@@ -1389,6 +1430,62 @@
 
     var rotLabels = ['Monthly', 'Quarterly', 'Semi-annual', 'Annual'];
     el('v-rot').textContent = rotLabels[+el('rot').value];
+
+    // --- Where the money goes (per invoice) ---
+    var opsPerInv = sweep;
+    var slices = [
+      {label:'You keep', amt:take, color:'var(--good)', cls:'is-you'},
+      {label:'On-chain ops', amt:opsPerInv, color:'var(--custody)', cls:'is-ops'}
+    ];
+    if(isNP) slices.push({label:'NOWPayments', amt:np, color:'#6B7280', cls:'is-np'});
+    if(isXmr){
+      slices.push({label:'XMR conversion', amt:conv, color:'#FF6B35', cls:'is-np'});
+      slices.push({label:'XMR network fee', amt:xmrFee, color:'#9CA3AF', cls:'is-np'});
+    }
+    slices.push({label:'Merchant nets', amt:net, color:'var(--clear)', cls:'is-merchant'});
+
+    var barHtml = '';
+    slices.forEach(function(s){
+      var pct = (s.amt / T) * 100;
+      if(pct < 0.01) return;
+      var lbl = pct >= 4 ? (pct.toFixed(1) + '%') : '';
+      barHtml += '<div class="split-seg" style="width:' + pct.toFixed(2) + '%;background:' + s.color + '">' + lbl + '</div>';
+    });
+    el('split-bar').innerHTML = barHtml;
+
+    var sumHtml = '';
+    slices.forEach(function(s){
+      var pct = ((s.amt / T) * 100).toFixed(2);
+      sumHtml += '<div class="split-line ' + s.cls + '">';
+      sumHtml += '<span class="split-line-label">' + s.label + '</span>';
+      sumHtml += '<span class="split-line-val">' + usd(s.amt) + ' <span class="split-pct">(' + pct + '%)</span></span>';
+      sumHtml += '</div>';
+    });
+    el('split-summary').innerHTML = sumHtml;
+
+    // --- Annual P&L ---
+    var annVol = V * 12;
+    var annRev = take * invYr;
+    var annOps = sweep * invYr;
+    var annNP = isNP ? np * invYr : 0;
+    var annConv = isXmr ? conv * invYr : 0;
+    var annXmrFee = isXmr ? xmrFee * invYr : 0;
+    var annIntermediary = annNP + annConv + annXmrFee;
+    var annMerchant = net * invYr;
+    var annProfit = annRev - annOps;
+    var margin = annRev > 0 ? ((annProfit / annRev) * 100).toFixed(1) : '0.0';
+
+    var aHtml = '';
+    aHtml += '<div class="split-line"><span class="split-line-label">Total throughput</span><span class="split-line-val">' + big(annVol) + '/yr</span></div>';
+    aHtml += '<div class="split-line"><span class="split-line-label">Invoices</span><span class="split-line-val">' + Math.round(invYr).toLocaleString() + '/yr</span></div>';
+    aHtml += '<div class="split-line is-you"><span class="split-line-label">Your gross revenue</span><span class="split-line-val">' + big(annRev) + '</span></div>';
+    aHtml += '<div class="split-line is-ops"><span class="split-line-label">On-chain ops cost</span><span class="split-line-val">−' + big(annOps) + '</span></div>';
+    if(annIntermediary > 0){
+      aHtml += '<div class="split-line is-np"><span class="split-line-label">Intermediary fees</span><span class="split-line-val">−' + big(annIntermediary) + '</span></div>';
+    }
+    aHtml += '<div class="split-big is-you"><span class="split-line-label">Net profit (you)</span><span class="split-line-val">' + big(annProfit) + ' <span class="split-pct">(' + margin + '% margin)</span></span></div>';
+    aHtml += '<div class="split-big is-merchant"><span class="split-line-label">Paid to merchants</span><span class="split-line-val">' + big(annMerchant) + '</span></div>';
+    el('split-annual').innerHTML = aHtml;
 
     renderOps();
   }
