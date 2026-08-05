@@ -185,6 +185,8 @@
     <button class="cp-btn" data-chain="base" style="opacity:.5">Base (L2)</button>
   </div>
 
+  <div id="sweep-callout" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);margin-bottom:10px"></div>
+
   <div class="payout-toggle" id="payout-toggle">
     <button class="pt-btn active" data-mode="direct">Direct USDC</button>
     <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
@@ -404,14 +406,14 @@
   function blendedPct(mix){
     var total = mixTotal(mix);
     if(total <= 0) return '—';
-    var wp = 0, hasFlat = false;
+    var wp = 0, flatSum = 0;
     for(var k in mix){
       if(mix[k] <= 0) continue;
       wp += (mix[k] / total) * EXIT_METHODS[k].pct;
-      if(EXIT_METHODS[k].flat > 0) hasFlat = true;
+      if(EXIT_METHODS[k].flat > 0) flatSum += EXIT_METHODS[k].flat;
     }
     var s = (wp * 100).toFixed(2) + '%';
-    if(hasFlat) s += ' + flat';
+    if(flatSum > 0) s += ' + $' + flatSum.toFixed(2) + '/exit';
     return s;
   }
   function applyMix(cls, mix){
@@ -476,6 +478,15 @@
     el('v-tokdelta').textContent = (tokDelta >= 0 ? '+' : '') + (tokDelta*100).toFixed(0) + '%';
     el('v-freq').textContent = FREQ_LABELS[freqIdx];
     el('v-merchants').textContent = merchants;
+
+    var sweepNow = getSweep(current);
+    var sweepCallout = el('sweep-callout');
+    var takePerTicket = T * r;
+    if(sweepNow > takePerTicket * 0.5){
+      sweepCallout.innerHTML = '<span style="color:var(--xmr);font-weight:500">&#9888; Sweep cost ' + smart(sweepNow) + '/invoice &gt; ' + Math.round(sweepNow/takePerTicket*100) + '% of per-ticket take (' + smart(takePerTicket) + '). Raise ticket size or switch chains.</span>';
+    } else {
+      sweepCallout.textContent = 'Sweep cost: ' + smart(sweepNow) + '/invoice (' + (sweepNow/takePerTicket*100).toFixed(1) + '% of per-ticket take)';
+    }
 
     var tA = mixTotal(mixA), tB = mixTotal(mixB);
     el('mix-total-a').textContent = tA + '%';
