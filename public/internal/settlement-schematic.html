@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Wallet opsec documentation</title>
+<title>Settlement economics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -51,100 +51,6 @@
     margin:0 0 14px;
   }
   .lede{font-size:15px;line-height:1.5;color:var(--mute);margin:0;max-width:52ch}
-
-  /* ---------- zones ---------- */
-  .zone-clear{padding-bottom:8px}
-  .zone-dark{
-    background:var(--dark);
-    color:var(--darkink);
-    padding:0 0 44px;
-  }
-
-  /* ---------- stage ---------- */
-  .stage{
-    display:grid;
-    grid-template-columns:44px 1fr auto;
-    gap:0 16px;
-    align-items:start;
-    background:var(--card);
-    border:1px solid var(--rule);
-    border-left:3px solid var(--clear);
-    padding:16px 16px 14px;
-  }
-  .stage.is-custody{border-left-color:var(--custody)}
-  .stage.is-xmr{border-left-color:var(--xmr)}
-  .zone-dark .stage{
-    background:var(--dark2);
-    border-color:var(--darkrule);
-    border-left-color:var(--violet);
-  }
-  .zone-dark .stage.is-xmr{border-left-color:var(--xmr)}
-
-  .idx{
-    font-family:"IBM Plex Mono",monospace;
-    font-size:12px;font-weight:500;
-    color:var(--mute);padding-top:3px;
-  }
-  .zone-dark .idx{color:var(--darkmute)}
-
-  .stage h3{
-    font-size:16px;font-weight:600;letter-spacing:-.01em;
-    margin:0 0 5px;
-  }
-  .stage p{
-    font-size:13.5px;line-height:1.5;color:var(--mute);margin:0;
-  }
-  .zone-dark .stage p{color:var(--darkmute)}
-
-  .meta{
-    display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;
-    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mute);
-  }
-  .zone-dark .meta{color:var(--darkmute)}
-  .meta b{font-weight:500;color:var(--ink)}
-  .zone-dark .meta b{color:var(--darkink)}
-
-  .vis{
-    font-family:"IBM Plex Mono",monospace;
-    font-size:10px;letter-spacing:.13em;text-transform:uppercase;
-    padding:3px 7px;border:1px solid currentColor;white-space:nowrap;
-    align-self:start;margin-top:2px;
-  }
-  .v-public{color:var(--clear)}
-  .v-agg{color:var(--custody)}
-  .v-opaque{color:var(--violet)}
-
-  /* ---------- connector ---------- */
-  .link{height:26px;position:relative;margin-left:calc(20px + 3px)}
-  .link::before{
-    content:"";position:absolute;left:0;top:0;bottom:6px;
-    border-left:1px solid var(--rule);
-  }
-  .link::after{
-    content:"";position:absolute;left:-3.5px;bottom:0;
-    width:0;height:0;border-left:4px solid transparent;
-    border-right:4px solid transparent;border-top:6px solid var(--rule);
-  }
-  .zone-dark .link::before{border-left:1px dashed var(--darkrule)}
-  .zone-dark .link::after{border-top-color:var(--darkrule)}
-
-  /* ---------- boundary ---------- */
-  .boundary{
-    background:var(--dark);
-    padding:30px 0 26px;
-    border-top:2px dashed var(--violet);
-  }
-  .boundary .wrap{display:block}
-  .b-label{
-    font-family:"IBM Plex Mono",monospace;
-    font-size:11px;letter-spacing:.24em;text-transform:uppercase;
-    color:var(--violet);margin:0 0 10px;
-  }
-  .b-text{
-    font-size:15px;line-height:1.55;color:var(--darkink);margin:0 0 8px;
-    max-width:56ch;font-weight:500;
-  }
-  .b-sub{font-size:13px;line-height:1.55;color:var(--darkmute);margin:0;max-width:56ch}
 
   /* ---------- model ---------- */
   .model{padding:44px 0 56px}
@@ -227,48 +133,6 @@
   .cp-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .cp-btn:focus-visible{outline:2px solid var(--clear);outline-offset:2px}
 
-  /* ---------- global chain picker ---------- */
-  .global-chainpick{padding:0 0 24px;border-bottom:1px solid var(--rule);margin-bottom:24px}
-  .gcp-label{
-    font-family:"IBM Plex Mono",monospace;font-size:10.5px;
-    letter-spacing:.18em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;
-  }
-  .gcp-row{display:flex;flex-wrap:wrap;gap:6px}
-  .gcp-btn{
-    display:inline-flex;align-items:center;gap:7px;
-    font-family:"IBM Plex Mono",monospace;font-size:12px;
-    padding:8px 14px;border:1px solid var(--rule);background:var(--card);
-    color:var(--mute);cursor:pointer;transition:all .15s ease;border-radius:2px;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .gcp-btn:hover{border-color:var(--mute);color:var(--ink)}
-  .gcp-btn.active{border-color:var(--cc);color:var(--ink);font-weight:500;background:#fff}
-  .gcp-btn:focus-visible{outline:2px solid var(--clear);outline-offset:2px}
-  .gcp-dot{
-    width:8px;height:8px;border-radius:50%;flex-shrink:0;
-    background:var(--cc);opacity:.4;transition:opacity .15s ease;
-  }
-  .gcp-btn.active .gcp-dot{opacity:1}
-
-  /* ---------- chain-meta rows in flow steps ---------- */
-  .chain-meta{margin-top:10px}
-  .cm-row{
-    display:flex;flex-wrap:wrap;gap:4px 12px;
-    padding:6px 0;align-items:baseline;
-    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mute);
-  }
-  .cm-row+.cm-row{border-top:1px solid var(--rule)}
-  .cm-dot{
-    width:7px;height:7px;border-radius:50%;flex-shrink:0;
-    display:inline-block;position:relative;top:-1px;
-  }
-  .cm-chain{font-weight:500;min-width:74px}
-  .cm-val b{font-weight:500;color:var(--ink)}
-  .cm-empty{
-    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
-    color:var(--mute);font-style:italic;padding:5px 0;
-  }
-
   /* ---------- price bar ---------- */
   .price-bar{
     display:flex;flex-wrap:wrap;gap:8px 14px;
@@ -321,80 +185,6 @@
   .tone-bad .vb-badge{color:var(--xmr)}
   .vb-note{font-size:12.5px;line-height:1.45;color:var(--mute)}
 
-  .chaingrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .chain{border:1px solid var(--rule);background:var(--card);padding:16px}
-  .chain-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
-  .chain-name{font-size:16px;font-weight:600;letter-spacing:-.01em}
-  .chain-tag{
-    font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;padding:3px 7px;white-space:nowrap;border:1px solid currentColor;
-  }
-  .tag-good{color:var(--good)}
-  .tag-warn{color:var(--custody)}
-  .tag-bad{color:var(--xmr)}
-  .chain-mech{font-size:12.5px;line-height:1.5;color:var(--mute);margin-bottom:12px}
-  .chain-mech b{color:var(--ink);font-weight:600}
-  .chain-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:11px}
-  .chain-tbl td{padding:5px 0;border-bottom:1px solid var(--rule);vertical-align:top}
-  .chain-tbl tr:last-child td{border-bottom:0}
-  .chain-tbl td:first-child{color:var(--mute);white-space:nowrap;padding-right:10px;width:42%}
-  .chain-tbl td:last-child{font-family:"IBM Plex Mono",monospace;text-align:right;font-size:11.5px}
-  .chain-tbl td.warn{color:var(--xmr)}
-  .chain-tbl b{font-weight:600;color:var(--ink)}
-  .chain-note{font-size:12px;line-height:1.5;color:var(--mute);padding-top:11px;border-top:1px solid var(--rule)}
-  .chain-note b{color:var(--ink);font-weight:600}
-  .chain-verdict{
-    margin-top:14px;padding:15px 16px;background:var(--card);
-    border:1px solid var(--rule);border-left:3px solid var(--clear);
-    font-size:13px;line-height:1.6;color:var(--mute);
-  }
-  .chain-verdict b{color:var(--ink);font-weight:600}
-
-  .tiers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .tier{border:1px solid var(--rule);background:var(--card);padding:15px}
-  .tier-hot{border-left:3px solid var(--custody)}
-  .tier-cold{border-left:3px solid var(--good)}
-  .tier-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px}
-  .tier-name{font-size:13.5px;font-weight:600}
-  .tier-cap{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
-  .tier-hot .tier-cap{color:var(--custody)}
-  .tier-cold .tier-cap{color:var(--good)}
-  .tier-desc{font-size:12.5px;line-height:1.5;color:var(--mute);margin:0 0 11px}
-  .tier-bar{height:6px;background:var(--paper);overflow:hidden;border-radius:3px}
-  .tier-fill{height:100%;transition:width .35s ease}
-  .tier-fill-hot{background:var(--custody)}
-  .tier-fill-cold{background:var(--good)}
-
-  .rot-flow{
-    margin-top:20px;border:1px solid var(--rule);background:var(--card);
-    display:grid;grid-template-columns:1fr 1fr;
-  }
-  .rot-step{
-    display:flex;align-items:flex-start;gap:10px;padding:13px 15px;
-    font-size:13px;line-height:1.45;
-    border-bottom:1px solid var(--rule);
-  }
-  .rot-step:nth-child(odd){border-right:1px solid var(--rule)}
-  .rot-step:nth-last-child(-n+2){border-bottom:0}
-  .rot-i{
-    flex-shrink:0;width:20px;height:20px;border-radius:50%;
-    background:var(--good);color:#fff;
-    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
-    display:flex;align-items:center;justify-content:center;margin-top:1px;
-  }
-  @media (max-width:560px){
-    .chaingrid{grid-template-columns:1fr}
-    .tiers{grid-template-columns:1fr}
-    .rot-flow{grid-template-columns:1fr}
-    .rot-step{border-right:0!important;border-bottom:1px solid var(--rule)!important}
-    .rot-step:last-child{border-bottom:0!important}
-  }
-
-  @media (max-width:560px){
-    .stage{grid-template-columns:34px 1fr;gap:0 12px}
-    .vis{grid-column:2;margin-top:10px;justify-self:start}
-    .link{margin-left:calc(17px + 3px)}
-  }
   .sc-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
   .sc-btn{
     font-family:"IBM Plex Mono",monospace;font-size:11px;
@@ -448,6 +238,10 @@
   }
   .split-big .split-line-val{font-size:18px}
 
+  @media (max-width:560px){
+    .cards{grid-template-columns:1fr 1fr}
+  }
+
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important}
   }
@@ -455,139 +249,24 @@
 </head>
 <body>
 
-<div class="zone-clear">
-  <div class="wrap">
-    <header>
-      <p class="eyebrow">Internal strategy document</p>
-      <h1>How money flows through the platform</h1>
-      <p class="lede">This document covers four questions: How do payments work? What does it cost us? How do we run it day to day? And what are our options for treasury privacy?</p>
-    </header>
+<div class="wrap model" style="padding-top:40px">
+  <header>
+    <p class="eyebrow">Internal &mdash; for Karl</p>
+    <h1>Settlement economics</h1>
+    <p class="lede">Two questions answered here: <b>what fees do we incur?</b> and <b>what are our options for spending treasury money privately?</b></p>
+  </header>
 
-    <div class="global-chainpick" id="global-chainpick">
-      <p class="gcp-label">Compare chains</p>
-      <div class="gcp-row">
-        <button class="gcp-btn" data-chain="solana" style="--cc:var(--c-sol)">
-          <span class="gcp-dot"></span>Solana
-        </button>
-        <button class="gcp-btn" data-chain="bnb" style="--cc:var(--c-bnb)">
-          <span class="gcp-dot"></span>BNB
-        </button>
-        <button class="gcp-btn" data-chain="ethereum" style="--cc:var(--c-eth)">
-          <span class="gcp-dot"></span>Ethereum
-        </button>
-        <button class="gcp-btn" data-chain="tron" style="--cc:var(--c-tron)">
-          <span class="gcp-dot"></span>Tron
-        </button>
-        <button class="gcp-btn" data-chain="base" style="--cc:var(--c-base);opacity:.5">
-          <span class="gcp-dot"></span>Base (L2)
-        </button>
-      </div>
-    </div>
+  <p class="footnote" style="margin-top:0;border-left-color:var(--clear)"><b>How it works in 30 seconds:</b> Customer pays USDC to a fresh deposit address &rarr; we sweep it into a shared treasury (all merchants commingled, so outsiders can&rsquo;t see per-merchant volume) &rarr; we pay merchants out in USDC (directly, or via NOWPayments). That&rsquo;s it. Everything below is the math and the options.</p>
 
-    <article class="stage">
-      <div class="idx">01</div>
-      <div>
-        <h3>Customer pays</h3>
-        <p>Customer sends USDC (or USDT) to pay an invoice. The chain they pay on is set per merchant — Solana, BNB, Ethereum, or Tron.</p>
-        <div class="chain-meta" id="meta-01"></div>
-      </div>
-      <div class="vis v-public">Public</div>
-    </article>
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 1 — FEES                           -->
+  <!-- ═══════════════════════════════════════════ -->
 
-    <div class="link"></div>
-
-    <article class="stage">
-      <div class="idx">02</div>
-      <div>
-        <h3>Fresh address per invoice</h3>
-        <p>Every invoice gets its own address. One payment, then it's retired — never reused. This is how we keep payments separated and auditable.</p>
-        <div class="meta"><span><b>1 payment</b>, then retired</span></div>
-        <div class="chain-meta" id="meta-02"></div>
-      </div>
-      <div class="vis v-public">Public</div>
-    </article>
-
-    <div class="link"></div>
-
-    <article class="stage">
-      <div class="idx">03</div>
-      <div>
-        <h3>Sweep to treasury</h3>
-        <p>Once paid, funds move from the deposit address into our shared treasury wallet. This happens automatically — a background job retries any that fail.</p>
-        <div class="meta"><span><b>automated</b>, retries on failure</span></div>
-        <div class="chain-meta" id="meta-03"></div>
-      </div>
-      <div class="vis v-public">Public</div>
-    </article>
-
-    <div class="link"></div>
-
-    <article class="stage is-custody">
-      <div class="idx">04</div>
-      <div>
-        <h3>Shared treasury</h3>
-        <p>All merchants' funds pool together in one wallet. This is the privacy step — anyone looking at the blockchain sees our total volume, but can't tell which payment belongs to which merchant. Only our database knows.</p>
-        <div class="meta"><span><b>custody</b> begins here</span><span><b>MSB / VASP</b> trigger</span></div>
-      </div>
-      <div class="vis v-agg">Aggregate</div>
-    </article>
-  </div>
-</div>
-
-<div class="boundary">
-  <div class="wrap">
-    <p class="b-label">Privacy boundary</p>
-    <p class="b-text">Anyone tracing payments on-chain hits this wall. Past here, they see platform totals — not which merchant got what.</p>
-    <p class="b-sub">This privacy is from competitors and public observers. It does not hide anything from a regulator with a subpoena, or from NOWPayments if we use them. And it only works because all merchants share one treasury — separate wallets per merchant would undo it.</p>
-  </div>
-</div>
-
-<div class="zone-dark">
-  <div class="wrap">
-    <div class="link"></div>
-
-    <article class="stage">
-      <div class="idx">05</div>
-      <div>
-        <h3>Merchant payout</h3>
-        <p>We send each merchant their share from the treasury. They pick how: direct USDC to their wallet, or via NOWPayments. The privacy from step 04 holds either way — this is just delivery.</p>
-        <div class="meta"><span><b>payout</b> = merchant config</span><span><b>self-custody</b> always</span></div>
-      </div>
-      <div class="vis v-agg">Configurable</div>
-    </article>
-
-    <div class="link"></div>
-
-    <article class="stage">
-      <div class="idx">05a</div>
-      <div>
-        <h3>Direct USDC payout (default)</h3>
-        <p>We send USDC straight to their wallet. No middleman, no extra fee. Most merchants will use this.</p>
-        <div class="meta"><span><b>0%</b> extra fee</span><span><b>~$0.002</b> tx cost</span></div>
-      </div>
-      <div class="vis v-public">Public</div>
-    </article>
-
-    <div class="link"></div>
-
-    <article class="stage is-xmr">
-      <div class="idx">05b</div>
-      <div>
-        <h3>XMR payout (opt-in, separate from NP)</h3>
-        <p>If a merchant specifically wants privacy on the receiving end, we convert their USDC to Monero via ChangeNOW before payout. This is a per-merchant election — it doesn't change how we collect payments. Extra cost: ~1.8% conversion + $0.015 network fee.</p>
-        <div class="meta"><span><b>~1.8%</b> conversion</span><span><b>separate</b> from NP</span><span><b>merchant</b> elects this</span></div>
-      </div>
-      <div class="vis v-opaque">Opaque</div>
-    </article>
-  </div>
-</div>
-
-<div class="wrap model">
-  <h2 class="sect-title">Unit economics</h2>
-  <p class="sect-sub"><b>This section answers: what does each payment cost us, and how much do we keep?</b> Pick a chain, toggle payout method, and drag the sliders — everything recalculates live. The "Where the money goes" bar at the bottom is the summary.</p>
+  <h2 class="sect-title" style="margin-top:36px">&num;1 &mdash; What does it cost us?</h2>
+  <p class="sect-sub">Pick a chain and payout method, drag the sliders. Everything recalculates live.</p>
 
   <div class="price-bar" id="price-bar">
-    <span class="pb-label">Token prices (all fees computed from these)</span>
+    <span class="pb-label">Token prices (fees computed from these)</span>
     <span class="pb-price"><span class="pb-sym">SOL</span> <span class="pb-val" id="p-sol">$74</span></span>
     <span class="pb-price"><span class="pb-sym">ETH</span> <span class="pb-val" id="p-eth">$1,872</span></span>
     <span class="pb-price"><span class="pb-sym">BNB</span> <span class="pb-val" id="p-bnb">$600</span></span>
@@ -612,10 +291,10 @@
   <label class="xmr-opt" id="xmr-opt">
     <input type="checkbox" id="xmr-check">
     <span class="xmr-label">Merchant elects XMR payout</span>
-    <span class="xmr-sub">Adds ~1.8% conversion via ChangeNOW + $0.015 XMR network fee. Separate from payment processing — this is a per-merchant treasury exit.</span>
+    <span class="xmr-sub">Adds ~1.8% conversion via ChangeNOW + $0.015 XMR network fee. This is a per-merchant election, separate from NOWPayments.</span>
   </label>
 
-  <div class="verdict-bar" id="verdict-bar">
+  <div class="verdict-bar" id="verdict-bar" style="margin-top:16px">
     <span class="vb-badge" id="vb-badge">Best fit for single-use</span>
     <span class="vb-note" id="vb-note">Rent refundable on close; failed closes are the only real leak.</span>
   </div>
@@ -641,9 +320,8 @@
     </div>
     <div class="ctl" id="ctl-fail">
       <label>
-        <span class="ctl-top"><span class="ctl-name">ATA close failures (Solana only)</span><span class="ctl-val" id="v-fail">1.0%</span></span>
+        <span class="ctl-top"><span class="ctl-name">ATA close failures (Solana)</span><span class="ctl-val" id="v-fail">1.0%</span></span>
         <input type="range" id="fail" min="0" max="10" step="0.1" value="1">
-        <span class="ctl-hint">% of swept deposit ATAs that fail to close — strands ~$0.15 rent each</span>
       </label>
     </div>
     <div class="ctl" id="ctl-gas" style="display:none">
@@ -654,34 +332,47 @@
     </div>
   </div>
 
+  <!-- per-invoice waterfall -->
+  <h3 style="margin:0 0 10px;font-size:15px;font-weight:700">Per invoice</h3>
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Client pays</span>
       <span class="row-val" id="r-gross">$15.00</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">Your platform fee<span class="row-note">your revenue line</span></span>
-      <span class="row-val" id="r-take">−$0.23</span>
+      <span class="row-name">Your platform fee<span class="row-note">this is what you keep</span></span>
+      <span class="row-val" id="r-take">&minus;$0.23</span>
     </div>
     <div class="row">
-      <span class="row-name">NOWPayments<span class="row-note">0.5% — only if using NP for USDC distribution</span></span>
-      <span class="row-val" id="r-np">−$0.08</span>
+      <span class="row-name">NOWPayments<span class="row-note">0.5% &mdash; only if using NP for distribution</span></span>
+      <span class="row-val" id="r-np">$0.00</span>
     </div>
     <div class="row">
-      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1.8% via ChangeNOW — only if merchant elects XMR</span></span>
-      <span class="row-val" id="r-conv">−$0.15</span>
+      <span class="row-name"><span id="r-asset">USDC</span> &rarr; XMR conversion<span class="row-note">~1.8% via ChangeNOW &mdash; only if merchant elects XMR</span></span>
+      <span class="row-val" id="r-conv">$0.00</span>
     </div>
     <div class="row">
-      <span class="row-name">XMR network fee<span class="row-note">~$0.015 — only if merchant elects XMR</span></span>
-      <span class="row-val" id="r-xmr">−$0.02</span>
+      <span class="row-name">XMR network fee<span class="row-note">~$0.015 &mdash; only if merchant elects XMR</span></span>
+      <span class="row-val" id="r-xmr">$0.00</span>
     </div>
     <div class="row is-net">
-      <span class="row-name">Merchant nets</span>
-      <span class="row-val" id="r-net">$14.53</span>
+      <span class="row-name">Merchant receives</span>
+      <span class="row-val" id="r-net">$14.78</span>
     </div>
   </div>
 
-  <div class="cards">
+  <!-- where the money goes -->
+  <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">Where the money goes</h3>
+  <div class="split-wrap">
+    <div class="split-bar" id="split-bar"></div>
+    <div class="split-summary" id="split-summary"></div>
+  </div>
+
+  <!-- annual P&L -->
+  <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">Annual P&amp;L</h3>
+  <div class="split-summary" id="split-annual"></div>
+
+  <div class="cards" style="margin-top:20px">
     <div class="kpi is-good">
       <div class="kpi-name">Your annual revenue</div>
       <div class="kpi-val" id="k-rev">$45,000</div>
@@ -700,239 +391,43 @@
     <div class="kpi" id="k-drag-card">
       <div class="kpi-name">Drag per ticket</div>
       <div class="kpi-val" id="k-drag">0.01%</div>
-      <div class="kpi-sub" id="k-drag-sub">on-chain cost ÷ ticket</div>
+      <div class="kpi-sub" id="k-drag-sub">on-chain cost &divide; ticket</div>
     </div>
   </div>
 
-  <h3 style="margin:32px 0 6px;font-size:15px;font-weight:700;letter-spacing:-.01em">Where the money goes</h3>
-  <p style="font-size:13px;color:var(--mute);margin:0 0 12px;line-height:1.5">Per invoice at current sliders. The stacked bar is proportional.</p>
-
-  <div class="split-wrap">
-    <div class="split-bar" id="split-bar"></div>
-    <div class="split-summary" id="split-summary"></div>
-  </div>
-
-  <h3 style="margin:28px 0 6px;font-size:15px;font-weight:700;letter-spacing:-.01em">Annual P&amp;L at scale</h3>
-  <div class="split-summary" id="split-annual"></div>
-
-  <h2 class="sect-title" style="margin-top:44px">Chain strategies</h2>
-  <p class="sect-sub"><b>This section answers: which blockchain should we launch on?</b> Each chain charges differently for our "fresh address per payment" model. Solana is cheapest. Tron looks cheap until you realize every new address pays a penalty. The cards below break down the real cost per chain.</p>
-
-  <div class="chaingrid">
-
-    <div class="chain">
-      <div class="chain-head">
-        <span class="chain-name">Solana</span>
-        <span class="chain-tag tag-good">Best for single-use</span>
-      </div>
-      <div class="chain-mech">Account-rent model. Fee payer is a separate account, so the treasury funds every sweep — deposit addresses never need pre-funding.</div>
-      <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.001–0.005</td></tr>
-        <tr><td>Per-address cost</td><td>0.00204 SOL ATA rent, <b>refundable</b></td></tr>
-        <tr><td>Sweep method</td><td><span class="mono">transfer</span> + <span class="mono">closeAccount</span>, atomic</td></tr>
-        <tr><td>Gotcha</td><td class="warn">Failed close = rent stranded (SOL-price dependent)</td></tr>
-      </table>
-      <div class="chain-note">USDC is legacy SPL, not Token-2022 — confidential transfers unavailable. Reclaim rent on every sweep and this is the cheapest option. Rent in USD tracks SOL price.</div>
-    </div>
-
-    <div class="chain">
-      <div class="chain-head">
-        <span class="chain-name">BNB Chain (BEP-20)</span>
-        <span class="chain-tag tag-warn">Needs gas funding</span>
-      </div>
-      <div class="chain-mech">Standard EVM gas, cheap and stable. <b>Neither USDT nor USDC on BNB supports EIP-3009 or permit</b> — both are Binance-pegged wrappers, not Circle-native. Each deposit address needs BNB to sweep.</div>
-      <table class="chain-tbl">
-        <tr><td>Fund + sweep</td><td>~$0.10–0.20</td></tr>
-        <tr><td>Per-address cost</td><td>BNB gas funding required</td></tr>
-        <tr><td>Sweep method</td><td>fund BNB → transferFrom → collect</td></tr>
-        <tr><td>Gotcha</td><td class="warn">No gasless path; centralization risk</td></tr>
-      </table>
-      <div class="chain-note">USDT is deeper on BNB but neither stablecoin supports gasless sweeps. Circle does not issue native USDC on BNB. Per-address gas funding adds ops complexity vs chains with EIP-3009.</div>
-    </div>
-
-    <div class="chain">
-      <div class="chain-head">
-        <span class="chain-name">Ethereum L1 (ERC-20)</span>
-        <span class="chain-tag tag-warn">Viable, still volatile</span>
-      </div>
-      <div class="chain-mech">Post-Dencun gas has dropped dramatically — typical 2026 fees are ~1 gwei, not 30+. EIP-3009 gasless sweeps work for Circle USDC (native). Still the most volatile fee environment.</div>
-      <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.01–2.00, rare spikes $5+</td></tr>
-        <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
-        <tr><td>Sweep method</td><td>EIP-3009 gasless, batched</td></tr>
-        <tr><td>Gotcha</td><td class="warn">Fee spikes still possible during congestion</td></tr>
-      </table>
-      <div class="chain-note">Much cheaper than 2024 but still the widest variance. L2s (Base, Arbitrum) give you the same USDC + EIP-3009 with tighter cost bounds. Use L1 only if counterparties insist on mainnet.</div>
-    </div>
-
-    <div class="chain">
-      <div class="chain-head">
-        <span class="chain-name">Tron (TRC-20)</span>
-        <span class="chain-tag tag-bad">Wrong fit for single-use</span>
-      </div>
-      <div class="chain-mech">Energy/bandwidth model, not per-tx gas. The trap: sending to a wallet that has never held the token costs <b>double energy</b> (~130k vs ~65k units) — and every single-use deposit address is, by definition, a fresh wallet. Proposal #104 (Aug 2025) halved energy unit prices, but TRX price rose to offset it.</div>
-      <table class="chain-tbl">
-        <tr><td>Transfer (fresh wallet)</td><td>~$3.08 rented / ~$4.42 burned</td></tr>
-        <tr><td>Per-address cost</td><td class="warn">the double-energy penalty, every time</td></tr>
-        <tr><td>Sweep method</td><td>delegate energy or fund TRX per address</td></tr>
-        <tr><td>Gotcha</td><td class="warn">Protocol-level energy delegation, not token-level gasless</td></tr>
-      </table>
-      <div class="chain-note">Tron rewards the opposite of your design: <b>reused</b> deposit addresses with a staked-TRX energy pool. If you want Tron, that means giving up single-use — a direct trade of privacy for cost. USDT dominates here; USDC is thin.</div>
-    </div>
-
-    <div class="chain" style="opacity:.45">
-      <div class="chain-head">
-        <span class="chain-name">Base (L2)</span>
-        <span class="chain-tag tag-good">Not at launch</span>
-      </div>
-      <div class="chain-mech">Ethereum L2 rollup. Native USDC, deepest stablecoin tooling, EIP-3009 gasless sweeps — deposit addresses never need funding. Cents per sweep.</div>
-      <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.008–0.02</td></tr>
-        <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
-        <tr><td>Sweep method</td><td>EIP-3009, relayer pays, batched</td></tr>
-        <tr><td>Gotcha</td><td class="warn">L2 fees track L1 data prices</td></tr>
-      </table>
-      <div class="chain-note">Strong option for future expansion: native Circle USDC, EIP-3009 gasless, mature infra. Not in the launch set but easy to add later.</div>
-    </div>
-
-  </div>
-
-  <div class="chain-verdict">
-    <b>Launch chains for single-use + sweep:</b> Solana (cheapest when rent is reclaimed) → BNB (cheap but needs gas funding) → Ethereum L1 (viable post-Dencun, still volatile) → Tron (only if you abandon single-use). Base is a strong future addition but not in the launch set.
-  </div>
-
-  <h2 class="sect-title" style="margin-top:44px">Address pool &amp; replenishment</h2>
-  <p class="sect-sub"><b>This section answers: how do we generate and manage deposit addresses?</b> We pre-generate addresses in batches from an HD seed. When the pool runs low, more are derived automatically. Each address goes through a simple lifecycle: derived → assigned to invoice → paid → swept → retired.</p>
-
+  <!-- chain cost comparison -->
+  <h3 style="margin:36px 0 8px;font-size:15px;font-weight:700">Chain cost comparison</h3>
+  <p style="font-size:13px;color:var(--mute);margin:0 0 12px">We use a fresh address per payment. That makes Solana cheapest and Tron most expensive.</p>
   <div class="flow-table">
     <div class="row is-gross">
-      <span class="row-name">Derivation method</span>
-      <span class="row-val">HD wallet (BIP-44) per chain</span>
+      <span class="row-name">Chain</span>
+      <span class="row-val">Cost per payment</span>
+    </div>
+    <div class="row is-yours">
+      <span class="row-name">Solana<span class="row-note">rent refundable on sweep &mdash; effective cost near zero</span></span>
+      <span class="row-val">~$0.003</span>
     </div>
     <div class="row">
-      <span class="row-name">Solana<span class="row-note">ATA from (treasury, mint, index)</span></span>
-      <span class="row-val">deterministic, rent on creation</span>
+      <span class="row-name">BNB<span class="row-note">need to pre-fund each address with BNB for gas</span></span>
+      <span class="row-val">~$0.10</span>
     </div>
     <div class="row">
-      <span class="row-name">EVM (Base, BNB, ETH)<span class="row-note">m/44'/60'/0'/0/{index}</span></span>
-      <span class="row-val">deterministic, no cost until funded</span>
+      <span class="row-name">Ethereum L1<span class="row-note">gasless sweep (EIP-3009), but gas price swings 30&times;</span></span>
+      <span class="row-val">$0.01 &ndash; $2+</span>
     </div>
-    <div class="row">
-      <span class="row-name">Tron (TRC-20)<span class="row-note">m/44'/195'/0'/0/{index}</span></span>
-      <span class="row-val">deterministic, energy penalty on first use</span>
+    <div class="row is-risk">
+      <span class="row-name">Tron<span class="row-note">first transfer to new address pays ~$3 energy penalty</span></span>
+      <span class="row-val">~$3.08</span>
+    </div>
+    <div class="row" style="opacity:.5">
+      <span class="row-name">Base (L2)<span class="row-note">not at launch &mdash; cheap and gasless, strong future candidate</span></span>
+      <span class="row-val">~$0.01</span>
     </div>
   </div>
 
-  <div class="flow-table" style="margin-top:12px">
-    <div class="row is-gross">
-      <span class="row-name">Pool management</span>
-      <span class="row-val">per chain, independent</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Pool floor (refill trigger)<span class="row-note">when available addresses drop below this</span></span>
-      <span class="row-val">50</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Batch size<span class="row-note">how many to generate per refill</span></span>
-      <span class="row-val">200</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Refill trigger<span class="row-note">how the system knows to generate more</span></span>
-      <span class="row-val">cron every 5 min + on-demand if pool &lt; floor</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Max derivations per seed<span class="row-note">when to rotate to a fresh seed</span></span>
-      <span class="row-val">10,000</span>
-    </div>
-  </div>
-
-  <div class="flow-table" style="margin-top:12px">
-    <div class="row is-gross">
-      <span class="row-name">Address lifecycle</span>
-      <span class="row-val">5 states</span>
-    </div>
-    <div class="row">
-      <span class="row-name">1. Derived<span class="row-note">address computed, stored in DB, not yet assigned</span></span>
-      <span class="row-val">available</span>
-    </div>
-    <div class="row">
-      <span class="row-name">2. Assigned<span class="row-note">linked to an invoice, waiting for payment</span></span>
-      <span class="row-val">watching</span>
-    </div>
-    <div class="row">
-      <span class="row-name">3. Funded<span class="row-note">payment received, awaiting sweep</span></span>
-      <span class="row-val">pending sweep</span>
-    </div>
-    <div class="row">
-      <span class="row-name">4. Swept<span class="row-note">funds moved to treasury, address retired</span></span>
-      <span class="row-val">done</span>
-    </div>
-    <div class="row">
-      <span class="row-name">5. Expired<span class="row-note">invoice timed out, no payment received</span></span>
-      <span class="row-val">recyclable</span>
-    </div>
-  </div>
-
-  <div class="footnote" style="margin-top:20px"><b>When to generate a new seed (not just new addresses):</b><br>
-    1. Every 10,000 derivations from one seed (precautionary limit — HD derivation is safe far beyond this, but smaller sets are easier to audit).<br>
-    2. If a seed is suspected compromised — rotate immediately, sweep all funded addresses from that seed.<br>
-    3. On the quarterly key rotation schedule (alongside cold wallet rotation).<br>
-    4. When onboarding a new chain (one seed per chain, never shared across chains).</p>
-  </div>
-
-  <div class="footnote"><b>Expired addresses:</b> If an invoice expires without payment, the address was never funded. On EVM chains it's free to recycle (just reassign it). On Solana, if the ATA was pre-created, the rent is stranded until you close it — run a reaper to close unfunded ATAs and reclaim rent. Don't reuse addresses even if they were never funded; single-use means single-use.</div>
-
-  <h2 class="sect-title" style="margin-top:44px">Treasury structure &amp; key rotation</h2>
-  <p class="sect-sub"><b>This section answers: how do we protect the money?</b> Two defenses: split the balance (hot wallet has a few days of payouts, cold wallet has the rest), and rotate keys on a schedule so a leaked key has a short shelf life.</p>
-
-  <div class="tiers">
-    <div class="tier tier-hot">
-      <div class="tier-head">
-        <span class="tier-name">Hot wallet</span>
-        <span class="tier-cap" id="t-hot">$—</span>
-      </div>
-      <p class="tier-desc">A small buffer that funds daily merchant payouts. Automated, single-sig or 2-of-3. If this key leaks, you lose only this amount — a few days of payouts, not your full balance.</p>
-      <div class="tier-bar"><div class="tier-fill tier-fill-hot" id="fill-hot"></div></div>
-    </div>
-    <div class="tier tier-cold">
-      <div class="tier-head">
-        <span class="tier-name">Cold wallet</span>
-        <span class="tier-cap" id="t-cold">$—</span>
-      </div>
-      <p class="tier-desc">Everything else. Multisig (3-of-5), hardware keys, no automated spending. Money only moves out manually to refill the hot wallet. Rotation protects this one.</p>
-      <div class="tier-bar"><div class="tier-fill tier-fill-cold" id="fill-cold"></div></div>
-    </div>
-  </div>
-
-  <div class="controls" style="margin-top:22px">
-    <div class="ctl">
-      <label>
-        <span class="ctl-top"><span class="ctl-name">Hot float</span><span class="ctl-val" id="v-days">3 days</span></span>
-        <input type="range" id="days" min="1" max="14" step="1" value="3">
-      </label>
-    </div>
-    <div class="ctl">
-      <label>
-        <span class="ctl-top"><span class="ctl-name">Rotation cadence</span><span class="ctl-val" id="v-rot">Quarterly</span></span>
-        <input type="range" id="rot" min="0" max="3" step="1" value="1">
-      </label>
-    </div>
-  </div>
-
-  <div class="rot-flow">
-    <div class="rot-step"><span class="rot-i">1</span> Create a brand-new cold wallet (fresh keys, fresh signers, done offline)</div>
-    <div class="rot-step"><span class="rot-i">2</span> Move everything from old cold wallet → new cold wallet in one transaction</div>
-    <div class="rot-step"><span class="rot-i">3</span> Record the swap in your books — same company, new address, date stamped</div>
-    <div class="rot-step"><span class="rot-i">4</span> Deactivate old signers, confirm old wallet is empty, keep the address on file for audits</div>
-  </div>
-
-  <p class="footnote" style="border-left-color:var(--good)"><b>Key rotation is standard security, not suspicious.</b> You rotate on a fixed schedule and move the full balance in one transaction. A regulator sees clean custody handoffs: same company, new keys, documented.</p>
-
-  <p class="footnote"><b>We are holding merchant funds — that makes us a custodian.</b> In the US: MSB registration with FinCEN. Elsewhere: VASP/PSP license. This is legal and routine — but we need our own books mapping wallets to merchants, invoices, and payout dates. On-chain data alone isn't enough.</p>
-
-  <!-- ── OPS SCENARIO PLANNER ──────────────────── -->
-  <h2 class="sect-title" style="margin-top:44px">Operations scenario planner</h2>
-  <p class="sect-sub"><b>This section answers: what does day-to-day operations look like?</b> Pick a growth stage (Launch → Enterprise) or drag the sliders. Shows how many invoices, sweeps, and payouts happen daily, what it costs, and what to monitor.</p>
+  <!-- scenarios -->
+  <h3 style="margin:36px 0 8px;font-size:15px;font-weight:700">Scenarios: what does ops look like at each stage?</h3>
+  <p style="font-size:13px;color:var(--mute);margin:0 0 14px">Pick a stage or drag the sliders. Numbers cascade from volume and chain above.</p>
 
   <div class="sc-row">
     <button class="sc-btn" data-sc="launch">Launch</button>
@@ -963,187 +458,113 @@
 
   <div class="flow-table">
     <div class="row is-gross">
-      <span class="row-name">Invoices created / day<span class="row-note">monthly volume ÷ 30 ÷ avg ticket</span></span>
-      <span class="row-val" id="o-inv">—</span>
+      <span class="row-name">Daily invoices</span>
+      <span class="row-val" id="o-inv">&mdash;</span>
     </div>
-    <div class="row">
-      <span class="row-name">Addresses consumed<span class="row-note">one per invoice, single-use HD derivation</span></span>
-      <span class="row-val" id="o-addr">—</span>
-    </div>
+    <div class="row" style="display:none"><span class="row-name"></span><span class="row-val" id="o-addr">&mdash;</span></div>
     <div class="row is-yours">
-      <span class="row-name">Payments received<span class="row-note">invoices × success rate</span></span>
-      <span class="row-val" id="o-paid">—</span>
+      <span class="row-name">Payments received<span class="row-note">invoices &times; success rate</span></span>
+      <span class="row-val" id="o-paid">&mdash;</span>
     </div>
     <div class="row">
-      <span class="row-name">Expired (no payment)<span class="row-note">address consumed, no funds — recyclable on EVM, close ATA on Solana</span></span>
-      <span class="row-val" id="o-expired">—</span>
+      <span class="row-name">Expired (unpaid)<span class="row-note">no cost on EVM; strands rent on Solana</span></span>
+      <span class="row-val" id="o-expired">&mdash;</span>
     </div>
     <div class="row">
-      <span class="row-name">Sweeps to treasury<span class="row-note">one tx per successful payment</span></span>
-      <span class="row-val" id="o-sweeps">—</span>
+      <span class="row-name">Sweeps to treasury</span>
+      <span class="row-val" id="o-sweeps">&mdash;</span>
     </div>
     <div class="row is-net">
-      <span class="row-name">Payout batch<span class="row-note">frequency × merchants per batch</span></span>
-      <span class="row-val" id="o-batch">—</span>
+      <span class="row-name">Payout batches</span>
+      <span class="row-val" id="o-batch">&mdash;</span>
     </div>
   </div>
 
   <div class="cards">
     <div class="kpi">
-      <div class="kpi-name">Pool burn rate</div>
-      <div class="kpi-val" id="o-burn">—</div>
-      <div class="kpi-sub" id="o-burn-sub">address pool consumption</div>
-    </div>
-    <div class="kpi">
       <div class="kpi-name">Daily ops cost</div>
-      <div class="kpi-val" id="o-opcost">—</div>
-      <div class="kpi-sub" id="o-opcost-sub">sweeps + payouts on-chain</div>
+      <div class="kpi-val" id="o-opcost">&mdash;</div>
+      <div class="kpi-sub" id="o-opcost-sub">sweeps + payouts</div>
     </div>
     <div class="kpi">
       <div class="kpi-name">Merchant wait</div>
-      <div class="kpi-val" id="o-wait">—</div>
+      <div class="kpi-val" id="o-wait">&mdash;</div>
       <div class="kpi-sub" id="o-wait-sub">worst case to payout</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Address pool burn</div>
+      <div class="kpi-val" id="o-burn">&mdash;</div>
+      <div class="kpi-sub" id="o-burn-sub">address pool consumption</div>
     </div>
     <div class="kpi" id="o-strand-card" style="display:none">
       <div class="kpi-name">Stranded rent / day</div>
-      <div class="kpi-val" id="o-strand">—</div>
-      <div class="kpi-sub" id="o-strand-sub">expired ATAs, reclaimable via reaper</div>
+      <div class="kpi-val" id="o-strand">&mdash;</div>
+      <div class="kpi-sub" id="o-strand-sub">expired ATAs</div>
     </div>
   </div>
 
-  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Invoice edge cases</h3>
-  <div class="flow-table">
-    <div class="row is-gross">
-      <span class="row-name">Scenario</span>
-      <span class="row-val">Policy</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Partial payment<span class="row-note">payer sends less than invoiced amount</span></span>
-      <span class="row-val">Hold, notify merchant</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Overpayment<span class="row-note">payer sends more than invoiced</span></span>
-      <span class="row-val">Credit merchant balance</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Invoice timeout<span class="row-note">no payment within window</span></span>
-      <span class="row-val">Mark expired, close ATA</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Wrong token<span class="row-note">e.g. USDT sent to USDC address</span></span>
-      <span class="row-val">Detect, hold for manual</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Refund request<span class="row-note">merchant initiates return to payer</span></span>
-      <span class="row-val">2-of-3 sig from treasury</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Double payment<span class="row-note">two txs to same deposit address</span></span>
-      <span class="row-val">Credit 2nd to merchant</span>
-    </div>
+  <!-- hidden elements the JS needs -->
+  <div style="display:none">
+    <input type="range" id="days" min="1" max="14" step="1" value="3">
+    <span id="v-days"></span><span id="t-hot"></span><span id="t-cold"></span>
+    <span id="fill-hot"></span><span id="fill-cold"></span>
+    <input type="range" id="rot" min="0" max="3" step="1" value="1">
+    <span id="v-rot"></span>
+    <span id="m-hot"></span><span id="m-hot-sub"></span>
+    <span id="m-sweep"></span><span id="m-sweep-sub"></span>
   </div>
 
-  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Cross-chain treasury</h3>
-  <p class="sect-sub">With multiple chains, do we keep separate wallets per chain or bridge everything to one? Start simple — per-chain — and reconsider only if one chain dominates volume.</p>
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 2 — TREASURY PRIVACY               -->
+  <!-- ═══════════════════════════════════════════ -->
 
-  <div class="tiers">
-    <div class="tier tier-hot">
-      <div class="tier-head">
-        <span class="tier-name">Per-chain treasuries</span>
-        <span class="tier-cap" style="color:var(--custody)">Simpler</span>
-      </div>
-      <p class="tier-desc">Each chain keeps its own hot + cold wallets. Sweeps stay on-chain. Payouts go out on the chain funds arrived on. No bridging risk.</p>
-    </div>
-    <div class="tier tier-cold">
-      <div class="tier-head">
-        <span class="tier-name">Unified treasury (bridge)</span>
-        <span class="tier-cap" style="color:var(--good)">Capital efficient</span>
-      </div>
-      <p class="tier-desc">Bridge all deposits to one treasury chain. Better capital efficiency, but adds bridge cost ($0.50–5/tx), bridge exploit risk, and finality latency.</p>
-    </div>
-  </div>
-
-  <p class="footnote" style="border-left-color:var(--clear)"><b>Recommendation for launch:</b> Start per-chain. Bridging adds a failure mode you don't need at low volume. Wait until one chain captures &gt;70% of deposits, then consider making it the treasury chain. Cross-chain reconciliation is a database problem — your books already map each wallet to a chain, merchant, and invoice.</p>
-
-  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Monitoring &amp; alerting</h3>
-  <p class="sect-sub">Five things that should wake you up at night. Thresholds adjust from your volume settings above.</p>
-
-  <div class="cards">
-    <div class="kpi is-risk">
-      <div class="kpi-name">Hot wallet low</div>
-      <div class="kpi-val" id="m-hot">—</div>
-      <div class="kpi-sub" id="m-hot-sub">below 1 day of payouts → refill from cold</div>
-    </div>
-    <div class="kpi is-risk">
-      <div class="kpi-name">Address pool low</div>
-      <div class="kpi-val">&lt; 50</div>
-      <div class="kpi-sub">below floor → cron replenishes. Page if cron fails.</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-name">Failed sweeps</div>
-      <div class="kpi-val" id="m-sweep">—</div>
-      <div class="kpi-sub" id="m-sweep-sub">reaper retries; page if stuck &gt;1h</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-name">Recon gap</div>
-      <div class="kpi-val">&gt; 0</div>
-      <div class="kpi-sub">on-chain balance ≠ sum of merchant balances → investigate</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-name">Settlement delay</div>
-      <div class="kpi-val">&gt; 2× freq</div>
-      <div class="kpi-sub">payout is &gt;2× the configured frequency → queue stuck</div>
-    </div>
-  </div>
-
-  <!-- ── TREASURY EXIT PATHS ──────────────────── -->
-  <h2 class="sect-title" style="margin-top:44px">Treasury exit paths</h2>
-  <p class="sect-sub"><b>This section answers: how can we spend treasury funds with privacy?</b> Sorted from simplest (fully visible) to most private (legal gray area). The short answer: our shared treasury design already hides per-merchant flows. For anything beyond that, the realistic options are CEX off-ramp (clean, KYC'd) or XMR conversion (private, shrinking liquidity).</p>
+  <h2 class="sect-title" style="margin-top:56px">&num;2 &mdash; How do we spend treasury money privately?</h2>
+  <p class="sect-sub">Our shared treasury already hides per-merchant flows from public observers. The question is: when we move money OUT of the treasury, how visible is that? Here are the options, from most visible to most private.</p>
 
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Method</span>
-      <span class="row-val">Privacy · Cost · Legal</span>
+      <span class="row-val">Privacy &middot; Cost &middot; Legal</span>
     </div>
     <div class="row">
-      <span class="row-name">Direct on-chain transfer<span class="row-note">Send USDC straight from treasury wallet. Address, amount, counterparty, timestamp — all permanently visible on any block explorer. Competitors reverse-engineer volumes and pricing. Circle has blacklisted 372 addresses ($109M frozen) including 16 wallets from a sealed civil lawsuit (Mar 2026).</span></span>
-      <span class="row-val">None · tx fee · Clean</span>
+      <span class="row-name">Direct on-chain transfer<span class="row-note">Send USDC straight from treasury wallet. Address, amount, counterparty, timestamp &mdash; all permanently visible on any block explorer. Competitors reverse-engineer volumes and pricing. Circle has blacklisted 372 addresses ($109M frozen) including 16 wallets from a sealed civil lawsuit (Mar 2026).</span></span>
+      <span class="row-val">None &middot; tx fee &middot; Clean</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">Shared treasury commingling (current design)<span class="row-note">Single-use deposits sweep into one shared wallet. Observer sees total volume but can't attribute outflows to specific merchants without your database. Privacy by architecture, not by tool.</span></span>
-      <span class="row-val">Moderate · free · Clean</span>
+      <span class="row-name">Shared treasury commingling (current design)<span class="row-note">Single-use deposits sweep into one shared wallet. Observer sees total volume but can&rsquo;t attribute outflows to specific merchants without your database. Privacy by architecture, not by tool.</span></span>
+      <span class="row-val">Moderate &middot; free &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">CEX off-ramp<span class="row-note">Deposit USDC to exchange, withdraw to different wallet or convert to fiat. Breaks the on-chain link — withdrawals come from the CEX's omnibus pool. Exchange has full KYC on you and reports to analytics firms. Chainalysis has 1B+ address clusters linked to entities. On-chain privacy is real; operational privacy is zero.</span></span>
-      <span class="row-val">High on-chain · $1–25 · Clean (KYC'd)</span>
+      <span class="row-name">CEX off-ramp<span class="row-note">Deposit USDC to exchange, withdraw to different wallet or convert to fiat. Breaks the on-chain link &mdash; withdrawals come from the CEX&rsquo;s omnibus pool. Exchange has full KYC on you and reports to analytics firms. Chainalysis has 1B+ address clusters linked to entities. On-chain privacy is real; operational privacy is zero.</span></span>
+      <span class="row-val">High on-chain &middot; $1&ndash;25 &middot; Clean (KYC&rsquo;d)</span>
     </div>
     <div class="row">
       <span class="row-name">Cross-chain bridge (CCTP / Wormhole / Stargate)<span class="row-note">Bridge USDC to another chain. ALL bridges log source + destination addresses on-chain: CCTP via DepositForBurn/MintAndWithdraw events, Wormhole via VAA hashes, Stargate/Across/deBridge via explicit sender+recipient in event params. Chainalysis/Elliptic/TRM track all of them with one-click cross-chain tracing. Zero privacy improvement.</span></span>
-      <span class="row-val">None · $0.50–5 · Clean</span>
+      <span class="row-val">None &middot; $0.50&ndash;5 &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Multi-hop (bridge → swap → bridge)<span class="row-note">Chain A → bridge → swap to intermediary token → swap back → chain B. Chainalysis tracks across 27+ chains, 300+ bridges, 325M+ indexed swaps. Elliptic's "Holistic Screening" collapses multi-hop into one graph via 65+ chains. Adds 2–4% in cost and provides minimal privacy against professional analytics.</span></span>
-      <span class="row-val">Low · 2–4% · Gray</span>
+      <span class="row-name">Multi-hop (bridge &rarr; swap &rarr; bridge)<span class="row-note">Chain A &rarr; bridge &rarr; swap to intermediary token &rarr; swap back &rarr; chain B. Chainalysis tracks across 27+ chains, 300+ bridges, 325M+ indexed swaps. Elliptic&rsquo;s &ldquo;Holistic Screening&rdquo; collapses multi-hop into one graph via 65+ chains. Adds 2&ndash;4% in cost and provides minimal privacy against professional analytics.</span></span>
+      <span class="row-val">Low &middot; 2&ndash;4% &middot; Gray</span>
     </div>
     <div class="row">
-      <span class="row-name">Umbra (stealth addresses)<span class="row-note">Sender generates a one-time address for the recipient — payment isn't linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible). Gas-only cost.</span></span>
-      <span class="row-val">Receiver only · gas · Clean</span>
+      <span class="row-name">Umbra (stealth addresses)<span class="row-note">Sender generates a one-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible). Gas-only cost.</span></span>
+      <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Privacy Pools (0xbow)<span class="row-note">Live on Ethereum mainnet since Mar 2025. ZK proofs let you prove funds aren't from sanctioned sources without revealing which deposit is yours. Vitalik-endorsed, EF-integrated (Kohaku wallet). Compliant by design. ETH/USDC/USDT/DAI supported.</span></span>
-      <span class="row-val">High · gas only · Clean</span>
+      <span class="row-name">Privacy Pools (0xbow)<span class="row-note">Live on Ethereum mainnet since Mar 2025. ZK proofs let you prove funds aren&rsquo;t from sanctioned sources without revealing which deposit is yours. Vitalik-endorsed, EF-integrated (Kohaku wallet). Compliant by design. ETH/USDC/USDT/DAI supported.</span></span>
+      <span class="row-val">High &middot; gas only &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance → unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
-      <span class="row-val">Very high · 0.25% · Low-gray</span>
+      <span class="row-name">Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance &rarr; unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
+      <span class="row-val">Very high &middot; 0.25% &middot; Low-gray</span>
     </div>
     <div class="row">
-      <span class="row-name">Privacy coin conversion (XMR)<span class="row-note">USDC → XMR via ChangeNOW or MEXC. Ring signatures (16 decoys) hide sender, amount, recipient. FCMP++ upgrade (full-chain membership proof) pending — will replace rings with full UTXO-set anonymity. Round-trip cost: 0.3–0.5% via CEX (MEXC/Kraken), 2–4% via no-KYC swaps. 73 exchange delistings in 2025 alone. Still on MEXC ($155M/day vol), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027. No country criminalizes holding.</span></span>
-      <span class="row-val">Very high · 0.3–4% RT · Elevated</span>
+      <span class="row-name">Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures (16 decoys) hide sender, amount, recipient. FCMP++ upgrade pending &mdash; will replace rings with full UTXO-set anonymity. Round-trip cost: 0.3&ndash;0.5% via CEX (MEXC/Kraken), 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025 alone. Still on MEXC ($155M/day vol), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027. No country criminalizes holding.</span></span>
+      <span class="row-val">Very high &middot; 0.3&ndash;4% RT &middot; Elevated</span>
     </div>
     <div class="row">
-      <span class="row-name">Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruled immutable contracts can't be sanctioned). Contracts functional, no longer illegal to use. But no compliance filtering — no way to prove funds are clean. Developer Storm convicted (MTB charge), Pertsev serving 5yr.</span></span>
-      <span class="row-val">Very high · 0.1–1% · Legal but toxic</span>
+      <span class="row-name">Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruled immutable contracts can&rsquo;t be sanctioned). Contracts functional, no longer illegal to use. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB charge), Pertsev serving 5yr.</span></span>
+      <span class="row-val">Very high &middot; 0.1&ndash;1% &middot; Legal but toxic</span>
     </div>
   </div>
 
@@ -1153,18 +574,18 @@
       <span class="row-val"></span>
     </div>
     <div class="row">
-      <span class="row-name">Solana confidential transfers (Token-2022)<span class="row-note">Twisted ElGamal + ZK range proofs hide amounts (not addresses). Launched Apr 2025, disabled Jun 2025 after two ZK ElGamal bugs. Re-enable pending with Agave 4.0 (no date). USDC is still on legacy SPL Token — Circle hasn't migrated. PYUSD and USDG enabled the extension but can't use it while ZK program is off.</span></span>
-      <span class="row-val">Amounts only · — · ZK program disabled</span>
+      <span class="row-name">Solana confidential transfers (Token-2022)<span class="row-note">Twisted ElGamal + ZK range proofs hide amounts (not addresses). Launched Apr 2025, disabled Jun 2025 after two ZK ElGamal bugs. Re-enable pending with Agave 4.0 (no date). USDC is still on legacy SPL Token &mdash; Circle hasn&rsquo;t migrated. PYUSD and USDG enabled the extension but can&rsquo;t use it while ZK program is off.</span></span>
+      <span class="row-val">Amounts only &middot; &mdash; &middot; ZK program disabled</span>
     </div>
     <div class="row">
-      <span class="row-name">Aztec privacy L2 (Alpha v5)<span class="row-note">Live on Ethereum mainnet since Jul 2026 with Shield Bridge, but explicitly "Alpha" — 72s block times, "don't deposit more than you can lose." Old Aztec Connect was exploited for $2.2M in Jun 2026. Not yet production-grade.</span></span>
-      <span class="row-val">Full · ~$0.05/tx · Experimental</span>
+      <span class="row-name">Aztec privacy L2 (Alpha v5)<span class="row-note">Live on Ethereum mainnet since Jul 2026 with Shield Bridge, but explicitly &ldquo;Alpha&rdquo; &mdash; 72s block times, &ldquo;don&rsquo;t deposit more than you can lose.&rdquo; Old Aztec Connect was exploited for $2.2M in Jun 2026. Not yet production-grade.</span></span>
+      <span class="row-val">Full &middot; ~$0.05/tx &middot; Experimental</span>
     </div>
   </div>
 
   <p class="footnote" style="border-left-color:var(--good)"><b>Bottom line: our shared treasury already does most of the work.</b> Competitors can see our total volume but not per-merchant breakdowns. That covers the most realistic threat.</p>
 
-  <p class="footnote" style="border-left-color:var(--custody)"><b>The practical playbook:</b> Shared treasury (free, already built) + CEX off-ramp when we need fiat (KYC'd, clean paper trail). If a merchant asks for extra privacy, offer XMR opt-in. Everything else on this list is either experimental, legally risky, or solving a problem we don't have yet.</p>
+  <p class="footnote" style="border-left-color:var(--custody)"><b>The practical playbook:</b> Shared treasury (free, already built) + CEX off-ramp when we need fiat (KYC&rsquo;d, clean paper trail). If a merchant asks for extra privacy, offer XMR opt-in. Everything else on this list is either experimental, legally risky, or solving a problem we don&rsquo;t have yet.</p>
 
 </div>
 
@@ -1176,7 +597,6 @@
   var payoutMode = 'direct';
   var xmrOptIn = false;
   var current = 'solana';
-  var selected = new Set(['solana']);
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
   var CHAINS = {
@@ -1250,38 +670,6 @@
     return 0;
   }
 
-  function getStepData(key, step){
-    var sp = PRICES.solana, ep = PRICES.ethereum, bp = PRICES.binancecoin, tp = PRICES.tron;
-    var d = {
-      solana:{
-        '01':['<b>~'+usd(0.000009*sp,4)+'</b> tx fee','<b>~400ms</b> settle','USDC'],
-        '02':['<b>'+usd(0.00203928*sp)+'</b> ATA rent','refundable on close'],
-        '03':['<b>~'+usd(0.000015*sp,4)+'</b> sweep','transfer + closeAccount','rent reclaimed']
-      },
-      base:{
-        '01':['<b>~'+usd(getSweep('base'),3)+'</b> tx fee','<b>~2s</b> settle','USDC'],
-        '02':['<b>$0</b> no rent','standard address'],
-        '03':['<b>~'+usd(getSweep('base'),3)+'</b> sweep','EIP-3009 gasless','batched']
-      },
-      bnb:{
-        '01':['<b>~'+usd((65000*3*1e-9)*bp)+'</b> tx fee','<b>~3s</b> settle','USDT'],
-        '02':['<b>$0</b> no rent','needs BNB gas to sweep'],
-        '03':['<b>~'+usd(getSweep('bnb'))+'</b> fund+sweep','no gasless for USDT','per address']
-      },
-      ethereum:{
-        '01':['<b>'+usd(getSweep('ethereum'))+'</b> tx fee','<b>~12s</b> settle','USDC'],
-        '02':['<b>$0</b> no rent','standard address'],
-        '03':['<b>'+usd(getSweep('ethereum'))+'</b> sweep','EIP-3009 gasless','gas varies']
-      },
-      tron:{
-        '01':['<b>~'+usd(9.33*tp)+'</b> fresh-wallet tx','<b>~3s</b> settle','USDT'],
-        '02':['<b>$0</b> but 2× energy penalty','standard address'],
-        '03':['<b>~'+usd(9.33*tp)+'</b> sweep','delegate energy','no gasless equiv.']
-      }
-    };
-    return d[key] && d[key][step] ? d[key][step] : [];
-  }
-
   function fetchPrices(){
     var btn = el('pb-refresh');
     if(btn) btn.textContent = '...';
@@ -1299,7 +687,6 @@
         }catch(e){}
         updatePriceBar();
         render();
-        renderChainMetas();
       })
       .catch(function(){
         updatePriceBar();
@@ -1505,30 +892,6 @@
     renderOps();
   }
 
-  function renderChainMetas(){
-    ['01','02','03'].forEach(function(step){
-      var container = el('meta-'+step);
-      if(!container) return;
-      container.innerHTML = '';
-      if(selected.size === 0){
-        container.innerHTML = '<div class="cm-empty">Select chains above to compare</div>';
-        return;
-      }
-      chainOrder.forEach(function(key){
-        if(!selected.has(key)) return;
-        var c = CHAINS[key];
-        var data = getStepData(key, step);
-        var row = document.createElement('div');
-        row.className = 'cm-row';
-        var html = '<span class="cm-dot" style="background:'+c.color+'"></span>';
-        html += '<span class="cm-chain" style="color:'+c.color+'">'+c.label+'</span>';
-        data.forEach(function(d){ html += '<span class="cm-val">'+d+'</span>'; });
-        row.innerHTML = html;
-        container.appendChild(row);
-      });
-    });
-  }
-
   var SCENARIOS = {
     launch:     {vol:10000,  ticket:25, freq:2, timeout:2, merchants:5,   success:80, note:'Low volume — daily payouts, ops cost ~pennies/day. The blocker is licensing, not code.'},
     growth:     {vol:100000, ticket:35, freq:1, timeout:1, merchants:50,  success:88, note:'4h batches balance merchant wait vs payout tx count. Pool burn is real — monitor the cron.'},
@@ -1605,33 +968,6 @@
     el('m-sweep').textContent = '> ' + sweepFailThreshold + '/day';
     el('m-sweep-sub').textContent = '>1% fail rate; reaper retries, page if stuck >1h';
   }
-
-  function syncUnitEcon(chain){
-    current = chain;
-    var btns = document.querySelectorAll('#chainpick .cp-btn');
-    btns.forEach(function(x){ x.classList.remove('active'); });
-    var match = document.querySelector('#chainpick .cp-btn[data-chain="'+chain+'"]');
-    if(match) match.classList.add('active');
-    render();
-  }
-
-  var gBtns = document.querySelectorAll('#global-chainpick .gcp-btn');
-  gBtns.forEach(function(b){
-    b.addEventListener('click', function(){
-      var chain = b.getAttribute('data-chain');
-      if(selected.has(chain)){
-        selected.delete(chain);
-        b.classList.remove('active');
-      } else {
-        selected.add(chain);
-        b.classList.add('active');
-        syncUnitEcon(chain);
-      }
-      renderChainMetas();
-    });
-  });
-  document.querySelector('#global-chainpick .gcp-btn[data-chain="solana"]').classList.add('active');
-  renderChainMetas();
 
   var ueBtns = document.querySelectorAll('#chainpick .cp-btn');
   ueBtns.forEach(function(b){
