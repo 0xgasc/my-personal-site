@@ -71,6 +71,13 @@
   .sim-table td:first-child{text-align:left;font-weight:600;color:var(--mute)}
   .sim-table .total-row td{font-weight:600;border-top:2px solid var(--ink);background:var(--card)}
   .sim-table .is-pos{color:var(--good)}.sim-table .is-neg{color:var(--xmr)}
+  .sim-table .loss-row td{background:rgba(196,89,11,.07)}
+  .sim-table .loss-row td:first-child{box-shadow:inset 3px 0 0 var(--xmr)}
+  .loss-banner{margin:0 0 20px;padding:12px 16px;background:rgba(196,89,11,.1);border:1px solid var(--xmr);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--xmr);line-height:1.5;display:none}
+  .loss-banner b{color:var(--ink)}
+
+  .embed-mode header,.embed-mode .back,.embed-mode .price-bar{display:none}
+  .embed-mode .wrap{padding-top:10px!important}
 
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:20px}
   .kpi{border:1px solid var(--rule);background:var(--card);padding:14px}
@@ -289,6 +296,8 @@
       <option value="9">9</option><option value="10">10</option>
     </select>
   </div>
+
+  <div class="loss-banner" id="loss-banner"></div>
 
   <div class="chart-wrap">
     <div class="chart-title">Cumulative profit (12 months)</div>
@@ -534,12 +543,15 @@
       });
     }
 
+    var lossMonths = 0;
     var html = '';
     months.forEach(function(mo){
       var nc = mo.net >= 0 ? 'is-pos' : 'is-neg';
       var cc = mo.cum >= 0 ? 'is-pos' : 'is-neg';
+      var rowCls = mo.net < 0 ? ' class="loss-row"' : '';
+      if(mo.net < 0) lossMonths++;
       var sm = (shiftEnabled && mo.m === shiftMonth) ? ' style="border-top:2px dashed var(--custody)"' : '';
-      html += '<tr' + sm + '><td>' + mo.m + '</td><td>' + big(mo.vol) + '</td><td>' + mo.inv.toLocaleString() + '</td><td>' + big(mo.rev) + '</td>';
+      html += '<tr' + rowCls + sm + '><td>' + mo.m + '</td><td>' + big(mo.vol) + '</td><td>' + mo.inv.toLocaleString() + '</td><td>' + big(mo.rev) + '</td>';
       html += '<td>' + smart(mo.sweepOps) + '</td><td>' + smart(mo.payoutOps) + '</td><td>' + smart(mo.exit) + '</td>';
       html += '<td class="' + nc + '">' + big(mo.net) + '</td><td class="' + cc + '">' + big(mo.cum) + '</td><td>' + mo.margin.toFixed(1) + '%</td></tr>';
     });
@@ -559,6 +571,23 @@
     ch += '<div class="kpi"><div class="kpi-name">Exit costs</div><div class="kpi-val">' + big(totals.exit) + '</div><div class="kpi-sub">blended mix + intermediary</div></div>';
     ch += '<div class="kpi"><div class="kpi-name">Mo 12 run rate</div><div class="kpi-val">' + big(mo12.net * 12) + '/yr</div><div class="kpi-sub">' + big(mo12.vol) + '/mo volume</div></div>';
     el('summary-cards').innerHTML = ch;
+
+    var lb = el('loss-banner');
+    if(lossMonths >= 12){
+      lb.innerHTML = '<b>UNSUSTAINABLE.</b> Every month loses money. Ops costs (' + big(totals.sweepOps + totals.payoutOps) + ') dwarf revenue (' + big(totals.rev) + '). Raise ticket size, reduce frequency, or switch chains.';
+      lb.style.display = '';
+    } else if(lossMonths > 0){
+      var breakEven = 0;
+      for(var i = 0; i < months.length; i++){
+        if(months[i].cum >= 0 && i > 0 && months[i-1].cum < 0){ breakEven = months[i].m; break; }
+        if(months[i].cum < 0 && i === months.length - 1){ breakEven = -1; }
+      }
+      var beNote = breakEven > 0 ? ' Break-even at month ' + breakEven + '.' : breakEven === -1 ? ' Never reaches break-even.' : '';
+      lb.innerHTML = '<b>' + lossMonths + ' of 12 months are net-negative.</b> Ops eat more than take rate in those periods.' + beNote;
+      lb.style.display = '';
+    } else {
+      lb.style.display = 'none';
+    }
 
     renderChart(months);
   }
@@ -602,6 +631,14 @@
     var pos = months[11].cum >= 0;
     var rgb = pos ? '42,99,80' : '196,89,11';
     var lc = pos ? '#2A6350' : '#C4590B';
+
+    if(yMin < 0){
+      var negTop = pad.top + ch - (ch * (0 - yMin) / range);
+      var negGrad = ctx.createLinearGradient(0, negTop, 0, pad.top + ch);
+      negGrad.addColorStop(0, 'rgba(196,89,11,0.03)'); negGrad.addColorStop(1, 'rgba(196,89,11,0.12)');
+      ctx.fillStyle = negGrad;
+      ctx.fillRect(pad.left, negTop, cw, pad.top + ch - negTop);
+    }
 
     ctx.beginPath(); ctx.moveTo(pts[0].x, baseY);
     pts.forEach(function(p){ ctx.lineTo(p.x, p.y); });
@@ -746,6 +783,11 @@
       });
     }, {threshold:0, rootMargin:'-60px 0px 0px 0px'});
     obs.observe(controlsEl);
+  }
+
+  if(window !== window.top){
+    document.querySelector('.wrap').classList.add('embed-mode');
+    stickyBar.style.display = 'none';
   }
 
   var resizeTimer;

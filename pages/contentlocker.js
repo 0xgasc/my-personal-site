@@ -36,10 +36,11 @@ export async function getServerSideProps({ req, query }) {
   const filePath = join(process.cwd(), 'public', 'internal', docFile)
   const html = readFileSync(filePath, 'utf-8')
 
-  return { props: { state: 'unlocked', html, reads: readCount } }
+  const embed = query.embed === '1'
+  return { props: { state: 'unlocked', html, reads: readCount, embed } }
 }
 
-export default function ContentLocker({ state, html, reads }) {
+export default function ContentLocker({ state, html, reads, embed }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -99,6 +100,10 @@ export default function ContentLocker({ state, html, reads }) {
         </div>
       </div>
     )
+  }
+
+  if (embed) {
+    return <div dangerouslySetInnerHTML={{ __html: html }} style={{ paddingTop: '0' }} />
   }
 
   return (
