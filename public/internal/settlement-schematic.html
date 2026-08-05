@@ -857,6 +857,194 @@
   <p class="footnote" style="border-left-color:var(--good)"><b>This is routine security, not money laundering.</b> The difference: you rotate on a fixed schedule (every 90 days) and move the <em>entire</em> balance in one visible hop. A regulator following the trail sees a clean chain of custody handoffs — "same entity, new key, here's why, here's when." That's the opposite of splitting money across wallets to hide volume. Same tool, opposite intent — the trigger (time vs. volume) is what distinguishes them.</p>
 
   <p class="footnote"><b>You are holding merchant funds.</b> The moment you sweep deposits into a treasury you control, you're a custodian. In the US that means MSB registration (FinCEN). Elsewhere, the equivalent VASP/PSP license. This is solvable and legal — you apply, you register, you keep records. But on-chain data alone does not satisfy the recordkeeping requirements. You need your own books mapping wallets to merchants, transactions to invoices, and payouts to settlement dates.</p>
+
+  <!-- ── OPS SCENARIO PLANNER ──────────────────── -->
+  <h2 class="sect-title" style="margin-top:44px">Operations scenario planner</h2>
+  <p class="sect-sub">Configure settlement frequency, invoice timeout, and merchant count. Cascading effects on costs, pool burn, and treasury sizing update live from the chain and volume you set above.</p>
+
+  <div class="controls">
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Payout frequency</span><span class="ctl-val" id="v-freq">Daily</span></span>
+      <input type="range" id="freq" min="0" max="4" step="1" value="2">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Invoice timeout</span><span class="ctl-val" id="v-timeout">30 min</span></span>
+      <input type="range" id="timeout" min="0" max="4" step="1" value="1">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Active merchants</span><span class="ctl-val" id="v-merchants">25</span></span>
+      <input type="range" id="merchants" min="1" max="500" step="1" value="25">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Payment success</span><span class="ctl-val" id="v-success">90%</span></span>
+      <input type="range" id="success" min="50" max="99" step="1" value="90">
+    </label></div>
+  </div>
+
+  <div class="flow-table">
+    <div class="row is-gross">
+      <span class="row-name">Invoices created / day<span class="row-note">monthly volume ÷ 30 ÷ avg ticket</span></span>
+      <span class="row-val" id="o-inv">—</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Addresses consumed<span class="row-note">one per invoice, single-use HD derivation</span></span>
+      <span class="row-val" id="o-addr">—</span>
+    </div>
+    <div class="row is-yours">
+      <span class="row-name">Payments received<span class="row-note">invoices × success rate</span></span>
+      <span class="row-val" id="o-paid">—</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Expired (no payment)<span class="row-note">address consumed, no funds — recyclable on EVM, close ATA on Solana</span></span>
+      <span class="row-val" id="o-expired">—</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Sweeps to treasury<span class="row-note">one tx per successful payment</span></span>
+      <span class="row-val" id="o-sweeps">—</span>
+    </div>
+    <div class="row is-net">
+      <span class="row-name">Payout batch<span class="row-note">frequency × merchants per batch</span></span>
+      <span class="row-val" id="o-batch">—</span>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="kpi">
+      <div class="kpi-name">Pool burn rate</div>
+      <div class="kpi-val" id="o-burn">—</div>
+      <div class="kpi-sub" id="o-burn-sub">address pool consumption</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Daily ops cost</div>
+      <div class="kpi-val" id="o-opcost">—</div>
+      <div class="kpi-sub" id="o-opcost-sub">sweeps + payouts on-chain</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Merchant wait</div>
+      <div class="kpi-val" id="o-wait">—</div>
+      <div class="kpi-sub" id="o-wait-sub">worst case to payout</div>
+    </div>
+    <div class="kpi" id="o-strand-card" style="display:none">
+      <div class="kpi-name">Stranded rent / day</div>
+      <div class="kpi-val" id="o-strand">—</div>
+      <div class="kpi-sub" id="o-strand-sub">expired ATAs, reclaimable via reaper</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Invoice edge cases</h3>
+  <div class="flow-table">
+    <div class="row is-gross">
+      <span class="row-name">Scenario</span>
+      <span class="row-val">Policy</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Partial payment<span class="row-note">payer sends less than invoiced amount</span></span>
+      <span class="row-val">Hold, notify merchant</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Overpayment<span class="row-note">payer sends more than invoiced</span></span>
+      <span class="row-val">Credit merchant balance</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Invoice timeout<span class="row-note">no payment within window</span></span>
+      <span class="row-val">Mark expired, close ATA</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Wrong token<span class="row-note">e.g. USDT sent to USDC address</span></span>
+      <span class="row-val">Detect, hold for manual</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Refund request<span class="row-note">merchant initiates return to payer</span></span>
+      <span class="row-val">2-of-3 sig from treasury</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Double payment<span class="row-note">two txs to same deposit address</span></span>
+      <span class="row-val">Credit 2nd to merchant</span>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Cross-chain treasury</h3>
+  <p class="sect-sub">With 3+ chains, you need a treasury strategy. Two models — pick based on where volume concentrates.</p>
+
+  <div class="tiers">
+    <div class="tier tier-hot">
+      <div class="tier-head">
+        <span class="tier-name">Per-chain treasuries</span>
+        <span class="tier-cap" style="color:var(--custody)">Simpler</span>
+      </div>
+      <p class="tier-desc">Each chain keeps its own hot + cold wallets. Sweeps stay on-chain. Payouts go out on the chain funds arrived on. No bridging risk.</p>
+    </div>
+    <div class="tier tier-cold">
+      <div class="tier-head">
+        <span class="tier-name">Unified treasury (bridge)</span>
+        <span class="tier-cap" style="color:var(--good)">Capital efficient</span>
+      </div>
+      <p class="tier-desc">Bridge all deposits to one treasury chain. Better capital efficiency, but adds bridge cost ($0.50–5/tx), bridge exploit risk, and finality latency.</p>
+    </div>
+  </div>
+
+  <p class="footnote" style="border-left-color:var(--clear)"><b>Recommendation for launch:</b> Start per-chain. Bridging adds a failure mode you don't need at low volume. Wait until one chain captures &gt;70% of deposits, then consider making it the treasury chain. Cross-chain reconciliation is a database problem — your books already map each wallet to a chain, merchant, and invoice.</p>
+
+  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Monitoring &amp; alerting</h3>
+  <p class="sect-sub">Five alerts that should page you. Thresholds auto-adjust from your volume settings above.</p>
+
+  <div class="cards">
+    <div class="kpi is-risk">
+      <div class="kpi-name">Hot wallet low</div>
+      <div class="kpi-val" id="m-hot">—</div>
+      <div class="kpi-sub" id="m-hot-sub">below 1 day of payouts → refill from cold</div>
+    </div>
+    <div class="kpi is-risk">
+      <div class="kpi-name">Address pool low</div>
+      <div class="kpi-val">&lt; 50</div>
+      <div class="kpi-sub">below floor → cron replenishes. Page if cron fails.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Failed sweeps</div>
+      <div class="kpi-val" id="m-sweep">—</div>
+      <div class="kpi-sub" id="m-sweep-sub">reaper retries; page if stuck &gt;1h</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Recon gap</div>
+      <div class="kpi-val">&gt; 0</div>
+      <div class="kpi-sub">on-chain balance ≠ sum of merchant balances → investigate</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-name">Settlement delay</div>
+      <div class="kpi-val">&gt; 2× freq</div>
+      <div class="kpi-sub">payout is &gt;2× the configured frequency → queue stuck</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Licensing requirements</h3>
+  <div class="flow-table">
+    <div class="row is-gross">
+      <span class="row-name">Jurisdiction</span>
+      <span class="row-val">Requirement</span>
+    </div>
+    <div class="row">
+      <span class="row-name">United States<span class="row-note">custodying stablecoins = money transmission</span></span>
+      <span class="row-val">MSB (FinCEN) + state MTLs</span>
+    </div>
+    <div class="row">
+      <span class="row-name">Guatemala<span class="row-note">SIB has no explicit VASP framework yet</span></span>
+      <span class="row-val">Gray area — counsel needed</span>
+    </div>
+    <div class="row">
+      <span class="row-name">EU / EEA<span class="row-note">MiCA regulation (effective 2024)</span></span>
+      <span class="row-val">CASP license via national authority</span>
+    </div>
+    <div class="row">
+      <span class="row-name">El Salvador<span class="row-note">Bitcoin legal tender, crypto-friendly</span></span>
+      <span class="row-val">DASP registration</span>
+    </div>
+    <div class="row is-net">
+      <span class="row-name">Key requirement everywhere</span>
+      <span class="row-val">Your own books: wallet → merchant → invoice → payout</span>
+    </div>
+  </div>
+
+  <p class="footnote" style="border-left-color:var(--xmr)"><b>This is the real blocker, not the code.</b> The technical architecture works. The ops model works. The fee economics work. But none of it matters if you can't legally custody merchant funds. For Guatemala: get a legal opinion before writing production code. The cost of a VASP opinion (~$2–5k) is nothing compared to operating without one.</p>
 </div>
 
 <script>
@@ -1134,6 +1322,8 @@
 
     var rotLabels = ['Monthly', 'Quarterly', 'Semi-annual', 'Annual'];
     el('v-rot').textContent = rotLabels[+el('rot').value];
+
+    renderOps();
   }
 
   function renderChainMetas(){
@@ -1158,6 +1348,76 @@
         container.appendChild(row);
       });
     });
+  }
+
+  function renderOps(){
+    var T = +el('ticket').value;
+    var V = +el('vol').value;
+    var freqIdx = +el('freq').value;
+    var timeoutIdx = +el('timeout').value;
+    var merchants = +el('merchants').value;
+    var successRate = +el('success').value / 100;
+
+    var freqLabels = ['Real-time','Every 4h','Daily','Every 3 days','Weekly'];
+    var freqHours = [0.08, 4, 24, 72, 168];
+    var timeoutLabels = ['15 min','30 min','1 hour','6 hours','24 hours'];
+
+    var dailyInv = Math.max(1, Math.round((V / 30) / T));
+    var paidPerDay = Math.round(dailyInv * successRate);
+    var expiredPerDay = dailyInv - paidPerDay;
+    var sweep = getSweep(current);
+
+    var batchesPerDay = freqIdx === 0 ? paidPerDay : Math.max(1, Math.round(24 / freqHours[freqIdx]));
+    var payoutTxPerDay = freqIdx === 0 ? paidPerDay : Math.min(merchants, paidPerDay) * batchesPerDay;
+    var totalTxPerDay = paidPerDay + payoutTxPerDay;
+    var dailyOpsCost = totalTxPerDay * sweep;
+
+    var poolBatch = 200;
+    var daysPerRefill = poolBatch / Math.max(1, dailyInv);
+
+    var waitH = freqHours[freqIdx];
+    var waitLabel = freqIdx === 0 ? '<5 min' : (waitH < 24 ? '≤' + waitH + 'h' : '≤' + Math.round(waitH / 24) + 'd');
+
+    el('v-freq').textContent = freqLabels[freqIdx];
+    el('v-timeout').textContent = timeoutLabels[timeoutIdx];
+    el('v-merchants').textContent = merchants;
+    el('v-success').textContent = Math.round(successRate * 100) + '%';
+
+    el('o-inv').textContent = dailyInv.toLocaleString();
+    el('o-addr').textContent = dailyInv.toLocaleString();
+    el('o-paid').textContent = paidPerDay.toLocaleString();
+    el('o-expired').textContent = expiredPerDay.toLocaleString();
+    el('o-sweeps').textContent = paidPerDay.toLocaleString();
+    el('o-batch').textContent = (freqIdx === 0 ? 'real-time' : batchesPerDay + '×/day') + ', ' + merchants + ' merchants';
+
+    el('o-burn').textContent = dailyInv + '/day';
+    el('o-burn-sub').textContent = 'refill every ' + (daysPerRefill < 1 ? (daysPerRefill * 24).toFixed(0) + 'h' : daysPerRefill.toFixed(1) + 'd') + ' (batch ' + poolBatch + ')';
+
+    el('o-opcost').textContent = dailyOpsCost < 1 ? usd(dailyOpsCost) : big(dailyOpsCost);
+    el('o-opcost-sub').textContent = totalTxPerDay.toLocaleString() + ' txs × ' + usd(sweep, 4);
+
+    el('o-wait').textContent = waitLabel;
+    el('o-wait-sub').textContent = freqLabels[freqIdx].toLowerCase() + ' settlement';
+
+    var strandCard = el('o-strand-card');
+    if(current === 'solana'){
+      var rent = getRent('solana');
+      var strandDaily = expiredPerDay * rent;
+      el('o-strand').textContent = usd(strandDaily) + '/day';
+      el('o-strand-sub').textContent = expiredPerDay + ' expired × ' + usd(rent) + ' rent';
+      strandCard.style.display = '';
+      strandCard.className = strandDaily > 1 ? 'kpi is-risk' : 'kpi';
+    } else {
+      strandCard.style.display = 'none';
+    }
+
+    var hotThreshold = V / 30;
+    el('m-hot').textContent = '< ' + big(hotThreshold);
+    el('m-hot-sub').textContent = 'below 1 day of payouts (' + big(V / 30) + '/day)';
+
+    var sweepFailThreshold = Math.max(1, Math.round(paidPerDay * 0.01));
+    el('m-sweep').textContent = '> ' + sweepFailThreshold + '/day';
+    el('m-sweep-sub').textContent = '>1% fail rate; reaper retries, page if stuck >1h';
   }
 
   function syncUnitEcon(chain){
@@ -1208,7 +1468,7 @@
     });
   });
 
-  ['ticket','vol','take','fail','gas','days','rot'].forEach(function(id){
+  ['ticket','vol','take','fail','gas','days','rot','freq','timeout','merchants','success'].forEach(function(id){
     el(id).addEventListener('input', render);
   });
 
