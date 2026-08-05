@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Strategy simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#DFE4E8;
+    --ink:#141C24;
+    --mute:#5D6A75;
+    --rule:#B2BCC5;
+    --card:#EAEEF1;
+    --clear:#1F5C8B;
+    --custody:#8A6510;
+    --xmr:#C4590B;
+    --good:#2A6350;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Archivo,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  .wrap{max-width:820px;margin:0 auto;padding:0 20px}
+
+  header{padding:40px 0 28px}
+  h1{
+    font-size:clamp(28px,7vw,42px);
+    font-weight:700;letter-spacing:-.025em;line-height:1.02;
+    margin:0 0 14px;
+  }
+  .lede{font-size:15px;line-height:1.5;color:var(--mute);margin:0;max-width:52ch}
+  .back{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    color:var(--clear);text-decoration:none;display:inline-block;margin-bottom:8px;
+  }
+  .back:hover{text-decoration:underline}
+
+  .controls{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:16px;margin-bottom:26px;
+  }
+  .ctl label{display:block}
+  .ctl-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .ctl-name{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--mute);
+  }
+  .ctl-val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500}
+  input[type=range]{width:100%;accent-color:var(--clear);height:20px}
+  input[type=range]:focus-visible{outline:2px solid var(--clear);outline-offset:3px}
+
+  .chainpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .cp-btn{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    padding:8px 13px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;border-radius:2px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cp-btn:hover{border-color:var(--mute);color:var(--ink)}
+  .cp-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .payout-toggle{display:flex;gap:0;margin-bottom:16px}
+  .pt-btn{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    padding:8px 14px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;
+  }
+  .pt-btn+.pt-btn{border-left:0}
+  .pt-btn:hover{color:var(--ink)}
+  .pt-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .exit-wrap{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .exit-select{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    padding:7px 10px;border:1px solid var(--rule);background:var(--card);
+    color:var(--ink);cursor:pointer;max-width:280px;
+  }
+
+  .shift-row{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    margin-bottom:22px;padding:12px 14px;
+    background:var(--card);border:1px dashed var(--rule);font-size:13px;
+  }
+  .shift-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .shift-row input[type=checkbox]{accent-color:var(--clear);margin:0}
+  .shift-row select{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    padding:5px 8px;border:1px solid var(--rule);background:#fff;color:var(--ink);
+  }
+
+  .sc-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .sc-btn{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;
+    padding:9px 16px;border:1px solid var(--rule);background:var(--card);
+    color:var(--mute);cursor:pointer;transition:all .15s ease;
+    letter-spacing:.06em;text-transform:uppercase;font-weight:500;
+  }
+  .sc-btn:hover{border-color:var(--mute);color:var(--ink)}
+  .sc-btn.active{background:var(--clear);color:#fff;border-color:var(--clear)}
+
+  .sim-table-wrap{overflow-x:auto;margin-bottom:24px}
+  .sim-table{
+    width:100%;border-collapse:collapse;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .sim-table th{
+    font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--mute);padding:8px 10px;text-align:right;
+    border-bottom:2px solid var(--ink);font-weight:500;
+    white-space:nowrap;position:sticky;top:0;background:var(--paper);
+  }
+  .sim-table th:first-child{text-align:left;width:40px}
+  .sim-table td{
+    padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule);
+    white-space:nowrap;
+  }
+  .sim-table td:first-child{text-align:left;font-weight:600;color:var(--mute)}
+  .sim-table .total-row td{font-weight:600;border-top:2px solid var(--ink);background:var(--card)}
+  .sim-table .is-pos{color:var(--good)}
+  .sim-table .is-neg{color:var(--xmr)}
+
+  .cards{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;margin-top:20px;
+  }
+  .kpi{border:1px solid var(--rule);background:var(--card);padding:14px}
+  .kpi-name{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--mute);margin-bottom:7px;
+  }
+  .kpi-val{
+    font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:500;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  }
+  .kpi-sub{font-size:11.5px;color:var(--mute);margin-top:4px;line-height:1.4}
+  .kpi.is-good .kpi-val{color:var(--good)}
+  .kpi.is-risk .kpi-val{color:var(--xmr)}
+
+  .chart-wrap{
+    margin:30px 0;padding:20px;
+    background:var(--card);border:1px solid var(--rule);
+  }
+  .chart-title{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--mute);margin:0 0 14px;
+  }
+  canvas{width:100%;height:200px;display:block}
+
+  .footnote{
+    margin-top:26px;padding:14px 16px;
+    border-left:3px solid var(--clear);background:var(--card);
+    font-size:13px;line-height:1.55;color:var(--mute);
+  }
+  .footnote b{color:var(--ink);font-weight:600}
+
+  .price-bar{
+    display:flex;flex-wrap:wrap;gap:8px 14px;
+    padding:11px 14px;margin-bottom:18px;
+    background:var(--card);border:1px solid var(--rule);
+    align-items:center;font-family:"IBM Plex Mono",monospace;
+  }
+  .pb-label{
+    font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--mute);width:100%;margin-bottom:2px;
+  }
+  .pb-price{font-size:12px;display:inline-flex;align-items:baseline;gap:4px}
+  .pb-sym{color:var(--mute);font-size:10px;letter-spacing:.05em}
+  .pb-val{font-weight:500;font-variant-numeric:tabular-nums}
+  .pb-refresh{
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 9px;border:1px solid var(--rule);background:transparent;
+    color:var(--mute);cursor:pointer;font-family:inherit;margin-left:auto;
+  }
+  .pb-refresh:hover{border-color:var(--ink);color:var(--ink)}
+  .pb-age{font-size:10px;color:var(--mute)}
+  .pb-stale{color:var(--xmr)}
+
+  @media (max-width:560px){
+    .cards{grid-template-columns:1fr 1fr}
+    .sim-table{font-size:11px}
+    .sim-table th,.sim-table td{padding:6px 6px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap" style="padding-top:40px;padding-bottom:60px">
+  <a href="/contentlocker" class="back">&larr; Settlement economics</a>
+  <header>
+    <h1>Strategy simulator</h1>
+    <p class="lede">Model 12 months of ops. Set volume, growth rate, and exit strategy &mdash; see month-by-month revenue, costs, and profit.</p>
+  </header>
+
+  <div class="price-bar" id="price-bar">
+    <span class="pb-label">Token prices (shared with main page)</span>
+    <span class="pb-price"><span class="pb-sym">SOL</span> <span class="pb-val" id="p-sol">$74</span></span>
+    <span class="pb-price"><span class="pb-sym">ETH</span> <span class="pb-val" id="p-eth">$1,872</span></span>
+    <span class="pb-price"><span class="pb-sym">BNB</span> <span class="pb-val" id="p-bnb">$600</span></span>
+    <span class="pb-price"><span class="pb-sym">TRX</span> <span class="pb-val" id="p-trx">$0.330</span></span>
+    <button class="pb-refresh" id="pb-refresh">Refresh</button>
+    <span class="pb-age" id="pb-age">defaults</span>
+  </div>
+
+  <h3 style="margin:0 0 10px;font-size:15px;font-weight:700">Presets</h3>
+  <div class="sc-row">
+    <button class="sc-btn" data-sc="bootstrap">Bootstrap</button>
+    <button class="sc-btn" data-sc="steady">Steady</button>
+    <button class="sc-btn" data-sc="rocket">Rocket</button>
+    <button class="sc-btn" data-sc="enterprise">Enterprise</button>
+  </div>
+
+  <div class="chainpick" id="chainpick">
+    <button class="cp-btn active" data-chain="solana">Solana</button>
+    <button class="cp-btn" data-chain="bnb">BNB</button>
+    <button class="cp-btn" data-chain="ethereum">Ethereum L1</button>
+    <button class="cp-btn" data-chain="tron">Tron</button>
+    <button class="cp-btn" data-chain="base" style="opacity:.5">Base (L2)</button>
+  </div>
+
+  <div class="payout-toggle" id="payout-toggle">
+    <button class="pt-btn active" data-mode="direct">Direct USDC</button>
+    <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
+  </div>
+
+  <div class="controls">
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Starting volume</span><span class="ctl-val" id="v-vol">$50k</span></span>
+      <input type="range" id="vol" min="1000" max="2000000" step="1000" value="50000">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Avg ticket</span><span class="ctl-val" id="v-ticket">$25</span></span>
+      <input type="range" id="ticket" min="2" max="100" step="1" value="25">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Take rate</span><span class="ctl-val" id="v-take">1.50%</span></span>
+      <input type="range" id="take" min="0" max="5" step="0.1" value="1.5">
+    </label></div>
+    <div class="ctl"><label>
+      <span class="ctl-top"><span class="ctl-name">Monthly growth</span><span class="ctl-val" id="v-growth">+15%</span></span>
+      <input type="range" id="growth" min="-10" max="50" step="1" value="15">
+    </label></div>
+  </div>
+
+  <h3 style="margin:0 0 10px;font-size:15px;font-weight:700">Exit strategy</h3>
+  <div class="exit-wrap">
+    <span class="ctl-name" style="margin:0">Start with</span>
+    <select id="exit-a" class="exit-select">
+      <option value="none">None (direct)</option>
+      <option value="cex" selected>CEX off-ramp (~$5/exit)</option>
+      <option value="privacy_pools">Privacy Pools (~$0.50/exit)</option>
+      <option value="veil">Veil Cash (0.3%)</option>
+      <option value="railgun">Railgun (0.25%)</option>
+      <option value="xmr_exit">XMR conversion (~1.5%)</option>
+      <option value="tornado">Tornado Cash (0.5%)</option>
+    </select>
+  </div>
+
+  <div class="shift-row" id="shift-row">
+    <label><input type="checkbox" id="shift-check"> Switch at month</label>
+    <select id="shift-month" disabled>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6" selected>6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+    <span class="ctl-name" style="margin:0">to</span>
+    <select id="exit-b" class="exit-select" disabled>
+      <option value="none">None (direct)</option>
+      <option value="cex">CEX off-ramp (~$5/exit)</option>
+      <option value="privacy_pools">Privacy Pools (~$0.50/exit)</option>
+      <option value="veil" selected>Veil Cash (0.3%)</option>
+      <option value="railgun">Railgun (0.25%)</option>
+      <option value="xmr_exit">XMR conversion (~1.5%)</option>
+      <option value="tornado">Tornado Cash (0.5%)</option>
+    </select>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Cumulative profit (12 months)</div>
+    <canvas id="chart" height="200"></canvas>
+  </div>
+
+  <div class="sim-table-wrap">
+    <table class="sim-table">
+      <thead>
+        <tr>
+          <th>Mo</th>
+          <th>Volume</th>
+          <th>Invoices</th>
+          <th>Revenue</th>
+          <th>Ops</th>
+          <th>Exit</th>
+          <th>Net</th>
+          <th>Cum.</th>
+          <th>Margin</th>
+        </tr>
+      </thead>
+      <tbody id="sim-body"></tbody>
+    </table>
+  </div>
+
+  <div class="cards" id="summary-cards"></div>
+
+  <p class="footnote"><b>How to read this:</b> Revenue is your platform fee (take rate &times; volume). Ops is on-chain sweep costs. Exit is the cost of moving money out of the treasury (method-dependent). Net = revenue &minus; ops &minus; exit. Growth compounds monthly.</p>
+</div>
+
+<script>
+(function(){
+  var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
+  var priceTs = 0;
+  var NP = 0.005;
+  var payoutMode = 'direct';
+  var current = 'solana';
+
+  var EXIT_METHODS = {
+    none:          {pct:0,     flat:0},
+    cex:           {pct:0,     flat:5},
+    privacy_pools: {pct:0,     flat:0.50},
+    veil:          {pct:0.003, flat:0},
+    railgun:       {pct:0.0025,flat:0},
+    xmr_exit:      {pct:0.015, flat:0},
+    tornado:       {pct:0.005, flat:0}
+  };
+
+  var CHAINS = {
+    solana:  {sweepNative:0.000015, rentNative:0.00203928},
+    base:    {sweepGas:51000, sweepGwei:0.1, l1DataUsd:0.008},
+    bnb:     {fundGas:21000, sweepGas:65000, gasGwei:3},
+    ethereum:{sweepGas:65000, defaultGwei:1},
+    tron:    {sweepTrx:9.33}
+  };
+
+  var SCENARIOS = {
+    bootstrap:  {vol:10000,  ticket:25, take:1.5, growth:20, chain:'solana', mode:'direct', exitA:'cex',           shift:false},
+    steady:     {vol:100000, ticket:35, take:1.5, growth:5,  chain:'solana', mode:'direct', exitA:'veil',          shift:false},
+    rocket:     {vol:50000,  ticket:30, take:2.0, growth:30, chain:'solana', mode:'direct', exitA:'none',          shift:true, shiftMonth:'6', exitB:'railgun'},
+    enterprise: {vol:500000, ticket:50, take:1.0, growth:10, chain:'solana', mode:'direct', exitA:'privacy_pools', shift:false}
+  };
+
+  var el = function(id){ return document.getElementById(id); };
+
+  function big(n){
+    var neg = n < 0; if(neg) n = -n;
+    var s;
+    if(n >= 1000000) s = '$' + (n/1000000).toFixed(2) + 'M';
+    else if(n >= 1000) s = '$' + Math.round(n/1000) + 'k';
+    else s = '$' + n.toFixed(0);
+    return neg ? '-' + s : s;
+  }
+  function smart(n){
+    var neg = n < 0; if(neg) n = -n;
+    var s;
+    if(n >= 1000000) s = '$' + (n/1000000).toFixed(2) + 'M';
+    else if(n >= 1000) s = '$' + Math.round(n/1000) + 'k';
+    else if(n >= 1) s = '$' + n.toFixed(2);
+    else if(n >= 0.01) s = '$' + n.toFixed(3);
+    else if(n > 0) s = '$' + n.toFixed(4);
+    else return '$0';
+    return neg ? '-' + s : s;
+  }
+
+  function getSweep(key){
+    var c = CHAINS[key];
+    switch(key){
+      case 'solana':   return c.sweepNative * PRICES.solana;
+      case 'base':     return (c.sweepGas * c.sweepGwei * 1e-9) * PRICES.ethereum + c.l1DataUsd;
+      case 'bnb':      return ((c.fundGas + c.sweepGas) * c.gasGwei * 1e-9) * PRICES.binancecoin;
+      case 'ethereum': return (c.sweepGas * c.defaultGwei * 1e-9) * PRICES.ethereum;
+      case 'tron':     return c.sweepTrx * PRICES.tron;
+    }
+    return 0;
+  }
+
+  function fetchPrices(){
+    var btn = el('pb-refresh');
+    if(btn) btn.textContent = '...';
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum,binancecoin,tron&vs_currencies=usd')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.solana) PRICES.solana = data.solana.usd;
+        if(data.ethereum) PRICES.ethereum = data.ethereum.usd;
+        if(data.binancecoin) PRICES.binancecoin = data.binancecoin.usd;
+        if(data.tron) PRICES.tron = data.tron.usd;
+        priceTs = Date.now();
+        try{
+          localStorage.setItem('sp_prices', JSON.stringify(PRICES));
+          localStorage.setItem('sp_priceTs', String(priceTs));
+        }catch(e){}
+        updatePriceBar();
+        render();
+      })
+      .catch(function(){ updatePriceBar(); });
+  }
+
+  function loadCachedPrices(){
+    try{
+      var cached = JSON.parse(localStorage.getItem('sp_prices'));
+      var ts = parseInt(localStorage.getItem('sp_priceTs'), 10);
+      if(cached && ts && cached.solana){ PRICES = cached; priceTs = ts; }
+    }catch(e){}
+    var age = priceTs ? Date.now() - priceTs : Infinity;
+    if(age > 24*3600*1000) fetchPrices();
+    else updatePriceBar();
+  }
+
+  function updatePriceBar(){
+    el('p-sol').textContent = '$' + PRICES.solana.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-eth').textContent = '$' + PRICES.ethereum.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-bnb').textContent = '$' + PRICES.binancecoin.toLocaleString(undefined,{maximumFractionDigits:0});
+    el('p-trx').textContent = '$' + PRICES.tron.toFixed(3);
+    var btn = el('pb-refresh');
+    if(btn) btn.textContent = 'Refresh';
+    if(!priceTs){ el('pb-age').textContent = 'defaults'; return; }
+    var mins = Math.round((Date.now()-priceTs)/60000);
+    var txt;
+    if(mins < 1) txt = 'just now';
+    else if(mins < 60) txt = mins + 'm ago';
+    else if(mins < 1440) txt = Math.round(mins/60) + 'h ago';
+    else txt = Math.round(mins/1440) + 'd ago';
+    var ageEl = el('pb-age');
+    ageEl.textContent = txt;
+    ageEl.className = 'pb-age' + (mins > 1440 ? ' pb-stale' : '');
+  }
+
+  function render(){
+    var V0 = +el('vol').value;
+    var T = +el('ticket').value;
+    var r = +el('take').value / 100;
+    var g = +el('growth').value / 100;
+    var sweep = getSweep(current);
+    var isNP = payoutMode === 'nowpay';
+
+    var exitA = el('exit-a').value;
+    var shiftEnabled = el('shift-check').checked;
+    var shiftMonth = +el('shift-month').value;
+    var exitB = el('exit-b').value;
+
+    el('v-vol').textContent = big(V0);
+    el('v-ticket').textContent = '$' + T;
+    el('v-take').textContent = (r*100).toFixed(2) + '%';
+    el('v-growth').textContent = (g >= 0 ? '+' : '') + (g*100).toFixed(0) + '%';
+
+    var months = [];
+    var cumProfit = 0;
+    var totalVol = 0, totalRev = 0, totalOps = 0, totalExit = 0, totalNet = 0;
+
+    for(var m = 1; m <= 12; m++){
+      var vol = V0 * Math.pow(1 + g, m - 1);
+      var inv = Math.max(1, Math.round(vol / T));
+      var rev = vol * r;
+      var npCost = isNP ? vol * NP : 0;
+      var ops = inv * sweep;
+
+      var exitKey = (shiftEnabled && m >= shiftMonth) ? exitB : exitA;
+      var ex = EXIT_METHODS[exitKey];
+      var exitCost = (ex.pct * rev) + ex.flat;
+
+      var net = rev - ops - exitCost - npCost;
+      cumProfit += net;
+      totalVol += vol;
+      totalRev += rev;
+      totalOps += ops;
+      totalExit += exitCost + npCost;
+      totalNet += net;
+
+      months.push({
+        m: m, vol: vol, inv: inv, rev: rev, ops: ops,
+        exit: exitCost + npCost, net: net, cum: cumProfit,
+        margin: rev > 0 ? (net / rev * 100) : 0,
+        shifted: shiftEnabled && m >= shiftMonth
+      });
+    }
+
+    // Table
+    var html = '';
+    months.forEach(function(mo){
+      var cls = mo.net >= 0 ? 'is-pos' : 'is-neg';
+      var cumCls = mo.cum >= 0 ? 'is-pos' : 'is-neg';
+      var shiftMark = (shiftEnabled && mo.m === shiftMonth) ? ' style="border-top:2px dashed var(--custody)"' : '';
+      html += '<tr' + shiftMark + '>';
+      html += '<td>' + mo.m + '</td>';
+      html += '<td>' + big(mo.vol) + '</td>';
+      html += '<td>' + mo.inv.toLocaleString() + '</td>';
+      html += '<td>' + big(mo.rev) + '</td>';
+      html += '<td>' + smart(mo.ops) + '</td>';
+      html += '<td>' + smart(mo.exit) + '</td>';
+      html += '<td class="' + cls + '">' + big(mo.net) + '</td>';
+      html += '<td class="' + cumCls + '">' + big(mo.cum) + '</td>';
+      html += '<td>' + mo.margin.toFixed(1) + '%</td>';
+      html += '</tr>';
+    });
+    var totalCls = totalNet >= 0 ? 'is-pos' : 'is-neg';
+    var avgMargin = totalRev > 0 ? (totalNet / totalRev * 100).toFixed(1) : '0.0';
+    html += '<tr class="total-row">';
+    html += '<td>Yr</td>';
+    html += '<td>' + big(totalVol) + '</td>';
+    html += '<td>' + Math.round(totalVol / T).toLocaleString() + '</td>';
+    html += '<td>' + big(totalRev) + '</td>';
+    html += '<td>' + big(totalOps) + '</td>';
+    html += '<td>' + big(totalExit) + '</td>';
+    html += '<td class="' + totalCls + '">' + big(totalNet) + '</td>';
+    html += '<td class="' + totalCls + '">' + big(cumProfit) + '</td>';
+    html += '<td>' + avgMargin + '%</td>';
+    html += '</tr>';
+    el('sim-body').innerHTML = html;
+
+    // Summary cards
+    var mo12 = months[11];
+    var runRate = mo12.net * 12;
+    var cardsHtml = '';
+    cardsHtml += '<div class="kpi"><div class="kpi-name">Year volume</div><div class="kpi-val">' + big(totalVol) + '</div><div class="kpi-sub">processed across 12 months</div></div>';
+    cardsHtml += '<div class="kpi ' + (totalNet >= 0 ? 'is-good' : 'is-risk') + '"><div class="kpi-name">Year profit</div><div class="kpi-val">' + big(totalNet) + '</div><div class="kpi-sub">' + avgMargin + '% avg margin</div></div>';
+    cardsHtml += '<div class="kpi"><div class="kpi-name">Total costs</div><div class="kpi-val">' + big(totalOps + totalExit) + '</div><div class="kpi-sub">ops + exit + intermediary</div></div>';
+    cardsHtml += '<div class="kpi"><div class="kpi-name">Mo 12 run rate</div><div class="kpi-val">' + big(runRate) + '/yr</div><div class="kpi-sub">' + big(mo12.vol) + '/mo at month 12</div></div>';
+    el('summary-cards').innerHTML = cardsHtml;
+
+    renderChart(months);
+  }
+
+  function renderChart(months){
+    var canvas = el('chart');
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth;
+    var h = 200;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    var vals = months.map(function(m){ return m.cum; });
+    var yMin = Math.min(0, Math.min.apply(null, vals));
+    var yMax = Math.max(0, Math.max.apply(null, vals));
+    if(yMax === yMin){ yMax = yMin + 100; }
+    var range = yMax - yMin;
+    var pad = {top:24, right:20, bottom:30, left:65};
+    var cw = w - pad.left - pad.right;
+    var ch = h - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'right';
+    var steps = 4;
+    for(var i = 0; i <= steps; i++){
+      var yVal = yMin + (range * i / steps);
+      var y = pad.top + ch - (ch * (yVal - yMin) / range);
+      ctx.fillStyle = '#5D6A75';
+      ctx.fillText(big(yVal), pad.left - 8, y + 3);
+      ctx.strokeStyle = '#B2BCC5';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+    }
+
+    if(yMin < 0){
+      var y0 = pad.top + ch - (ch * (0 - yMin) / range);
+      ctx.strokeStyle = '#141C24';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y0);
+      ctx.lineTo(w - pad.right, y0);
+      ctx.stroke();
+    }
+
+    var points = months.map(function(m, i){
+      return {
+        x: pad.left + (cw * i / 11),
+        y: pad.top + ch - (ch * (m.cum - yMin) / range)
+      };
+    });
+
+    var baseY = pad.top + ch - (ch * (0 - yMin) / range);
+    var endPositive = months[11].cum >= 0;
+    var fillRgb = endPositive ? '42,99,80' : '196,89,11';
+    var lineColor = endPositive ? '#2A6350' : '#C4590B';
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, baseY);
+    points.forEach(function(p){ ctx.lineTo(p.x, p.y); });
+    ctx.lineTo(points[11].x, baseY);
+    ctx.closePath();
+    var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+    grad.addColorStop(0, 'rgba(' + fillRgb + ',0.25)');
+    grad.addColorStop(1, 'rgba(' + fillRgb + ',0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for(var i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    points.forEach(function(p){
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = lineColor;
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#5D6A75';
+    ctx.textAlign = 'center';
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    months.forEach(function(m, i){
+      ctx.fillText('M' + m.m, points[i].x, h - 8);
+    });
+
+    if(el('shift-check').checked){
+      var sm = +el('shift-month').value;
+      var sx = pad.left + (cw * (sm - 1) / 11);
+      ctx.strokeStyle = '#8A6510';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(sx, pad.top);
+      ctx.lineTo(sx, pad.top + ch);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#8A6510';
+      ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('switch', sx, pad.top - 6);
+    }
+  }
+
+  // --- Event listeners ---
+  var chainBtns = document.querySelectorAll('#chainpick .cp-btn');
+  chainBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      current = b.getAttribute('data-chain');
+      chainBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      clearPreset();
+      render();
+    });
+  });
+
+  var ptBtns = document.querySelectorAll('#payout-toggle .pt-btn');
+  ptBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      payoutMode = b.getAttribute('data-mode');
+      ptBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      clearPreset();
+      render();
+    });
+  });
+
+  ['vol','ticket','take','growth'].forEach(function(id){
+    el(id).addEventListener('input', function(){
+      clearPreset();
+      render();
+    });
+  });
+
+  el('exit-a').addEventListener('change', function(){ clearPreset(); render(); });
+  el('exit-b').addEventListener('change', function(){ clearPreset(); render(); });
+  el('shift-month').addEventListener('change', function(){ clearPreset(); render(); });
+
+  el('shift-check').addEventListener('change', function(){
+    var on = this.checked;
+    el('shift-month').disabled = !on;
+    el('exit-b').disabled = !on;
+    clearPreset();
+    render();
+  });
+
+  el('pb-refresh').addEventListener('click', fetchPrices);
+
+  function clearPreset(){
+    document.querySelectorAll('.sc-btn').forEach(function(x){ x.classList.remove('active'); });
+  }
+
+  document.querySelectorAll('.sc-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var sc = SCENARIOS[b.getAttribute('data-sc')];
+      if(!sc) return;
+      el('vol').value = sc.vol;
+      el('ticket').value = sc.ticket;
+      el('take').value = sc.take;
+      el('growth').value = sc.growth;
+      el('exit-a').value = sc.exitA;
+
+      current = sc.chain;
+      chainBtns.forEach(function(x){ x.classList.remove('active'); });
+      var cb = document.querySelector('#chainpick .cp-btn[data-chain="' + sc.chain + '"]');
+      if(cb) cb.classList.add('active');
+
+      payoutMode = sc.mode;
+      ptBtns.forEach(function(x){ x.classList.remove('active'); });
+      var mb = document.querySelector('#payout-toggle .pt-btn[data-mode="' + sc.mode + '"]');
+      if(mb) mb.classList.add('active');
+
+      el('shift-check').checked = !!sc.shift;
+      el('shift-month').disabled = !sc.shift;
+      el('exit-b').disabled = !sc.shift;
+      if(sc.shift){
+        el('shift-month').value = sc.shiftMonth;
+        el('exit-b').value = sc.exitB;
+      }
+
+      document.querySelectorAll('.sc-btn').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      render();
+    });
+  });
+
+  var resizeTimer;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 100);
+  });
+
+  loadCachedPrices();
+  render();
+})();
+</script>
+</body>
+</html>

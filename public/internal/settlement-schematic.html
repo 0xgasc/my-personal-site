@@ -167,6 +167,12 @@
   .pt-btn+.pt-btn{border-left:0}
   .pt-btn:hover{color:var(--ink)}
   .pt-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .exit-wrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .exit-select{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    padding:7px 10px;border:1px solid var(--rule);background:var(--card);
+    color:var(--ink);cursor:pointer;flex:1;max-width:280px;
+  }
 
   .verdict-bar{
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
@@ -366,6 +372,18 @@
     <button class="pt-btn active" data-hz="txn">Per txn</button>
     <button class="pt-btn" data-hz="month">Monthly</button>
     <button class="pt-btn" data-hz="year">Yearly</button>
+  </div>
+  <div class="exit-wrap">
+    <span class="ctl-name" style="margin:0">Treasury exit</span>
+    <select id="exit-method" class="exit-select">
+      <option value="none">None (direct)</option>
+      <option value="cex">CEX off-ramp (~$5/exit)</option>
+      <option value="privacy_pools">Privacy Pools (~$0.50/exit)</option>
+      <option value="veil">Veil Cash (0.3%)</option>
+      <option value="railgun">Railgun (0.25%)</option>
+      <option value="xmr_exit">XMR conversion (~1.5%)</option>
+      <option value="tornado">Tornado Cash (0.5%)</option>
+    </select>
   </div>
   <div class="split-wrap">
     <div class="split-bar" id="split-bar"></div>
@@ -567,6 +585,8 @@
 
   <p class="footnote" style="border-left-color:var(--custody)"><b>The practical playbook:</b> Shared treasury (free, already built) + CEX off-ramp when we need fiat (KYC&rsquo;d, clean paper trail). If a merchant asks for extra privacy, offer XMR opt-in. Everything else on this list is either experimental, legally risky, or solving a problem we don&rsquo;t have yet.</p>
 
+  <p style="margin-top:32px;font-size:13px"><a href="/contentlocker?doc=simulator" style="color:var(--clear);font-family:'IBM Plex Mono',monospace;font-size:12px">Open month-by-month strategy simulator &rarr;</a></p>
+
 </div>
 
 <script>
@@ -578,6 +598,16 @@
   var xmrOptIn = false;
   var horizon = 'txn';
   var current = 'solana';
+  var exitMethod = 'none';
+  var EXIT_METHODS = {
+    none:          {pct:0,     flat:0},
+    cex:           {pct:0,     flat:5},
+    privacy_pools: {pct:0,     flat:0.50},
+    veil:          {pct:0.003, flat:0},
+    railgun:       {pct:0.0025,flat:0},
+    xmr_exit:      {pct:0.015, flat:0},
+    tornado:       {pct:0.005, flat:0}
+  };
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
   var CHAINS = {
@@ -764,7 +794,10 @@
     var hConv = conv * mult;
     var hXmrFee = xmrFee * mult;
     var hIntermediary = hNP + hConv + hXmrFee;
-    var hNet = hTake - hOps;
+    var ex = EXIT_METHODS[exitMethod];
+    var exitsPerPeriod = horizon === 'txn' ? (1 / invMo) : (horizon === 'month' ? 1 : 12);
+    var hExit = (ex.pct * hTake) + (ex.flat * exitsPerPeriod);
+    var hNet = hTake - hOps - hExit;
     var hMargin = hTake > 0 ? ((hNet / hTake) * 100).toFixed(1) : '0.0';
 
     var fmt = horizon === 'txn' ? smart : big;
@@ -817,9 +850,10 @@
     // --- Where the money goes (horizon-aware) ---
     var hGross = T * mult;
     var slices = [
-      {label:'You keep', amt:hTake, color:'var(--good)', cls:'is-you'},
+      {label:'You keep', amt:hTake - hExit, color:'var(--good)', cls:'is-you'},
       {label:'On-chain ops', amt:hOps, color:'var(--custody)', cls:'is-ops'}
     ];
+    if(hExit > 0) slices.push({label:'Exit cost', amt:hExit, color:'var(--xmr)', cls:'is-ops'});
     if(isNP) slices.push({label:'NOWPayments', amt:hNP, color:'#6B7280', cls:'is-np'});
     if(isXmr){
       slices.push({label:'XMR conversion', amt:hConv, color:'#FF6B35', cls:'is-np'});
@@ -874,7 +908,7 @@
     var expiredPerDay = dailyInv - paidPerDay;
     var sweep = getSweep(current);
 
-    var batchesPerDay = freqIdx === 0 ? paidPerDay : Math.max(1, Math.round(24 / freqHours[freqIdx]));
+    var batchesPerDay = freqIdx === 0 ? paidPerDay : (freqHours[freqIdx] <= 24 ? Math.max(1, Math.round(24 / freqHours[freqIdx])) : 24 / freqHours[freqIdx]);
     var payoutTxPerDay = freqIdx === 0 ? paidPerDay : Math.min(merchants, paidPerDay) * batchesPerDay;
     var totalTxPerDay = paidPerDay + payoutTxPerDay;
     var dailyOpsCost = totalTxPerDay * sweep;
@@ -895,7 +929,8 @@
     el('o-paid').textContent = paidPerDay.toLocaleString();
     el('o-expired').textContent = expiredPerDay.toLocaleString();
     el('o-sweeps').textContent = paidPerDay.toLocaleString();
-    el('o-batch').textContent = (freqIdx === 0 ? 'real-time' : batchesPerDay + '×/day') + ', ' + merchants + ' merchants';
+    var batchLabel = freqIdx === 0 ? 'real-time' : (batchesPerDay >= 1 ? Math.round(batchesPerDay) + '×/day' : '1× every ' + Math.round(freqHours[freqIdx] / 24) + 'd');
+    el('o-batch').textContent = batchLabel + ', ' + merchants + ' merchants';
 
     el('o-burn').textContent = dailyInv + '/day';
     el('o-burn-sub').textContent = 'refill every ' + (daysPerRefill < 1 ? (daysPerRefill * 24).toFixed(0) + 'h' : daysPerRefill.toFixed(1) + 'd') + ' (batch ' + poolBatch + ')';
@@ -950,6 +985,11 @@
 
   el('xmr-check').addEventListener('change', function(){
     xmrOptIn = this.checked;
+    render();
+  });
+
+  el('exit-method').addEventListener('change', function(){
+    exitMethod = this.value;
     render();
   });
 

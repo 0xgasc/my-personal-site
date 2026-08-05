@@ -7,9 +7,14 @@ import { parse } from 'cookie'
 const MAX_READS = 25
 const EXPIRES_AT = new Date('2026-08-15T06:00:00Z')
 
+const DOCS = {
+  schematic: 'settlement-schematic.html',
+  simulator: 'simulator.html'
+}
+
 let readCount = 0
 
-export async function getServerSideProps({ req }) {
+export async function getServerSideProps({ req, query }) {
   const expired = new Date() >= EXPIRES_AT || readCount >= MAX_READS
   if (expired) {
     return { props: { state: 'expired', html: null, reads: readCount } }
@@ -27,7 +32,9 @@ export async function getServerSideProps({ req }) {
 
   readCount++
 
-  const filePath = join(process.cwd(), 'public', 'internal', 'settlement-schematic.html')
+  const docKey = query.doc || 'schematic'
+  const docFile = DOCS[docKey] || DOCS.schematic
+  const filePath = join(process.cwd(), 'public', 'internal', docFile)
   const html = readFileSync(filePath, 'utf-8')
 
   return { props: { state: 'unlocked', html, reads: readCount } }
