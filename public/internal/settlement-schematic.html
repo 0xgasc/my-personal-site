@@ -431,9 +431,6 @@
         <button class="gcp-btn" data-chain="solana" style="--cc:var(--c-sol)">
           <span class="gcp-dot"></span>Solana
         </button>
-        <button class="gcp-btn" data-chain="base" style="--cc:var(--c-base)">
-          <span class="gcp-dot"></span>Base (L2)
-        </button>
         <button class="gcp-btn" data-chain="bnb" style="--cc:var(--c-bnb)">
           <span class="gcp-dot"></span>BNB
         </button>
@@ -442,6 +439,9 @@
         </button>
         <button class="gcp-btn" data-chain="tron" style="--cc:var(--c-tron)">
           <span class="gcp-dot"></span>Tron
+        </button>
+        <button class="gcp-btn" data-chain="base" style="--cc:var(--c-base);opacity:.5">
+          <span class="gcp-dot"></span>Base (L2)
         </button>
       </div>
     </div>
@@ -560,15 +560,16 @@
 
   <div class="chainpick" id="chainpick">
     <button class="cp-btn" data-chain="solana">Solana</button>
-    <button class="cp-btn" data-chain="base">Base (L2)</button>
     <button class="cp-btn" data-chain="bnb">BNB</button>
     <button class="cp-btn" data-chain="ethereum">Ethereum L1</button>
     <button class="cp-btn" data-chain="tron">Tron</button>
+    <button class="cp-btn" data-chain="base" style="opacity:.5">Base (L2)</button>
   </div>
 
   <div class="payout-toggle" id="payout-toggle">
-    <button class="pt-btn active" data-mode="usdc">Direct USDC payout</button>
-    <button class="pt-btn" data-mode="xmr">XMR via NOWPayments</button>
+    <button class="pt-btn active" data-mode="direct">Direct USDC</button>
+    <button class="pt-btn" data-mode="nowpay">USDC via NOWPayments</button>
+    <button class="pt-btn" data-mode="xmr">XMR (opt-in)</button>
   </div>
 
   <div class="verdict-bar" id="verdict-bar">
@@ -619,15 +620,15 @@
       <span class="row-val" id="r-take">−$0.23</span>
     </div>
     <div class="row">
-      <span class="row-name">NOWPayments<span class="row-note">0.5% — XMR path only</span></span>
+      <span class="row-name">NOWPayments<span class="row-note">0.5% processing fee</span></span>
       <span class="row-val" id="r-np">−$0.08</span>
     </div>
     <div class="row">
-      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1.8% all-in (NP + ChangeNOW + spread) — XMR path only</span></span>
+      <span class="row-name"><span id="r-asset">USDC</span> → XMR conversion<span class="row-note">~1.8% all-in (ChangeNOW + spread) — XMR only</span></span>
       <span class="row-val" id="r-conv">−$0.15</span>
     </div>
     <div class="row">
-      <span class="row-name">XMR network fee<span class="row-note">~$0.015 — XMR path only</span></span>
+      <span class="row-name">XMR network fee<span class="row-note">~$0.015 — XMR only</span></span>
       <span class="row-val" id="r-xmr">−$0.02</span>
     </div>
     <div class="row is-net">
@@ -681,21 +682,6 @@
 
     <div class="chain">
       <div class="chain-head">
-        <span class="chain-name">Base (L2)</span>
-        <span class="chain-tag tag-good">Best tooling + USDC</span>
-      </div>
-      <div class="chain-mech">Ethereum L2 rollup. Native USDC, deepest stablecoin tooling, EIP-3009 gasless sweeps — deposit addresses never need funding. Cents per sweep.</div>
-      <table class="chain-tbl">
-        <tr><td>Sweep tx</td><td>~$0.008–0.02</td></tr>
-        <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
-        <tr><td>Sweep method</td><td>EIP-3009, relayer pays, batched</td></tr>
-        <tr><td>Gotcha</td><td class="warn">L2 fees track L1 data prices</td></tr>
-      </table>
-      <div class="chain-note">Strongest all-round choice after Solana: native Circle USDC, EIP-3009 gasless, mature infra, no rent bookkeeping. Fees track L1 data prices via EIP-4844 blobs.</div>
-    </div>
-
-    <div class="chain">
-      <div class="chain-head">
         <span class="chain-name">BNB Chain (BEP-20)</span>
         <span class="chain-tag tag-warn">Needs gas funding</span>
       </div>
@@ -739,10 +725,25 @@
       <div class="chain-note">Tron rewards the opposite of your design: <b>reused</b> deposit addresses with a staked-TRX energy pool. If you want Tron, that means giving up single-use — a direct trade of privacy for cost. USDT dominates here; USDC is thin.</div>
     </div>
 
+    <div class="chain" style="opacity:.45">
+      <div class="chain-head">
+        <span class="chain-name">Base (L2)</span>
+        <span class="chain-tag tag-good">Not at launch</span>
+      </div>
+      <div class="chain-mech">Ethereum L2 rollup. Native USDC, deepest stablecoin tooling, EIP-3009 gasless sweeps — deposit addresses never need funding. Cents per sweep.</div>
+      <table class="chain-tbl">
+        <tr><td>Sweep tx</td><td>~$0.008–0.02</td></tr>
+        <tr><td>Per-address cost</td><td>none (no rent)</td></tr>
+        <tr><td>Sweep method</td><td>EIP-3009, relayer pays, batched</td></tr>
+        <tr><td>Gotcha</td><td class="warn">L2 fees track L1 data prices</td></tr>
+      </table>
+      <div class="chain-note">Strong option for future expansion: native Circle USDC, EIP-3009 gasless, mature infra. Not in the launch set but easy to add later.</div>
+    </div>
+
   </div>
 
   <div class="chain-verdict">
-    <b>Ranking for a single-use + sweep design:</b> Solana (close your ATAs, cheapest when rent is reclaimed) → Base (best tooling, native USDC, EIP-3009 gasless) → Ethereum L1 (viable post-Dencun at ~1 gwei, but still volatile) → BNB (cheap but no gasless — both stablecoins are Binance-pegged) → Tron (only if you abandon single-use for reused addresses). Tron's cheap reputation is earned on reused wallets with staked energy — it does not transfer to single-use.
+    <b>Launch chains for single-use + sweep:</b> Solana (cheapest when rent is reclaimed) → BNB (cheap but needs gas funding) → Ethereum L1 (viable post-Dencun, still volatile) → Tron (only if you abandon single-use). Base is a strong future addition but not in the launch set.
   </div>
 
   <h2 class="sect-title" style="margin-top:44px">Address pool &amp; replenishment</h2>
@@ -1040,35 +1041,6 @@
     </div>
   </div>
 
-  <h3 style="font-size:16px;font-weight:600;margin:36px 0 10px">Licensing requirements</h3>
-  <div class="flow-table">
-    <div class="row is-gross">
-      <span class="row-name">Jurisdiction</span>
-      <span class="row-val">Requirement</span>
-    </div>
-    <div class="row">
-      <span class="row-name">United States<span class="row-note">custodying stablecoins = money transmission</span></span>
-      <span class="row-val">MSB (FinCEN) + state MTLs</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Guatemala<span class="row-note">SIB has no explicit VASP framework yet</span></span>
-      <span class="row-val">Gray area — counsel needed</span>
-    </div>
-    <div class="row">
-      <span class="row-name">EU / EEA<span class="row-note">MiCA regulation (effective 2024)</span></span>
-      <span class="row-val">CASP license via national authority</span>
-    </div>
-    <div class="row">
-      <span class="row-name">El Salvador<span class="row-note">Bitcoin legal tender, crypto-friendly</span></span>
-      <span class="row-val">DASP registration</span>
-    </div>
-    <div class="row is-net">
-      <span class="row-name">Key requirement everywhere</span>
-      <span class="row-val">Your own books: wallet → merchant → invoice → payout</span>
-    </div>
-  </div>
-
-  <p class="footnote" style="border-left-color:var(--xmr)"><b>This is the real blocker, not the code.</b> The technical architecture works. The ops model works. The fee economics work. But none of it matters if you can't legally custody merchant funds. For Guatemala: get a legal opinion before writing production code. The cost of a VASP opinion (~$2–5k) is nothing compared to operating without one.</p>
 </div>
 
 <script>
@@ -1076,10 +1048,10 @@
   var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
   var priceTs = 0;
   var NP = 0.005, CONV = 0.018, XMRFEE = 0.015;
-  var payoutMode = 'usdc';
+  var payoutMode = 'direct';
   var current = 'solana';
   var selected = new Set(['solana']);
-  var chainOrder = ['solana','base','bnb','ethereum','tron'];
+  var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
   var CHAINS = {
     solana: {
@@ -1252,9 +1224,10 @@
     var sweep = getSweep(current);
     var perAddr = getRent(current);
 
+    var isNP = payoutMode === 'nowpay' || payoutMode === 'xmr';
     var isXmr = payoutMode === 'xmr';
     var take = T * r;
-    var np = isXmr ? T * NP : 0;
+    var np = isNP ? T * NP : 0;
     var conv = isXmr ? T * CONV : 0;
     var xmrFee = isXmr ? XMRFEE : 0;
     var net = T - take - np - conv - xmrFee;
@@ -1267,13 +1240,13 @@
 
     el('r-gross').textContent = usd(T);
     el('r-take').textContent = '−' + usd(take);
-    el('r-np').textContent = isXmr ? '−' + usd(np) : '$0.00';
+    el('r-np').textContent = isNP ? '−' + usd(np) : '$0.00';
     el('r-asset').textContent = c.asset;
     el('r-conv').textContent = isXmr ? '−' + usd(conv) : '$0.00';
     el('r-xmr').textContent = isXmr ? '−' + usd(xmrFee) : '$0.00';
     el('r-net').textContent = usd(net);
 
-    el('r-np').parentNode.style.opacity = isXmr ? '1' : '0.35';
+    el('r-np').parentNode.style.opacity = isNP ? '1' : '0.35';
     el('r-conv').parentNode.style.opacity = isXmr ? '1' : '0.35';
     el('r-xmr').parentNode.style.opacity = isXmr ? '1' : '0.35';
 
