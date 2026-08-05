@@ -95,11 +95,62 @@
   .pb-refresh:hover{border-color:var(--ink);color:var(--ink)}
   .pb-age{font-size:10px;color:var(--mute)}.pb-stale{color:var(--xmr)}
 
-  @media(max-width:560px){.cards{grid-template-columns:1fr 1fr}.sim-table{font-size:11px}.sim-table th,.sim-table td{padding:6px 6px}.mix-table td,.mix-table th{padding:4px 6px}}
+  .sticky-bar{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:var(--ink);color:var(--paper);
+    padding:8px 20px 10px;
+    transform:translateY(-100%);transition:transform .2s ease;
+    box-shadow:0 2px 16px rgba(0,0,0,.18);
+  }
+  .sticky-bar.visible{transform:translateY(0)}
+  .sticky-bar .s-grid{
+    max-width:860px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px 14px;
+  }
+  .sticky-bar .s-ctl{display:flex;flex-direction:column;gap:2px}
+  .sticky-bar .s-top{display:flex;justify-content:space-between;align-items:baseline}
+  .sticky-bar .s-label{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8A95A0}
+  .sticky-bar .s-val{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:var(--paper)}
+  .sticky-bar input[type=range]{width:100%;height:14px;accent-color:var(--clear)}
+
+  @media(max-width:560px){.cards{grid-template-columns:1fr 1fr}.sim-table{font-size:11px}.sim-table th,.sim-table td{padding:6px 6px}.mix-table td,.mix-table th{padding:4px 6px}.sticky-bar .s-grid{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:4px 8px}.sticky-bar{padding:6px 12px 8px}}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+
+<div class="sticky-bar" id="sticky-bar">
+  <div class="s-grid">
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Volume</span><span class="s-val" id="sv-vol">$50k</span></div>
+      <input type="range" id="s-vol" min="1000" max="2000000" step="1000" value="50000">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Ticket</span><span class="s-val" id="sv-ticket">$25</span></div>
+      <input type="range" id="s-ticket" min="2" max="100" step="1" value="25">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Take</span><span class="s-val" id="sv-take">1.50%</span></div>
+      <input type="range" id="s-take" min="0" max="5" step="0.1" value="1.5">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Growth</span><span class="s-val" id="sv-growth">+15%</span></div>
+      <input type="range" id="s-growth" min="-10" max="50" step="1" value="15">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Freq</span><span class="s-val" id="sv-freq">Daily</span></div>
+      <input type="range" id="s-freq" min="0" max="2" step="1" value="0">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Merchants</span><span class="s-val" id="sv-merchants">25</span></div>
+      <input type="range" id="s-merchants" min="1" max="500" step="1" value="25">
+    </div>
+    <div class="s-ctl">
+      <div class="s-top"><span class="s-label">Tok &Delta;</span><span class="s-val" id="sv-tokdelta">0%</span></div>
+      <input type="range" id="s-tokdelta" min="-50" max="100" step="5" value="0">
+    </div>
+  </div>
+</div>
 
 <div class="wrap" style="padding-top:40px;padding-bottom:60px">
   <a href="/contentlocker" class="back">&larr; Settlement economics</a>
@@ -640,6 +691,51 @@
       render();
     });
   });
+
+  // --- Sticky bar sync ---
+  var SLIDER_IDS = ['vol','ticket','take','growth','freq','merchants','tokdelta'];
+  var syncing = false;
+
+  function syncFromMain(){
+    if(syncing) return; syncing = true;
+    SLIDER_IDS.forEach(function(id){ el('s-'+id).value = el(id).value; });
+    syncing = false;
+  }
+  function syncFromSticky(){
+    if(syncing) return; syncing = true;
+    SLIDER_IDS.forEach(function(id){ el(id).value = el('s-'+id).value; });
+    syncing = false;
+    clearPreset(); render();
+  }
+
+  SLIDER_IDS.forEach(function(id){
+    el('s-'+id).addEventListener('input', syncFromSticky);
+  });
+
+  var origRender = render;
+  render = function(){
+    origRender();
+    syncFromMain();
+    el('sv-vol').textContent = el('v-vol').textContent;
+    el('sv-ticket').textContent = el('v-ticket').textContent;
+    el('sv-take').textContent = el('v-take').textContent;
+    el('sv-growth').textContent = el('v-growth').textContent;
+    el('sv-freq').textContent = el('v-freq').textContent;
+    el('sv-merchants').textContent = el('v-merchants').textContent;
+    el('sv-tokdelta').textContent = el('v-tokdelta').textContent;
+  };
+
+  var stickyBar = el('sticky-bar');
+  var controlsEl = document.querySelector('.controls');
+  if('IntersectionObserver' in window){
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting) stickyBar.classList.remove('visible');
+        else stickyBar.classList.add('visible');
+      });
+    }, {threshold:0, rootMargin:'-60px 0px 0px 0px'});
+    obs.observe(controlsEl);
+  }
 
   var resizeTimer;
   window.addEventListener('resize', function(){ clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 100); });
