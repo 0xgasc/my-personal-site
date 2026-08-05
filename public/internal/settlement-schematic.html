@@ -542,19 +542,23 @@
       <span class="row-val">High &middot; gas only &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">4. Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance &rarr; unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
+      <span class="row-name">4. Veil Cash (Base L2 shielding)<span class="row-note">Privacy protocol on Base L2. Deposit USDC &rarr; Groth16 ZK-shielded UTXO balance &rarr; withdraw to any address via relayer. 0.3% deposit fee, no withdrawal fee. Compliance screening via 0xbow + Coinbase EAS / Binance BABT auto-approval. Native USDC support. Newer and smaller than Railgun but on a cheaper chain with built-in compliance.</span></span>
+      <span class="row-val">Very high &middot; 0.3% &middot; Clean</span>
+    </div>
+    <div class="row">
+      <span class="row-name">5. Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance &rarr; unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
       <span class="row-val">Very high &middot; 0.25% &middot; Clean-ish</span>
     </div>
     <div class="row">
-      <span class="row-name">5. Umbra (stealth addresses)<span class="row-note">One-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible).</span></span>
+      <span class="row-name">6. Umbra (stealth addresses)<span class="row-note">One-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible).</span></span>
       <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">6. Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures hide sender, amount, recipient. Round-trip: 0.3&ndash;0.5% via CEX, 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025. Still on MEXC ($155M/day), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027.</span></span>
+      <span class="row-name">7. Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures hide sender, amount, recipient. Round-trip: 0.3&ndash;0.5% via CEX, 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025. Still on MEXC ($155M/day), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027.</span></span>
       <span class="row-val">Very high &middot; 0.3&ndash;4% &middot; Elevated</span>
     </div>
     <div class="row">
-      <span class="row-name">7. Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruling). Contracts functional. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB), Pertsev serving 5yr. Reputational poison.</span></span>
+      <span class="row-name">8. Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruling). Contracts functional. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB), Pertsev serving 5yr. Reputational poison.</span></span>
       <span class="row-val">Very high &middot; 0.1&ndash;1% &middot; Toxic</span>
     </div>
   </div>
@@ -624,6 +628,14 @@
   function usd(n, dp){
     if(dp === undefined) dp = 2;
     return '$' + n.toLocaleString(undefined,{minimumFractionDigits:dp, maximumFractionDigits:dp});
+  }
+  function smart(n){
+    if(n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+    if(n >= 1000) return '$' + Math.round(n/1000) + 'k';
+    if(n >= 1) return '$' + n.toFixed(2);
+    if(n >= 0.01) return '$' + n.toFixed(3);
+    if(n > 0) return '$' + n.toFixed(4);
+    return '$0';
   }
   function big(n){
     if(n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
@@ -755,20 +767,20 @@
     var hNet = hTake - hOps;
     var hMargin = hTake > 0 ? ((hNet / hTake) * 100).toFixed(1) : '0.0';
 
-    var fmt = horizon === 'txn' ? usd : big;
+    var fmt = horizon === 'txn' ? smart : big;
     el('k-rev-name').textContent = 'You keep';
     el('k-rev').textContent = fmt(hTake);
     el('k-rev-sub').textContent = Math.round(hInv).toLocaleString() + ' invoices' + hLabel;
 
     el('k-ops-name').textContent = 'On-chain ops';
-    el('k-ops').textContent = fmt(hOps);
-    el('k-ops-sub').textContent = horizon === 'txn' ? usd(sweep, 4) + ' sweep' : fmt(hOps) + ' total';
+    el('k-ops').textContent = smart(hOps);
+    el('k-ops-sub').textContent = horizon === 'txn' ? smart(sweep) + ' sweep' : smart(hOps) + ' total';
 
     var leak = 0;
     if(c.riskModel === 'rent') leak = perAddr * f * mult;
     else if(c.riskModel === 'penalty' || c.riskModel === 'gasfund') leak = hOps;
     el('k-leak-name').textContent = c.riskModel === 'rent' ? 'Stranded rent' : (c.riskModel === 'gas' ? 'Gas volatility' : 'Risk line');
-    el('k-leak').textContent = leak > 0 ? fmt(leak) : '—';
+    el('k-leak').textContent = leak > 0 ? smart(leak) : '—';
     el('k-leak-sub').textContent = c.riskModel === 'rent' ? 'failed closes' : (c.riskModel === 'none' ? 'nothing to strand' : c.opsSub);
 
     el('k-net-name').textContent = 'Net profit';
@@ -829,10 +841,10 @@
       var pct = ((s.amt / hGross) * 100).toFixed(2);
       sumHtml += '<div class="split-line ' + s.cls + '">';
       sumHtml += '<span class="split-line-label">' + s.label + '</span>';
-      sumHtml += '<span class="split-line-val">' + fmt(s.amt) + ' <span class="split-pct">(' + pct + '%)</span></span>';
+      sumHtml += '<span class="split-line-val">' + smart(s.amt) + ' <span class="split-pct">(' + pct + '%)</span></span>';
       sumHtml += '</div>';
     });
-    sumHtml += '<div class="split-big is-you"><span class="split-line-label">Net profit</span><span class="split-line-val">' + fmt(hNet) + ' <span class="split-pct">(' + hMargin + '% margin)</span></span></div>';
+    sumHtml += '<div class="split-big is-you"><span class="split-line-label">Net profit</span><span class="split-line-val">' + smart(hNet) + ' <span class="split-pct">(' + hMargin + '% margin)</span></span></div>';
     el('split-summary').innerHTML = sumHtml;
 
     renderOps();
