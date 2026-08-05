@@ -360,39 +360,43 @@
     </div>
   </div>
 
-  <!-- where the money goes -->
-  <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">Where the money goes</h3>
+  <!-- how much we keep -->
+  <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">How much we keep</h3>
+  <div class="payout-toggle" id="horizon-toggle" style="margin-bottom:14px">
+    <button class="pt-btn active" data-hz="txn">Per txn</button>
+    <button class="pt-btn" data-hz="month">Monthly</button>
+    <button class="pt-btn" data-hz="year">Yearly</button>
+  </div>
   <div class="split-wrap">
     <div class="split-bar" id="split-bar"></div>
     <div class="split-summary" id="split-summary"></div>
   </div>
 
-  <!-- annual P&L -->
-  <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">Annual P&amp;L</h3>
-  <div class="split-summary" id="split-annual"></div>
-
   <div class="cards" style="margin-top:20px">
     <div class="kpi is-good">
-      <div class="kpi-name">Your annual revenue</div>
-      <div class="kpi-val" id="k-rev">$45,000</div>
-      <div class="kpi-sub" id="k-rev-sub">before opex</div>
+      <div class="kpi-name" id="k-rev-name">You keep</div>
+      <div class="kpi-val" id="k-rev">$0.23</div>
+      <div class="kpi-sub" id="k-rev-sub">platform fee</div>
     </div>
     <div class="kpi">
-      <div class="kpi-name" id="k-ops-name">On-chain ops cost</div>
-      <div class="kpi-val" id="k-ops">$360</div>
-      <div class="kpi-sub" id="k-ops-sub">sweeps, annual</div>
+      <div class="kpi-name" id="k-ops-name">On-chain ops</div>
+      <div class="kpi-val" id="k-ops">$0.001</div>
+      <div class="kpi-sub" id="k-ops-sub">sweep cost</div>
     </div>
     <div class="kpi is-risk">
-      <div class="kpi-name" id="k-leak-name">Chain risk line</div>
-      <div class="kpi-val" id="k-leak">$740</div>
-      <div class="kpi-sub" id="k-leak-sub">annual</div>
+      <div class="kpi-name" id="k-leak-name">Risk line</div>
+      <div class="kpi-val" id="k-leak">$0.00</div>
+      <div class="kpi-sub" id="k-leak-sub">stranded rent</div>
     </div>
     <div class="kpi" id="k-drag-card">
-      <div class="kpi-name">Drag per ticket</div>
-      <div class="kpi-val" id="k-drag">0.01%</div>
-      <div class="kpi-sub" id="k-drag-sub">on-chain cost &divide; ticket</div>
+      <div class="kpi-name" id="k-net-name">Net profit</div>
+      <div class="kpi-val" id="k-drag">$0.23</div>
+      <div class="kpi-sub" id="k-drag-sub">99.5% margin</div>
     </div>
   </div>
+
+  <!-- hidden el for annual P&L JS compat -->
+  <div style="display:none"><div id="split-annual"></div></div>
 
   <!-- chain cost comparison -->
   <h3 style="margin:36px 0 8px;font-size:15px;font-weight:700">Chain cost comparison</h3>
@@ -441,7 +445,7 @@
       <span class="ctl-top"><span class="ctl-name">Payout frequency</span><span class="ctl-val" id="v-freq">Daily</span></span>
       <input type="range" id="freq" min="0" max="4" step="1" value="2">
     </label></div>
-    <div class="ctl"><label>
+    <div class="ctl" style="display:none"><label>
       <span class="ctl-top"><span class="ctl-name">Invoice timeout</span><span class="ctl-val" id="v-timeout">30 min</span></span>
       <input type="range" id="timeout" min="0" max="4" step="1" value="1">
     </label></div>
@@ -522,63 +526,36 @@
 
   <div class="flow-table">
     <div class="row is-gross">
-      <span class="row-name">Method</span>
+      <span class="row-name">Ranked best &rarr; worst</span>
       <span class="row-val">Privacy &middot; Cost &middot; Legal</span>
     </div>
-    <div class="row">
-      <span class="row-name">Direct on-chain transfer<span class="row-note">Send USDC straight from treasury wallet. Address, amount, counterparty, timestamp &mdash; all permanently visible on any block explorer. Competitors reverse-engineer volumes and pricing. Circle has blacklisted 372 addresses ($109M frozen) including 16 wallets from a sealed civil lawsuit (Mar 2026).</span></span>
-      <span class="row-val">None &middot; tx fee &middot; Clean</span>
-    </div>
     <div class="row is-yours">
-      <span class="row-name">Shared treasury commingling (current design)<span class="row-note">Single-use deposits sweep into one shared wallet. Observer sees total volume but can&rsquo;t attribute outflows to specific merchants without your database. Privacy by architecture, not by tool.</span></span>
+      <span class="row-name">1. Shared treasury commingling (current design)<span class="row-note">Single-use deposits sweep into one shared wallet. Observer sees total volume but can&rsquo;t attribute outflows to specific merchants without your database. Privacy by architecture, not by tool. Already built, zero extra cost.</span></span>
       <span class="row-val">Moderate &middot; free &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">CEX off-ramp<span class="row-note">Deposit USDC to exchange, withdraw to different wallet or convert to fiat. Breaks the on-chain link &mdash; withdrawals come from the CEX&rsquo;s omnibus pool. Exchange has full KYC on you and reports to analytics firms. Chainalysis has 1B+ address clusters linked to entities. On-chain privacy is real; operational privacy is zero.</span></span>
-      <span class="row-val">High on-chain &middot; $1&ndash;25 &middot; Clean (KYC&rsquo;d)</span>
+      <span class="row-name">2. CEX off-ramp<span class="row-note">Deposit USDC to exchange, withdraw to different wallet or convert to fiat. Breaks the on-chain link &mdash; withdrawals come from the CEX&rsquo;s omnibus pool. Exchange has full KYC on you. Chainalysis has 1B+ address clusters. On-chain privacy is real; operational privacy is zero.</span></span>
+      <span class="row-val">High on-chain &middot; $1&ndash;25 &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Cross-chain bridge (CCTP / Wormhole / Stargate)<span class="row-note">Bridge USDC to another chain. ALL bridges log source + destination addresses on-chain: CCTP via DepositForBurn/MintAndWithdraw events, Wormhole via VAA hashes, Stargate/Across/deBridge via explicit sender+recipient in event params. Chainalysis/Elliptic/TRM track all of them with one-click cross-chain tracing. Zero privacy improvement.</span></span>
-      <span class="row-val">None &middot; $0.50&ndash;5 &middot; Clean</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Multi-hop (bridge &rarr; swap &rarr; bridge)<span class="row-note">Chain A &rarr; bridge &rarr; swap to intermediary token &rarr; swap back &rarr; chain B. Chainalysis tracks across 27+ chains, 300+ bridges, 325M+ indexed swaps. Elliptic&rsquo;s &ldquo;Holistic Screening&rdquo; collapses multi-hop into one graph via 65+ chains. Adds 2&ndash;4% in cost and provides minimal privacy against professional analytics.</span></span>
-      <span class="row-val">Low &middot; 2&ndash;4% &middot; Gray</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Umbra (stealth addresses)<span class="row-note">Sender generates a one-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible). Gas-only cost.</span></span>
-      <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Privacy Pools (0xbow)<span class="row-note">Live on Ethereum mainnet since Mar 2025. ZK proofs let you prove funds aren&rsquo;t from sanctioned sources without revealing which deposit is yours. Vitalik-endorsed, EF-integrated (Kohaku wallet). Compliant by design. ETH/USDC/USDT/DAI supported.</span></span>
+      <span class="row-name">3. Privacy Pools (0xbow)<span class="row-note">Live on Ethereum mainnet since Mar 2025. ZK proofs let you prove funds aren&rsquo;t from sanctioned sources without revealing which deposit is yours. Vitalik-endorsed, EF-integrated (Kohaku wallet). Compliant by design. ETH/USDC/USDT/DAI supported.</span></span>
       <span class="row-val">High &middot; gas only &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance &rarr; unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
-      <span class="row-val">Very high &middot; 0.25% &middot; Low-gray</span>
+      <span class="row-name">4. Railgun (on-chain shielding)<span class="row-note">Shield USDC into private balance &rarr; unshield to fresh address. Proof of Innocence blocks illicit funds (rejected $9.5M zkLend hack live, Feb 2025). Ethereum, Arbitrum, Polygon, BNB. $5.16B+ cumulative shielded volume. EF-endorsed.</span></span>
+      <span class="row-val">Very high &middot; 0.25% &middot; Clean-ish</span>
     </div>
     <div class="row">
-      <span class="row-name">Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures (16 decoys) hide sender, amount, recipient. FCMP++ upgrade pending &mdash; will replace rings with full UTXO-set anonymity. Round-trip cost: 0.3&ndash;0.5% via CEX (MEXC/Kraken), 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025 alone. Still on MEXC ($155M/day vol), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027. No country criminalizes holding.</span></span>
-      <span class="row-val">Very high &middot; 0.3&ndash;4% RT &middot; Elevated</span>
+      <span class="row-name">5. Umbra (stealth addresses)<span class="row-note">One-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible).</span></span>
+      <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruled immutable contracts can&rsquo;t be sanctioned). Contracts functional, no longer illegal to use. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB charge), Pertsev serving 5yr.</span></span>
-      <span class="row-val">Very high &middot; 0.1&ndash;1% &middot; Legal but toxic</span>
-    </div>
-  </div>
-
-  <div class="flow-table" style="margin-top:12px;opacity:.5">
-    <div class="row is-gross">
-      <span class="row-name">Not production-ready</span>
-      <span class="row-val"></span>
+      <span class="row-name">6. Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures hide sender, amount, recipient. Round-trip: 0.3&ndash;0.5% via CEX, 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025. Still on MEXC ($155M/day), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027.</span></span>
+      <span class="row-val">Very high &middot; 0.3&ndash;4% &middot; Elevated</span>
     </div>
     <div class="row">
-      <span class="row-name">Solana confidential transfers (Token-2022)<span class="row-note">Twisted ElGamal + ZK range proofs hide amounts (not addresses). Launched Apr 2025, disabled Jun 2025 after two ZK ElGamal bugs. Re-enable pending with Agave 4.0 (no date). USDC is still on legacy SPL Token &mdash; Circle hasn&rsquo;t migrated. PYUSD and USDG enabled the extension but can&rsquo;t use it while ZK program is off.</span></span>
-      <span class="row-val">Amounts only &middot; &mdash; &middot; ZK program disabled</span>
-    </div>
-    <div class="row">
-      <span class="row-name">Aztec privacy L2 (Alpha v5)<span class="row-note">Live on Ethereum mainnet since Jul 2026 with Shield Bridge, but explicitly &ldquo;Alpha&rdquo; &mdash; 72s block times, &ldquo;don&rsquo;t deposit more than you can lose.&rdquo; Old Aztec Connect was exploited for $2.2M in Jun 2026. Not yet production-grade.</span></span>
-      <span class="row-val">Full &middot; ~$0.05/tx &middot; Experimental</span>
+      <span class="row-name">7. Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruling). Contracts functional. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB), Pertsev serving 5yr. Reputational poison.</span></span>
+      <span class="row-val">Very high &middot; 0.1&ndash;1% &middot; Toxic</span>
     </div>
   </div>
 
@@ -595,6 +572,7 @@
   var NP = 0.005, CONV = 0.018, XMRFEE = 0.015;
   var payoutMode = 'direct';
   var xmrOptIn = false;
+  var horizon = 'txn';
   var current = 'solana';
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
@@ -762,51 +740,43 @@
     el('r-conv').parentNode.style.opacity = isXmr ? '1' : '0.35';
     el('r-xmr').parentNode.style.opacity = isXmr ? '1' : '0.35';
 
-    var rev = take * invYr;
-    var ops = sweep * invYr;
+    // --- horizon multiplier ---
+    var invMo = V / T;
+    var mult = horizon === 'txn' ? 1 : (horizon === 'month' ? invMo : invYr);
+    var hLabel = horizon === 'txn' ? '/txn' : (horizon === 'month' ? '/mo' : '/yr');
+    var hInv = horizon === 'txn' ? 1 : (horizon === 'month' ? invMo : invYr);
 
-    el('k-rev').textContent = big(rev);
-    el('k-rev-sub').textContent = Math.round(invYr).toLocaleString() + ' invoices/yr';
+    var hTake = take * mult;
+    var hOps = sweep * mult;
+    var hNP = np * mult;
+    var hConv = conv * mult;
+    var hXmrFee = xmrFee * mult;
+    var hIntermediary = hNP + hConv + hXmrFee;
+    var hNet = hTake - hOps;
+    var hMargin = hTake > 0 ? ((hNet / hTake) * 100).toFixed(1) : '0.0';
 
-    el('k-ops-name').textContent = c.opsName;
-    el('k-ops').textContent = ops < 1000 ? usd(ops, 0) : big(ops);
-    el('k-ops-sub').textContent = usd(sweep, 4) + ' per invoice';
+    var fmt = horizon === 'txn' ? usd : big;
+    el('k-rev-name').textContent = 'You keep';
+    el('k-rev').textContent = fmt(hTake);
+    el('k-rev-sub').textContent = Math.round(hInv).toLocaleString() + ' invoices' + hLabel;
 
-    if(c.riskModel === 'rent'){
-      var leak = perAddr * f * invYr;
-      el('k-leak-name').textContent = 'Stranded rent';
-      el('k-leak').textContent = usd(leak, 0);
-      el('k-leak-sub').textContent = leak > rev * 0.05
-        ? 'material — ' + ((leak/rev)*100).toFixed(1) + '% of revenue'
-        : 'lost to failed closes, annual';
-    } else if(c.riskModel === 'gas'){
-      var loGwei = 0.1, hiGwei = 30;
-      var lo = (c.sweepGas * loGwei * 1e-9) * PRICES.ethereum * invYr;
-      var hi = (c.sweepGas * hiGwei * 1e-9) * PRICES.ethereum * invYr;
-      el('k-leak-name').textContent = 'Gas volatility band';
-      el('k-leak').textContent = big(lo) + '–' + big(hi);
-      el('k-leak-sub').textContent = 'annual range, 0.1–30 gwei';
-    } else if(c.riskModel === 'penalty'){
-      el('k-leak-name').textContent = 'Fresh-wallet penalty';
-      el('k-leak').textContent = big(ops);
-      el('k-leak-sub').textContent = 'the whole ops line IS the penalty';
-    } else if(c.riskModel === 'gasfund'){
-      el('k-leak-name').textContent = 'Gas funding overhead';
-      el('k-leak').textContent = big(ops);
-      el('k-leak-sub').textContent = 'each address needs BNB to sweep';
-    } else {
-      el('k-leak-name').textContent = 'Strand risk';
-      el('k-leak').textContent = '—';
-      el('k-leak-sub').textContent = 'no rent, nothing to strand';
-    }
+    el('k-ops-name').textContent = 'On-chain ops';
+    el('k-ops').textContent = fmt(hOps);
+    el('k-ops-sub').textContent = horizon === 'txn' ? usd(sweep, 4) + ' sweep' : fmt(hOps) + ' total';
 
-    var drag = sweep / T;
-    el('k-drag').textContent = (drag*100).toFixed(drag >= 0.01 ? 1 : 3) + '%';
+    var leak = 0;
+    if(c.riskModel === 'rent') leak = perAddr * f * mult;
+    else if(c.riskModel === 'penalty' || c.riskModel === 'gasfund') leak = hOps;
+    el('k-leak-name').textContent = c.riskModel === 'rent' ? 'Stranded rent' : (c.riskModel === 'gas' ? 'Gas volatility' : 'Risk line');
+    el('k-leak').textContent = leak > 0 ? fmt(leak) : '—';
+    el('k-leak-sub').textContent = c.riskModel === 'rent' ? 'failed closes' : (c.riskModel === 'none' ? 'nothing to strand' : c.opsSub);
+
+    el('k-net-name').textContent = 'Net profit';
+    el('k-drag').textContent = fmt(hNet);
+    el('k-drag-sub').textContent = hMargin + '% margin';
     var dcard = el('k-drag-card');
     dcard.classList.remove('is-risk','is-good');
-    if(drag > 0.05){ dcard.classList.add('is-risk'); el('k-drag-sub').textContent = 'on-chain cost eats the margin'; }
-    else if(drag < 0.005){ dcard.classList.add('is-good'); el('k-drag-sub').textContent = 'negligible drag'; }
-    else { el('k-drag-sub').textContent = 'on-chain cost ÷ ticket'; }
+    dcard.classList.add(hNet > 0 ? 'is-good' : 'is-risk');
 
     var vb = el('verdict-bar');
     vb.className = 'verdict-bar tone-' + c.tone;
@@ -832,22 +802,22 @@
     var rotLabels = ['Monthly', 'Quarterly', 'Semi-annual', 'Annual'];
     el('v-rot').textContent = rotLabels[+el('rot').value];
 
-    // --- Where the money goes (per invoice) ---
-    var opsPerInv = sweep;
+    // --- Where the money goes (horizon-aware) ---
+    var hGross = T * mult;
     var slices = [
-      {label:'You keep', amt:take, color:'var(--good)', cls:'is-you'},
-      {label:'On-chain ops', amt:opsPerInv, color:'var(--custody)', cls:'is-ops'}
+      {label:'You keep', amt:hTake, color:'var(--good)', cls:'is-you'},
+      {label:'On-chain ops', amt:hOps, color:'var(--custody)', cls:'is-ops'}
     ];
-    if(isNP) slices.push({label:'NOWPayments', amt:np, color:'#6B7280', cls:'is-np'});
+    if(isNP) slices.push({label:'NOWPayments', amt:hNP, color:'#6B7280', cls:'is-np'});
     if(isXmr){
-      slices.push({label:'XMR conversion', amt:conv, color:'#FF6B35', cls:'is-np'});
-      slices.push({label:'XMR network fee', amt:xmrFee, color:'#9CA3AF', cls:'is-np'});
+      slices.push({label:'XMR conversion', amt:hConv, color:'#FF6B35', cls:'is-np'});
+      slices.push({label:'XMR network fee', amt:hXmrFee, color:'#9CA3AF', cls:'is-np'});
     }
-    slices.push({label:'Merchant nets', amt:net, color:'var(--clear)', cls:'is-merchant'});
+    slices.push({label:'Merchant nets', amt:net * mult, color:'var(--clear)', cls:'is-merchant'});
 
     var barHtml = '';
     slices.forEach(function(s){
-      var pct = (s.amt / T) * 100;
+      var pct = (s.amt / hGross) * 100;
       if(pct < 0.01) return;
       var lbl = pct >= 4 ? (pct.toFixed(1) + '%') : '';
       barHtml += '<div class="split-seg" style="width:' + pct.toFixed(2) + '%;background:' + s.color + '">' + lbl + '</div>';
@@ -856,37 +826,14 @@
 
     var sumHtml = '';
     slices.forEach(function(s){
-      var pct = ((s.amt / T) * 100).toFixed(2);
+      var pct = ((s.amt / hGross) * 100).toFixed(2);
       sumHtml += '<div class="split-line ' + s.cls + '">';
       sumHtml += '<span class="split-line-label">' + s.label + '</span>';
-      sumHtml += '<span class="split-line-val">' + usd(s.amt) + ' <span class="split-pct">(' + pct + '%)</span></span>';
+      sumHtml += '<span class="split-line-val">' + fmt(s.amt) + ' <span class="split-pct">(' + pct + '%)</span></span>';
       sumHtml += '</div>';
     });
+    sumHtml += '<div class="split-big is-you"><span class="split-line-label">Net profit</span><span class="split-line-val">' + fmt(hNet) + ' <span class="split-pct">(' + hMargin + '% margin)</span></span></div>';
     el('split-summary').innerHTML = sumHtml;
-
-    // --- Annual P&L ---
-    var annVol = V * 12;
-    var annRev = take * invYr;
-    var annOps = sweep * invYr;
-    var annNP = isNP ? np * invYr : 0;
-    var annConv = isXmr ? conv * invYr : 0;
-    var annXmrFee = isXmr ? xmrFee * invYr : 0;
-    var annIntermediary = annNP + annConv + annXmrFee;
-    var annMerchant = net * invYr;
-    var annProfit = annRev - annOps;
-    var margin = annRev > 0 ? ((annProfit / annRev) * 100).toFixed(1) : '0.0';
-
-    var aHtml = '';
-    aHtml += '<div class="split-line"><span class="split-line-label">Total throughput</span><span class="split-line-val">' + big(annVol) + '/yr</span></div>';
-    aHtml += '<div class="split-line"><span class="split-line-label">Invoices</span><span class="split-line-val">' + Math.round(invYr).toLocaleString() + '/yr</span></div>';
-    aHtml += '<div class="split-line is-you"><span class="split-line-label">Your gross revenue</span><span class="split-line-val">' + big(annRev) + '</span></div>';
-    aHtml += '<div class="split-line is-ops"><span class="split-line-label">On-chain ops cost</span><span class="split-line-val">−' + big(annOps) + '</span></div>';
-    if(annIntermediary > 0){
-      aHtml += '<div class="split-line is-np"><span class="split-line-label">Intermediary fees</span><span class="split-line-val">−' + big(annIntermediary) + '</span></div>';
-    }
-    aHtml += '<div class="split-big is-you"><span class="split-line-label">Net profit (you)</span><span class="split-line-val">' + big(annProfit) + ' <span class="split-pct">(' + margin + '% margin)</span></span></div>';
-    aHtml += '<div class="split-big is-merchant"><span class="split-line-label">Paid to merchants</span><span class="split-line-val">' + big(annMerchant) + '</span></div>';
-    el('split-annual').innerHTML = aHtml;
 
     renderOps();
   }
@@ -992,6 +939,16 @@
   el('xmr-check').addEventListener('change', function(){
     xmrOptIn = this.checked;
     render();
+  });
+
+  var hzBtns = document.querySelectorAll('#horizon-toggle .pt-btn');
+  hzBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      horizon = b.getAttribute('data-hz');
+      hzBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      render();
+    });
   });
 
   document.querySelectorAll('.sc-btn').forEach(function(b){
