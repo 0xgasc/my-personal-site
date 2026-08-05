@@ -789,7 +789,16 @@
     var hInv = horizon === 'txn' ? 1 : (horizon === 'month' ? invMo : invYr);
 
     var hTake = take * mult;
-    var hOps = sweep * mult;
+    var hSweepOps = sweep * mult;
+
+    var freqIdx = +el('freq').value;
+    var freqHours = [0.08, 4, 24, 72, 168];
+    var merchants = +el('merchants').value;
+    var bpd = freqIdx === 0 ? invMo / 30 : (freqHours[freqIdx] <= 24 ? Math.max(1, Math.round(24 / freqHours[freqIdx])) : 24 / freqHours[freqIdx]);
+    var payoutTxPerDay = freqIdx === 0 ? invMo / 30 : Math.min(merchants, invMo / 30) * bpd;
+    var hPayoutOps = horizon === 'txn' ? (payoutTxPerDay / (invMo / 30)) * sweep : (horizon === 'month' ? payoutTxPerDay * 30 * sweep : payoutTxPerDay * 365 * sweep);
+    var hOps = hSweepOps + hPayoutOps;
+
     var hNP = np * mult;
     var hConv = conv * mult;
     var hXmrFee = xmrFee * mult;
@@ -807,7 +816,7 @@
 
     el('k-ops-name').textContent = 'On-chain ops';
     el('k-ops').textContent = smart(hOps);
-    el('k-ops-sub').textContent = horizon === 'txn' ? smart(sweep) + ' sweep' : smart(hOps) + ' total';
+    el('k-ops-sub').textContent = horizon === 'txn' ? smart(sweep) + ' sweep + payout share' : 'sweeps + payouts';
 
     var leak = 0;
     if(c.riskModel === 'rent') leak = perAddr * f * mult;
