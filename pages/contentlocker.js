@@ -4,8 +4,6 @@ import { join } from 'path'
 import { createHash } from 'crypto'
 import { parse } from 'cookie'
 
-const EXPIRES_AT = new Date('2026-08-15T06:00:00Z')
-
 const DOCS = {
   schematic: 'settlement-schematic.html',
   simulator: 'simulator.html'
@@ -14,10 +12,6 @@ const DOCS = {
 let readCount = 0
 
 export async function getServerSideProps({ req, query }) {
-  const expired = new Date() >= EXPIRES_AT
-  if (expired) {
-    return { props: { state: 'expired', html: null, reads: readCount } }
-  }
 
   const cookies = parse(req.headers.cookie || '')
   const token = cookies.cl_token
@@ -44,16 +38,6 @@ export default function ContentLocker({ state, html, reads, embed }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
-
-  if (state === 'expired') {
-    return (
-      <div style={styles.container}>
-        <h1 style={styles.code}>410</h1>
-        <p style={styles.msg}>This document has self-destructed.</p>
-        <p style={styles.sub}>Expired after scheduled deadline.</p>
-      </div>
-    )
-  }
 
   if (state === 'locked') {
     async function handleSubmit(e) {
@@ -110,7 +94,7 @@ export default function ContentLocker({ state, html, reads, embed }) {
     <>
       <div style={styles.banner}>
         <span>CONFIDENTIAL</span>
-        <span>expires Friday Aug 15</span>
+        <span>password-protected</span>
       </div>
       <div dangerouslySetInnerHTML={{ __html: html }} style={{ paddingTop: '28px' }} />
     </>
