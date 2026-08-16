@@ -207,14 +207,6 @@
   }
   .sc-note b{color:var(--ink);font-weight:600}
 
-  .xmr-opt{
-    display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;
-    margin:10px 0 0;padding:10px 14px;cursor:pointer;
-    background:var(--card);border:1px dashed var(--rule);font-size:13px;
-  }
-  .xmr-opt input{accent-color:var(--clear);margin:0}
-  .xmr-label{font-weight:600;color:var(--ink);font-size:13px}
-  .xmr-sub{width:100%;font-size:12px;color:var(--mute);line-height:1.45;margin-top:2px}
 
   .split-wrap{margin-top:10px}
   .split-bar{display:flex;height:28px;border-radius:3px;overflow:hidden;font-size:0}
@@ -358,12 +350,6 @@
     <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
   </div>
 
-  <label class="xmr-opt" id="xmr-opt">
-    <input type="checkbox" id="xmr-check">
-    <span class="xmr-label">Merchant elects XMR payout</span>
-    <span class="xmr-sub">Adds ~1.8% conversion via ChangeNOW + $0.015 XMR network fee. This is a per-merchant election, separate from NOWPayments.</span>
-  </label>
-
   <div class="verdict-bar" id="verdict-bar" style="margin-top:16px">
     <span class="vb-badge" id="vb-badge">Best fit for single-use</span>
     <span class="vb-note" id="vb-note">Rent refundable on close; failed closes are the only real leak.</span>
@@ -417,14 +403,6 @@
       <span class="row-name">NOWPayments<span class="row-note">0.5% &mdash; only if using NP for distribution</span></span>
       <span class="row-val" id="r-np">$0.00</span>
     </div>
-    <div class="row">
-      <span class="row-name"><span id="r-asset">USDC</span> &rarr; XMR conversion<span class="row-note">~1.8% via ChangeNOW &mdash; only if merchant elects XMR</span></span>
-      <span class="row-val" id="r-conv">$0.00</span>
-    </div>
-    <div class="row">
-      <span class="row-name">XMR network fee<span class="row-note">~$0.015 &mdash; only if merchant elects XMR</span></span>
-      <span class="row-val" id="r-xmr">$0.00</span>
-    </div>
     <div class="row is-net">
       <span class="row-name">Merchant receives</span>
       <span class="row-val" id="r-net">$14.78</span>
@@ -446,7 +424,6 @@
       <option value="privacy_pools">Privacy Pools (~$0.50/exit)</option>
       <option value="veil">Veil Cash (0.3%)</option>
       <option value="railgun">Railgun (0.25%)</option>
-      <option value="xmr_exit">XMR conversion (~1.5%)</option>
     </select>
     <input type="number" id="exit-freq" min="1" max="30" value="1" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 6px;border:1px solid var(--rule);background:var(--card);color:var(--ink);text-align:center">
     <span class="ctl-name" style="margin:0">&times;/mo</span>
@@ -638,14 +615,12 @@
       <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
     </div>
     <div class="row">
-      <span class="row-name">7. Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures hide sender, amount, recipient. Round-trip: 0.3&ndash;0.5% via CEX, 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025. Still on MEXC ($155M/day), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027.</span></span>
-      <span class="row-val">Very high &middot; 0.3&ndash;4% &middot; Elevated</span>
     </div>
   </div>
 
   <p class="footnote" style="border-left-color:var(--good)"><b>Bottom line: our shared treasury already does most of the work.</b> Competitors can see our total volume but not per-merchant breakdowns. That covers the most realistic threat.</p>
 
-  <p class="footnote" style="border-left-color:var(--custody)"><b>The practical playbook:</b> Shared treasury (free, already built) + CEX off-ramp when we need fiat (KYC&rsquo;d, clean paper trail). If a merchant asks for extra privacy, offer XMR opt-in. Everything else on this list is either experimental, legally risky, or solving a problem we don&rsquo;t have yet.</p>
+  <p class="footnote" style="border-left-color:var(--custody)"><b>The practical playbook:</b> Shared treasury (free, already built) + CEX off-ramp when we need fiat (KYC&rsquo;d, clean paper trail). Privacy Pools or Railgun if a merchant wants extra privacy. Everything else on this list is either experimental or solving a problem we don&rsquo;t have yet.</p>
 
   <p style="margin-top:32px;font-size:13px"><a href="/contentlocker?doc=simulator" style="color:var(--clear);font-family:'IBM Plex Mono',monospace;font-size:12px">Open month-by-month strategy simulator &rarr;</a></p>
 
@@ -712,9 +687,8 @@
 (function(){
   var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
   var priceTs = 0;
-  var NP = 0.005, CONV = 0.018, XMRFEE = 0.015;
+  var NP = 0.005;
   var payoutMode = 'direct';
-  var xmrOptIn = false;
   var horizon = 'txn';
   var current = 'solana';
   var exitMethod = 'none';
@@ -723,8 +697,7 @@
     cex:           {pct:0,     flat:5},
     privacy_pools: {pct:0,     flat:0.50},
     veil:          {pct:0.003, flat:0},
-    railgun:       {pct:0.0025,flat:0},
-    xmr_exit:      {pct:0.015, flat:0}
+    railgun:       {pct:0.0025,flat:0}
   };
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
@@ -875,12 +848,9 @@
     var perAddr = getRent(current);
 
     var isNP = payoutMode === 'nowpay';
-    var isXmr = xmrOptIn;
     var take = T * r;
     var np = isNP ? T * NP : 0;
-    var conv = isXmr ? T * CONV : 0;
-    var xmrFee = isXmr ? XMRFEE : 0;
-    var net = T - take - np - conv - xmrFee;
+    var net = T - take - np;
 
     el('v-ticket').textContent = '$' + T;
     el('v-vol').textContent = big(V);
@@ -891,14 +861,9 @@
     el('r-gross').textContent = usd(T);
     el('r-take').textContent = '−' + usd(take);
     el('r-np').textContent = isNP ? '−' + usd(np) : '$0.00';
-    el('r-asset').textContent = c.asset;
-    el('r-conv').textContent = isXmr ? '−' + usd(conv) : '$0.00';
-    el('r-xmr').textContent = isXmr ? '−' + usd(xmrFee) : '$0.00';
     el('r-net').textContent = usd(net);
 
     el('r-np').parentNode.style.opacity = isNP ? '1' : '0.35';
-    el('r-conv').parentNode.style.opacity = isXmr ? '1' : '0.35';
-    el('r-xmr').parentNode.style.opacity = isXmr ? '1' : '0.35';
 
     // --- horizon multiplier ---
     var invMo = V / T;
@@ -918,9 +883,7 @@
     var hOps = hSweepOps + hPayoutOps;
 
     var hNP = np * mult;
-    var hConv = conv * mult;
-    var hXmrFee = xmrFee * mult;
-    var hIntermediary = hNP + hConv + hXmrFee;
+    var hIntermediary = hNP;
     var ex = EXIT_METHODS[exitMethod];
     var exitFreq = Math.max(1, +el('exit-freq').value || 1);
     var exitsPerPeriod = horizon === 'txn' ? (exitFreq / invMo) : (horizon === 'month' ? exitFreq : exitFreq * 12);
@@ -983,10 +946,6 @@
     ];
     if(hExit > 0) slices.push({label:'Exit cost', amt:hExit, color:'var(--xmr)', cls:'is-ops'});
     if(isNP) slices.push({label:'NOWPayments', amt:hNP, color:'#6B7280', cls:'is-np'});
-    if(isXmr){
-      slices.push({label:'XMR conversion', amt:hConv, color:'#FF6B35', cls:'is-np'});
-      slices.push({label:'XMR network fee', amt:hXmrFee, color:'#9CA3AF', cls:'is-np'});
-    }
     slices.push({label:'Merchant nets', amt:net * mult, color:'var(--clear)', cls:'is-merchant'});
 
     var barHtml = '';
@@ -1129,11 +1088,6 @@
   hzBtns.forEach(function(b){ b.addEventListener('click', function(){ setHz(b.getAttribute('data-hz')); }); });
   sHzBtns.forEach(function(b){ b.addEventListener('click', function(){ setHz(b.getAttribute('data-shz')); }); });
   document.querySelector('[data-shz="txn"]').classList.add('active');
-
-  el('xmr-check').addEventListener('change', function(){
-    xmrOptIn = this.checked;
-    render();
-  });
 
   el('exit-method').addEventListener('change', function(){
     exitMethod = this.value;
