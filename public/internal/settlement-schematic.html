@@ -447,7 +447,6 @@
       <option value="veil">Veil Cash (0.3%)</option>
       <option value="railgun">Railgun (0.25%)</option>
       <option value="xmr_exit">XMR conversion (~1.5%)</option>
-      <option value="tornado">Tornado Cash (0.5%)</option>
     </select>
     <input type="number" id="exit-freq" min="1" max="30" value="1" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 6px;border:1px solid var(--rule);background:var(--card);color:var(--ink);text-align:center">
     <span class="ctl-name" style="margin:0">&times;/mo</span>
@@ -642,10 +641,6 @@
       <span class="row-name">7. Privacy coin conversion (XMR)<span class="row-note">USDC &rarr; XMR via ChangeNOW or MEXC. Ring signatures hide sender, amount, recipient. Round-trip: 0.3&ndash;0.5% via CEX, 2&ndash;4% via no-KYC swaps. 73 exchange delistings in 2025. Still on MEXC ($155M/day), KuCoin, Kraken US. EU AMLR Art.79 bans CASP handling by Jul 2027.</span></span>
       <span class="row-val">Very high &middot; 0.3&ndash;4% &middot; Elevated</span>
     </div>
-    <div class="row">
-      <span class="row-name">8. Tornado Cash<span class="row-note">OFAC sanctions removed Mar 2025 (Fifth Circuit ruling). Contracts functional. But no compliance filtering &mdash; no way to prove funds are clean. Developer Storm convicted (MTB), Pertsev serving 5yr. Reputational poison.</span></span>
-      <span class="row-val">Very high &middot; 0.1&ndash;1% &middot; Toxic</span>
-    </div>
   </div>
 
   <p class="footnote" style="border-left-color:var(--good)"><b>Bottom line: our shared treasury already does most of the work.</b> Competitors can see our total volume but not per-merchant breakdowns. That covers the most realistic threat.</p>
@@ -729,8 +724,7 @@
     privacy_pools: {pct:0,     flat:0.50},
     veil:          {pct:0.003, flat:0},
     railgun:       {pct:0.0025,flat:0},
-    xmr_exit:      {pct:0.015, flat:0},
-    tornado:       {pct:0.005, flat:0}
+    xmr_exit:      {pct:0.015, flat:0}
   };
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
