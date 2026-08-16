@@ -34,11 +34,6 @@
   .cp-btn{font-family:"IBM Plex Mono",monospace;font-size:12px;padding:8px 13px;border:1px solid var(--rule);background:var(--card);color:var(--mute);cursor:pointer;border-radius:2px;-webkit-tap-highlight-color:transparent}
   .cp-btn:hover{border-color:var(--mute);color:var(--ink)}
   .cp-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .payout-toggle{display:flex;gap:0;margin-bottom:16px}
-  .pt-btn{font-family:"IBM Plex Mono",monospace;font-size:11.5px;padding:8px 14px;border:1px solid var(--rule);background:var(--card);color:var(--mute);cursor:pointer}
-  .pt-btn+.pt-btn{border-left:0}
-  .pt-btn:hover{color:var(--ink)}
-  .pt-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .sc-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
   .sc-btn{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:9px 16px;border:1px solid var(--rule);background:var(--card);color:var(--mute);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:500}
   .sc-btn:hover{border-color:var(--mute);color:var(--ink)}
@@ -76,7 +71,7 @@
   .loss-banner{margin:0 0 20px;padding:12px 16px;background:rgba(196,89,11,.1);border:1px solid var(--xmr);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--xmr);line-height:1.5;display:none}
   .loss-banner b{color:var(--ink)}
 
-  .embed-mode header,.embed-mode .back,.embed-mode .price-bar,.embed-mode .sc-row,.embed-mode #chainpick,.embed-mode #payout-toggle,.embed-mode #sweep-callout,.embed-mode .synced-controls{display:none!important}
+  .embed-mode header,.embed-mode .back,.embed-mode .price-bar,.embed-mode .sc-row,.embed-mode #chainpick,.embed-mode #sweep-callout,.embed-mode .synced-controls{display:none!important}
   .embed-mode .wrap{padding-top:10px!important}
   .embed-mode h3.presets-h{display:none}
   .synced-bar{display:none;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;background:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.5;color:var(--paper)}
@@ -175,9 +170,6 @@
     <button class="s-chip" data-schain="tron">TRX</button>
     <button class="s-chip" data-schain="base" style="opacity:.5">BASE</button>
     <div class="s-sep"></div>
-    <button class="s-chip active" data-smode="direct">Direct</button>
-    <button class="s-chip" data-smode="nowpay">NP 0.5%</button>
-    <div class="s-sep"></div>
     <span id="s-sweep" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A95A0"></span>
   </div>
 </div>
@@ -216,11 +208,6 @@
   </div>
 
   <div id="sweep-callout" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);margin-bottom:10px"></div>
-
-  <div class="payout-toggle" id="payout-toggle">
-    <button class="pt-btn active" data-mode="direct">Direct USDC</button>
-    <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
-  </div>
 
   <div class="synced-bar" id="synced-bar">
     <span class="sb-tag">Synced</span>
@@ -285,6 +272,9 @@
         <tr><td>None (direct)</td><td>free</td>
           <td><input type="number" class="mix-pct mix-a" data-method="none" value="50" min="0" max="100">%</td>
           <td class="phase-b" style="display:none"><input type="number" class="mix-pct mix-b" data-method="none" value="20" min="0" max="100">%</td></tr>
+        <tr><td>NOWPayments</td><td>0.5% vol</td>
+          <td><input type="number" class="mix-pct mix-a" data-method="nowpay" value="0" min="0" max="100">%</td>
+          <td class="phase-b" style="display:none"><input type="number" class="mix-pct mix-b" data-method="nowpay" value="0" min="0" max="100">%</td></tr>
         <tr><td>CEX off-ramp</td><td>$5/exit</td>
           <td><input type="number" class="mix-pct mix-a" data-method="cex" value="30" min="0" max="100">%</td>
           <td class="phase-b" style="display:none"><input type="number" class="mix-pct mix-b" data-method="cex" value="10" min="0" max="100">%</td></tr>
@@ -348,16 +338,15 @@
 (function(){
   var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
   var priceTs = 0;
-  var NP = 0.005;
-  var payoutMode = 'direct';
   var current = 'solana';
 
   var EXIT_METHODS = {
-    none:          {pct:0,     flat:0},
-    cex:           {pct:0,     flat:5},
-    privacy_pools: {pct:0,     flat:0.50},
-    veil:          {pct:0.003, flat:0},
-    railgun:       {pct:0.0025,flat:0}
+    none:          {pct:0,      flat:0},
+    nowpay:        {pct:0.005,  flat:0, onVol:true},
+    cex:           {pct:0,      flat:5},
+    privacy_pools: {pct:0,      flat:0.50},
+    veil:          {pct:0.003,  flat:0},
+    railgun:       {pct:0.0025, flat:0}
   };
 
   var CHAINS = {
@@ -371,10 +360,10 @@
   var FREQ_HOURS = [24, 72, 168];
 
   var SCENARIOS = {
-    bootstrap:  {vol:10000,  ticket:25, take:1.5, growth:20, chain:'solana', mode:'direct', freq:2, merchants:5,   tokdelta:0,  exitFreq:1, mixA:{none:70,cex:30},                                     shift:false},
-    steady:     {vol:100000, ticket:35, take:1.5, growth:5,  chain:'solana', mode:'direct', freq:0, merchants:25,  tokdelta:0,  exitFreq:1, mixA:{none:30,cex:30,veil:40},                              shift:false},
-    rocket:     {vol:50000,  ticket:30, take:2.0, growth:30, chain:'solana', mode:'direct', freq:1, merchants:15,  tokdelta:25, exitFreq:2, mixA:{none:80,cex:20},                                      shift:true, shiftMonth:'6', mixB:{none:20,veil:50,railgun:30}},
-    enterprise: {vol:500000, ticket:50, take:1.0, growth:10, chain:'solana', mode:'direct', freq:0, merchants:100, tokdelta:0,  exitFreq:4, mixA:{none:10,privacy_pools:30,veil:40,railgun:20},          shift:false}
+    bootstrap:  {vol:10000,  ticket:25, take:1.5, growth:20, chain:'solana', freq:2, merchants:5,   tokdelta:0,  exitFreq:1, mixA:{none:70,cex:30},                                                shift:false},
+    steady:     {vol:100000, ticket:35, take:1.5, growth:5,  chain:'solana', freq:0, merchants:25,  tokdelta:0,  exitFreq:1, mixA:{none:30,cex:30,veil:40},                                         shift:false},
+    rocket:     {vol:50000,  ticket:30, take:2.0, growth:30, chain:'solana', freq:1, merchants:15,  tokdelta:25, exitFreq:2, mixA:{none:80,cex:20},                                                 shift:true, shiftMonth:'6', mixB:{none:20,veil:50,railgun:30}},
+    enterprise: {vol:500000, ticket:50, take:1.0, growth:10, chain:'solana', freq:0, merchants:100, tokdelta:0,  exitFreq:4, mixA:{nowpay:20,privacy_pools:20,veil:40,railgun:20},                   shift:false}
   };
 
   var el = function(id){ return document.getElementById(id); };
@@ -422,7 +411,7 @@
   function mixTotal(mix){
     var t = 0; for(var k in mix) t += mix[k]; return t;
   }
-  function calcExitCost(mix, rev, exitFreq){
+  function calcExitCost(mix, rev, vol, exitFreq){
     var total = mixTotal(mix);
     if(total <= 0) return 0;
     var cost = 0;
@@ -430,7 +419,8 @@
       if(mix[k] <= 0) continue;
       var alloc = mix[k] / total;
       var ex = EXIT_METHODS[k];
-      cost += ex.pct * rev * alloc;
+      var base = ex.onVol ? vol : rev;
+      cost += ex.pct * base * alloc;
       if(ex.flat > 0) cost += ex.flat * exitFreq;
     }
     return cost;
@@ -495,7 +485,6 @@
     var tokMonthly = Math.pow(1 + tokDelta, 1/12);
     var freqIdx = +el('freq').value;
     var merchants = +el('merchants').value;
-    var isNP = payoutMode === 'nowpay';
     var exitFreq = Math.max(1, +el('exit-freq').value || 1);
 
     var mixA = readMix('mix-a');
@@ -538,7 +527,6 @@
       var vol = V0 * Math.pow(1 + g, m - 1);
       var inv = Math.max(1, Math.round(vol / T));
       var rev = vol * r;
-      var npCost = isNP ? vol * NP : 0;
       var pm = Math.pow(tokMonthly, m - 1);
       var sweep = getSweep(current, pm);
 
@@ -549,18 +537,18 @@
       var payoutCost = payoutTxPerDay * 30 * sweep;
 
       var mix = (shiftEnabled && m >= shiftMonth) ? mixB : mixA;
-      var exitCost = calcExitCost(mix, rev, exitFreq);
+      var exitCost = calcExitCost(mix, rev, vol, exitFreq);
 
-      var net = rev - sweepCost - payoutCost - exitCost - npCost;
+      var net = rev - sweepCost - payoutCost - exitCost;
       cumProfit += net;
       totals.vol += vol; totals.rev += rev;
       totals.sweepOps += sweepCost; totals.payoutOps += payoutCost;
-      totals.exit += exitCost + npCost; totals.net += net;
+      totals.exit += exitCost; totals.net += net;
 
       months.push({
         m:m, vol:vol, inv:inv, rev:rev,
         sweepOps:sweepCost, payoutOps:payoutCost,
-        exit:exitCost + npCost, net:net, cum:cumProfit,
+        exit:exitCost, net:net, cum:cumProfit,
         margin: rev > 0 ? (net / rev * 100) : 0,
         shifted: shiftEnabled && m >= shiftMonth
       });
@@ -591,7 +579,7 @@
     ch += '<div class="kpi ' + (totals.net >= 0 ? 'is-good' : 'is-risk') + '"><div class="kpi-name">Year profit</div><div class="kpi-val">' + big(totals.net) + '</div><div class="kpi-sub">' + am + '% avg margin</div></div>';
     ch += '<div class="kpi"><div class="kpi-name">Sweep costs</div><div class="kpi-val">' + big(totals.sweepOps) + '</div><div class="kpi-sub">' + smart(getSweep(current)) + '/invoice today</div></div>';
     ch += '<div class="kpi"><div class="kpi-name">Payout costs</div><div class="kpi-val">' + big(totals.payoutOps) + '</div><div class="kpi-sub">' + FREQ_LABELS[freqIdx].toLowerCase() + ' batches, ' + merchants + ' merchants</div></div>';
-    ch += '<div class="kpi"><div class="kpi-name">Exit costs</div><div class="kpi-val">' + big(totals.exit) + '</div><div class="kpi-sub">blended mix + intermediary</div></div>';
+    ch += '<div class="kpi"><div class="kpi-name">Exit costs</div><div class="kpi-val">' + big(totals.exit) + '</div><div class="kpi-sub">blended distribution mix</div></div>';
     ch += '<div class="kpi"><div class="kpi-name">Mo 12 run rate</div><div class="kpi-val">' + big(mo12.net * 12) + '/yr</div><div class="kpi-sub">' + big(mo12.vol) + '/mo volume</div></div>';
     el('summary-cards').innerHTML = ch;
 
@@ -701,17 +689,6 @@
   chainBtns.forEach(function(b){ b.addEventListener('click', function(){ setChain(b.getAttribute('data-chain')); }); });
   sChainBtns.forEach(function(b){ b.addEventListener('click', function(){ setChain(b.getAttribute('data-schain')); }); });
 
-  var ptBtns = document.querySelectorAll('#payout-toggle .pt-btn');
-  var sModeBtns = document.querySelectorAll('[data-smode]');
-  function setMode(mode){
-    payoutMode = mode;
-    ptBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-mode') === mode); });
-    sModeBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-smode') === mode); });
-    clearPreset(); render();
-  }
-  ptBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-mode')); }); });
-  sModeBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-smode')); }); });
-
   ['vol','ticket','take','growth','tokdelta','freq','merchants'].forEach(function(id){
     el(id).addEventListener('input', function(){ clearPreset(); render(); });
   });
@@ -748,11 +725,6 @@
       chainBtns.forEach(function(x){ x.classList.remove('active'); });
       var cb = document.querySelector('#chainpick .cp-btn[data-chain="' + sc.chain + '"]');
       if(cb) cb.classList.add('active');
-
-      payoutMode = sc.mode;
-      ptBtns.forEach(function(x){ x.classList.remove('active'); });
-      var mb = document.querySelector('#payout-toggle .pt-btn[data-mode="' + sc.mode + '"]');
-      if(mb) mb.classList.add('active');
 
       applyMix('mix-a', sc.mixA);
       el('shift-check').checked = !!sc.shift;
@@ -803,7 +775,6 @@
     el('sv-merchants').textContent = el('v-merchants').textContent;
     el('sv-tokdelta').textContent = el('v-tokdelta').textContent;
     sChainBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-schain') === current); });
-    sModeBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-smode') === payoutMode); });
     var ss = el('s-sweep');
     if(ss) ss.textContent = smart(getSweep(current)) + '/sweep';
   };
@@ -829,7 +800,7 @@
     function updateSyncedBar(){
       var sb = el('sb-vals');
       if(!sb) return;
-      sb.textContent = el('v-vol').textContent + ' vol · ' + el('v-ticket').textContent + ' ticket · ' + el('v-take').textContent + ' take · ' + FREQ_LABELS[+el('freq').value] + ' · ' + el('v-merchants').textContent + ' merchants · ' + (CHAIN_NAMES[current]||current) + ' · ' + (payoutMode==='nowpay'?'NP':'Direct');
+      sb.textContent = el('v-vol').textContent + ' vol · ' + el('v-ticket').textContent + ' ticket · ' + el('v-take').textContent + ' take · ' + FREQ_LABELS[+el('freq').value] + ' · ' + el('v-merchants').textContent + ' merchants · ' + (CHAIN_NAMES[current]||current);
     }
 
     window.addEventListener('message', function(e){
@@ -846,9 +817,6 @@
         chainBtns.forEach(function(x){ x.classList.remove('active'); });
         var cb = document.querySelector('#chainpick .cp-btn[data-chain="'+d.chain+'"]');
         if(cb) cb.classList.add('active');
-      }
-      if(d.mode && d.mode !== payoutMode){
-        payoutMode = d.mode;
       }
       render();
       updateSyncedBar();
