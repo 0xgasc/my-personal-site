@@ -17,7 +17,7 @@
     --card:#EAEEF1;
     --clear:#1F5C8B;
     --custody:#8A6510;
-    --xmr:#C4590B;
+    --risk:#C4590B;
     --good:#2A6350;
     --dark:#1B1626;
     --dark2:#241E31;
@@ -95,7 +95,7 @@
   .row.is-net{background:#DDE3E7;border-top:2px solid var(--ink)}
   .row.is-net .row-name{font-weight:600;font-size:14.5px}
   .row.is-net .row-val{font-weight:600;font-size:16px}
-  .row.is-risk .row-val{color:var(--xmr)}
+  .row.is-risk .row-val{color:var(--risk)}
 
   .cards{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -111,7 +111,7 @@
     letter-spacing:-.02em;font-variant-numeric:tabular-nums;
   }
   .kpi-sub{font-size:11.5px;color:var(--mute);margin-top:4px;line-height:1.4}
-  .kpi.is-risk .kpi-val{color:var(--xmr)}
+  .kpi.is-risk .kpi-val{color:var(--risk)}
   .kpi.is-good .kpi-val{color:var(--good)}
 
   .footnote{
@@ -155,7 +155,7 @@
   }
   .pb-refresh:hover{border-color:var(--ink);color:var(--ink)}
   .pb-age{font-size:10px;color:var(--mute)}
-  .pb-stale{color:var(--xmr)}
+  .pb-stale{color:var(--risk)}
 
   /* ---------- payout toggle ---------- */
   .payout-toggle{display:flex;gap:0;margin-bottom:16px}
@@ -181,14 +181,14 @@
   }
   .verdict-bar.tone-good{border-left-color:var(--good)}
   .verdict-bar.tone-warn{border-left-color:var(--custody)}
-  .verdict-bar.tone-bad{border-left-color:var(--xmr)}
+  .verdict-bar.tone-bad{border-left-color:var(--risk)}
   .vb-badge{
     font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;
     text-transform:uppercase;font-weight:500;white-space:nowrap;
   }
   .tone-good .vb-badge{color:var(--good)}
   .tone-warn .vb-badge{color:var(--custody)}
-  .tone-bad .vb-badge{color:var(--xmr)}
+  .tone-bad .vb-badge{color:var(--risk)}
   .vb-note{font-size:12.5px;line-height:1.45;color:var(--mute)}
 
   .sc-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
@@ -456,9 +456,6 @@
     </div>
   </div>
 
-  <!-- hidden el for annual P&L JS compat -->
-  <div style="display:none"><div id="split-annual"></div></div>
-
   <!-- chain cost comparison -->
   <h3 style="margin:36px 0 8px;font-size:15px;font-weight:700">Chain cost comparison</h3>
   <p style="font-size:13px;color:var(--mute);margin:0 0 12px">We use a fresh address per payment. That makes Solana cheapest and Tron most expensive.</p>
@@ -613,8 +610,6 @@
     <div class="row">
       <span class="row-name">6. Umbra (stealth addresses)<span class="row-note">One-time address for the recipient &mdash; payment isn&rsquo;t linkable to their known address. 350k+ txs, ~$500M total. Ethereum, Polygon, Arbitrum, Base. Hides receiver only (amounts + sender still visible).</span></span>
       <span class="row-val">Receiver only &middot; gas &middot; Clean</span>
-    </div>
-    <div class="row">
     </div>
   </div>
 
@@ -944,7 +939,7 @@
       {label:'You keep', amt:hTake - hExit, color:'var(--good)', cls:'is-you'},
       {label:'On-chain ops', amt:hOps, color:'var(--custody)', cls:'is-ops'}
     ];
-    if(hExit > 0) slices.push({label:'Exit cost', amt:hExit, color:'var(--xmr)', cls:'is-ops'});
+    if(hExit > 0) slices.push({label:'Exit cost', amt:hExit, color:'var(--risk)', cls:'is-ops'});
     if(isNP) slices.push({label:'NOWPayments', amt:hNP, color:'#6B7280', cls:'is-np'});
     slices.push({label:'Merchant nets', amt:net * mult, color:'var(--clear)', cls:'is-merchant'});
 
