@@ -229,7 +229,7 @@
   .split-line.is-you .split-line-val{color:var(--good)}
   .split-line.is-merchant .split-line-val{color:var(--clear)}
   .split-line.is-ops .split-line-val{color:var(--custody)}
-  .split-line.is-np .split-line-val{color:var(--mute)}
+  .split-line.is-exit .split-line-val{color:var(--risk)}
   .split-big{
     grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;
     padding-top:10px;border-top:1px solid var(--rule);font-size:15px;
@@ -301,9 +301,6 @@
     <button class="s-chip" data-schain="tron">TRX</button>
     <button class="s-chip" data-schain="base" style="opacity:.5">BASE</button>
     <div class="s-sep"></div>
-    <button class="s-chip" data-smode="direct">Direct</button>
-    <button class="s-chip" data-smode="nowpay">NP 0.5%</button>
-    <div class="s-sep"></div>
     <button class="s-chip" data-shz="txn">Per txn</button>
     <button class="s-chip" data-shz="month">Monthly</button>
     <button class="s-chip" data-shz="year">Yearly</button>
@@ -318,14 +315,14 @@
     <p class="lede">What fees do we incur, and what are our options for spending treasury money privately?</p>
   </header>
 
-  <p class="footnote" style="margin-top:0;border-left-color:var(--clear)"><b>How it works in 30 seconds:</b> Customer pays USDC to a fresh deposit address &rarr; we sweep it into a shared treasury (all merchants commingled, so outsiders can&rsquo;t see per-merchant volume) &rarr; we pay merchants out in USDC (directly, or via NOWPayments). That&rsquo;s it. Everything below is the math and the options.</p>
+  <p class="footnote" style="margin-top:0;border-left-color:var(--clear)"><b>How it works in 30 seconds:</b> Customer pays USDC to a fresh deposit address &rarr; we sweep it into a shared treasury (all merchants commingled, so outsiders can&rsquo;t see per-merchant volume) &rarr; we pay merchants out in USDC. That&rsquo;s it. Everything below is the math and the options.</p>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- SECTION 1 — FEES                           -->
   <!-- ═══════════════════════════════════════════ -->
 
   <h2 class="sect-title" style="margin-top:36px">What does it cost us?</h2>
-  <p class="sect-sub">Pick a chain and payout method, drag the sliders. Everything recalculates live.</p>
+  <p class="sect-sub">Pick a chain and exit method, drag the sliders. Everything recalculates live.</p>
 
   <div class="price-bar" id="price-bar">
     <span class="pb-label">Token prices (fees computed from these)</span>
@@ -343,11 +340,6 @@
     <button class="cp-btn" data-chain="ethereum">Ethereum L1</button>
     <button class="cp-btn" data-chain="tron">Tron</button>
     <button class="cp-btn" data-chain="base" style="opacity:.5">Base (L2)</button>
-  </div>
-
-  <div class="payout-toggle" id="payout-toggle">
-    <button class="pt-btn active" data-mode="direct">Direct USDC</button>
-    <button class="pt-btn" data-mode="nowpay">Via NOWPayments (0.5%)</button>
   </div>
 
   <div class="verdict-bar" id="verdict-bar" style="margin-top:16px">
@@ -399,10 +391,6 @@
       <span class="row-name">Your platform fee<span class="row-note">this is what you keep</span></span>
       <span class="row-val" id="r-take">&minus;$0.23</span>
     </div>
-    <div class="row">
-      <span class="row-name">NOWPayments<span class="row-note">0.5% &mdash; only if using NP for distribution</span></span>
-      <span class="row-val" id="r-np">$0.00</span>
-    </div>
     <div class="row is-net">
       <span class="row-name">Merchant receives</span>
       <span class="row-val" id="r-net">$14.78</span>
@@ -420,6 +408,7 @@
     <span class="ctl-name" style="margin:0">Treasury exit</span>
     <select id="exit-method" class="exit-select">
       <option value="none">None (direct)</option>
+      <option value="nowpay">NOWPayments (0.5% of vol)</option>
       <option value="cex">CEX off-ramp (~$5/exit)</option>
       <option value="privacy_pools">Privacy Pools (~$0.50/exit)</option>
       <option value="veil">Veil Cash (0.3%)</option>
@@ -682,17 +671,16 @@
 (function(){
   var PRICES = {solana:74, ethereum:1872, binancecoin:600, tron:0.33};
   var priceTs = 0;
-  var NP = 0.005;
-  var payoutMode = 'direct';
   var horizon = 'txn';
   var current = 'solana';
   var exitMethod = 'none';
   var EXIT_METHODS = {
-    none:          {pct:0,     flat:0},
-    cex:           {pct:0,     flat:5},
-    privacy_pools: {pct:0,     flat:0.50},
-    veil:          {pct:0.003, flat:0},
-    railgun:       {pct:0.0025,flat:0}
+    none:          {pct:0,      flat:0},
+    nowpay:        {pct:0.005,  flat:0, onVol:true},
+    cex:           {pct:0,      flat:5},
+    privacy_pools: {pct:0,      flat:0.50},
+    veil:          {pct:0.003,  flat:0},
+    railgun:       {pct:0.0025, flat:0}
   };
   var chainOrder = ['solana','bnb','ethereum','tron','base'];
 
@@ -842,10 +830,8 @@
     var sweep = getSweep(current);
     var perAddr = getRent(current);
 
-    var isNP = payoutMode === 'nowpay';
     var take = T * r;
-    var np = isNP ? T * NP : 0;
-    var net = T - take - np;
+    var net = T - take;
 
     el('v-ticket').textContent = '$' + T;
     el('v-vol').textContent = big(V);
@@ -855,10 +841,7 @@
 
     el('r-gross').textContent = usd(T);
     el('r-take').textContent = '−' + usd(take);
-    el('r-np').textContent = isNP ? '−' + usd(np) : '$0.00';
     el('r-net').textContent = usd(net);
-
-    el('r-np').parentNode.style.opacity = isNP ? '1' : '0.35';
 
     // --- horizon multiplier ---
     var invMo = V / T;
@@ -877,12 +860,12 @@
     var hPayoutOps = horizon === 'txn' ? (payoutTxPerDay / (invMo / 30)) * sweep : (horizon === 'month' ? payoutTxPerDay * 30 * sweep : payoutTxPerDay * 365 * sweep);
     var hOps = hSweepOps + hPayoutOps;
 
-    var hNP = np * mult;
-    var hIntermediary = hNP;
     var ex = EXIT_METHODS[exitMethod];
     var exitFreq = Math.max(1, +el('exit-freq').value || 1);
     var exitsPerPeriod = horizon === 'txn' ? (exitFreq / invMo) : (horizon === 'month' ? exitFreq : exitFreq * 12);
-    var hExit = (ex.pct * hTake) + (ex.flat * exitsPerPeriod);
+    var hGrossVol = T * mult;
+    var exitBase = ex.onVol ? hGrossVol : hTake;
+    var hExit = (ex.pct * exitBase) + (ex.flat * exitsPerPeriod);
     var hNet = hTake - hOps - hExit;
     var hMargin = hTake > 0 ? ((hNet / hTake) * 100).toFixed(1) : '0.0';
 
@@ -935,12 +918,12 @@
 
     // --- Where the money goes (horizon-aware) ---
     var hGross = T * mult;
+    var exitLabel = exitMethod === 'nowpay' ? 'NOWPayments (0.5% vol)' : 'Exit cost';
     var slices = [
-      {label:'You keep', amt:hTake - hExit, color:'var(--good)', cls:'is-you'},
+      {label:'You keep', amt:hTake - hOps - hExit, color:'var(--good)', cls:'is-you'},
       {label:'On-chain ops', amt:hOps, color:'var(--custody)', cls:'is-ops'}
     ];
-    if(hExit > 0) slices.push({label:'Exit cost', amt:hExit, color:'var(--risk)', cls:'is-ops'});
-    if(isNP) slices.push({label:'NOWPayments', amt:hNP, color:'#6B7280', cls:'is-np'});
+    if(hExit > 0) slices.push({label:exitLabel, amt:hExit, color:'var(--risk)', cls:'is-exit'});
     slices.push({label:'Merchant nets', amt:net * mult, color:'var(--clear)', cls:'is-merchant'});
 
     var barHtml = '';
@@ -1058,19 +1041,6 @@
   document.querySelector('#chainpick .cp-btn[data-chain="solana"]').classList.add('active');
   document.querySelector('[data-schain="solana"]').classList.add('active');
 
-  // --- Payout mode (main + sticky) ---
-  var ptBtns = document.querySelectorAll('#payout-toggle .pt-btn');
-  var sModeBtns = document.querySelectorAll('[data-smode]');
-  function setMode(mode){
-    payoutMode = mode;
-    ptBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-mode') === mode); });
-    sModeBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-smode') === mode); });
-    render();
-  }
-  ptBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-mode')); }); });
-  sModeBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-smode')); }); });
-  document.querySelector('[data-smode="direct"]').classList.add('active');
-
   // --- Horizon toggle (main + sticky) ---
   var hzBtns = document.querySelectorAll('#horizon-toggle .pt-btn');
   var sHzBtns = document.querySelectorAll('[data-shz]');
@@ -1149,7 +1119,6 @@
     el('sv-freq').textContent = el('v-freq').textContent;
     el('sv-merchants').textContent = el('v-merchants').textContent;
     sChainBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-schain') === current); });
-    sModeBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-smode') === payoutMode); });
     sHzBtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-shz') === horizon); });
     var ss = el('s-sweep');
     if(ss) ss.textContent = smart(getSweep(current)) + '/sweep';
@@ -1182,8 +1151,7 @@
         take: +el('take').value,
         freq: +el('freq').value,
         merchants: +el('merchants').value,
-        chain: current,
-        mode: payoutMode
+        chain: current
       }, '*');
     }catch(e){}
   }
