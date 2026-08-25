@@ -615,6 +615,34 @@
 
   <p class="footnote" style="margin-top:0;border-left-color:var(--clear)"><b>Key insight:</b> We already collect USDC from customers. For gas-wallet funding (SOL/ETH/BNB), we just swap USDC &rarr; native token on a DEX (Jupiter, Uniswap). No fiat bridge needed for ops. The real question is: how do we on-ramp initial capital and off-ramp revenue?</p>
 
+  <!-- KYC LEGEND -->
+  <div class="flow-table" style="margin-bottom:20px">
+    <div class="row is-gross">
+      <span class="row-name">KYC level legend</span>
+      <span class="row-val">What they ask for</span>
+    </div>
+    <div class="row is-yours">
+      <span class="row-name"><b>L0 &mdash; Zero</b><span class="row-note">Nothing. No email, no phone, no name. Tor-compatible. Fully anonymous.</span></span>
+      <span class="row-val" style="color:var(--good)">&#9679; nothing</span>
+    </div>
+    <div class="row">
+      <span class="row-name"><b>L1 &mdash; Email only</b><span class="row-note">Email address (can be burner). No identity documents. No phone verification.</span></span>
+      <span class="row-val" style="color:var(--custody)">&#9679; email</span>
+    </div>
+    <div class="row">
+      <span class="row-name"><b>L2 &mdash; Phone + email</b><span class="row-note">Phone number (SMS verification) + email. May include name. No ID scan. Pseudonymous but linkable.</span></span>
+      <span class="row-val" style="color:var(--custody)">&#9679; phone + email</span>
+    </div>
+    <div class="row">
+      <span class="row-name"><b>L3 &mdash; ID scan</b><span class="row-note">Government ID (passport/DPI/license) + selfie with liveness check. Name, DOB, nationality confirmed. The standard &ldquo;full KYC&rdquo; of most exchanges.</span></span>
+      <span class="row-val" style="color:var(--risk)">&#9679; ID + selfie</span>
+    </div>
+    <div class="row is-risk">
+      <span class="row-name"><b>L4 &mdash; Enhanced</b><span class="row-note">L3 plus proof of address (utility bill / bank statement), source of funds declaration, and possibly video interview. Triggered by high volumes or regulatory requirements.</span></span>
+      <span class="row-val" style="color:var(--risk)">&#9679; ID + address + source</span>
+    </div>
+  </div>
+
   <!-- ON-RAMP -->
   <h3 style="margin:28px 0 8px;font-size:15px;font-weight:700">On-ramp: fiat &rarr; crypto</h3>
   <p style="font-size:13px;color:var(--mute);margin:0 0 12px">Buying crypto to fund the treasury before revenue flows, or topping up from external fiat.</p>
@@ -622,35 +650,35 @@
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Method</span>
-      <span class="row-val">KYC &middot; Cost &middot; Limits</span>
+      <span class="row-val">KYC &middot; Fees</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">P2P &mdash; Bisq<span class="row-note">Decentralized, open-source. Multisig escrow, Tor-native. BTC only (swap to USDC after). Fiat via bank transfer, cash deposit, mobile money. Global.</span></span>
-      <span class="row-val">None &middot; 0.1% + spread &middot; No limit</span>
+      <span class="row-name">P2P &mdash; Bisq<span class="row-note"><b>KYC L0.</b> Zero identity data. Runs over Tor. Decentralized &mdash; no company holds your info. BTC only (swap to USDC after via DEX). Multisig escrow. Fiat via bank transfer, cash deposit, mobile money. 100% global. <b>Downside:</b> desktop app only, slower matching, BTC-only means extra swap step.</span></span>
+      <span class="row-val">L0 &middot; 0.1% maker / 0.7% taker + 2&ndash;5% spread</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">P2P &mdash; HodlHodl<span class="row-note">Non-custodial P2P. Multisig escrow, no account funds held. BTC only. 100+ payment methods. Strong LATAM presence.</span></span>
-      <span class="row-val">None &middot; spread only &middot; No limit</span>
+      <span class="row-name">P2P &mdash; HodlHodl<span class="row-note"><b>KYC L0.</b> No registration data stored. Non-custodial multisig escrow &mdash; platform never touches funds. BTC only. 100+ payment methods. Strong LATAM/GTQ presence. Web-based (easier than Bisq). <b>Downside:</b> BTC-only, smaller liquidity than CEX P2P.</span></span>
+      <span class="row-val">L0 &middot; 0.6% fee + 3&ndash;6% spread</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">P2P &mdash; Robosats<span class="row-note">Lightning-native P2P. Tor-only, no accounts, no data retained. Best for small/medium amounts. Very private but smaller liquidity pool.</span></span>
-      <span class="row-val">None &middot; ~0.2% + spread &middot; Lightning limits</span>
+      <span class="row-name">P2P &mdash; Robosats<span class="row-note"><b>KYC L0.</b> No accounts, no data retained, Tor-only. Lightning Network native. Robot identities (disposable). Maximum privacy. <b>Downside:</b> Lightning channel limits (~0.04 BTC per trade), smaller pool, technical UX. Best for &lt;$2k chunks.</span></span>
+      <span class="row-val">L0 &middot; ~0.2% + 2&ndash;4% spread</span>
     </div>
     <div class="row">
-      <span class="row-name">P2P &mdash; Noones<span class="row-note">Successor to Paxful&rsquo;s LATAM/Africa market. Multi-crypto. Wide payment method support in GT (bank transfers, mobile). Lighter KYC in lower tiers.</span></span>
-      <span class="row-val">Light &middot; 1% escrow &middot; Tiered</span>
+      <span class="row-name">P2P &mdash; Noones<span class="row-note"><b>KYC L1&ndash;L2.</b> Email required. Phone for higher tiers. ID scan above $1k/day in some regions. Successor to Paxful&rsquo;s LATAM market. Multi-crypto (BTC, USDT, USDC). Wide GT payment methods (Banrural, BI, BAM transfers, Tigo Money). <b>Downside:</b> centralized platform, data stored, KYC can escalate.</span></span>
+      <span class="row-val">L1&ndash;L2 &middot; 1% escrow + 3&ndash;8% spread</span>
     </div>
     <div class="row">
-      <span class="row-name">Bitcoin ATMs<span class="row-note">Buy BTC with cash. Many operators allow purchases under $500&ndash;$1,000 without ID (varies by machine and jurisdiction). 5&ndash;12% premium. Limited availability in GT (Guatemala City has a few).</span></span>
-      <span class="row-val">None/light &middot; 5&ndash;12% &middot; ~$1k/txn</span>
+      <span class="row-name">Bitcoin ATMs<span class="row-note"><b>KYC L0&ndash;L2.</b> Varies by operator and amount. Typical thresholds: &lt;$250 = phone only or nothing, $250&ndash;$1k = phone + photo, &gt;$1k = ID scan. Cash in, BTC out to any address. Operators: Athena, General Bytes, LibertyX. <b>GT:</b> Zona 10/14 have a few. <b>Downside:</b> 7&ndash;12% total cost (fee + spread), low sell-side availability.</span></span>
+      <span class="row-val">L0&ndash;L2 &middot; 5&ndash;8% fee + 2&ndash;4% spread</span>
     </div>
     <div class="row">
-      <span class="row-name">Azteco vouchers<span class="row-note">Buy a Bitcoin voucher code with cash at participating shops or online. Redeem to any wallet. Available in select LATAM markets. Fixed denominations.</span></span>
-      <span class="row-val">None &middot; 5&ndash;8% &middot; Small amounts</span>
+      <span class="row-name">Azteco vouchers<span class="row-note"><b>KYC L0.</b> Buy voucher code with cash at shops or online. Redeem to any wallet. No identity link between buyer and redemption. Fixed denominations ($10&ndash;$500). <b>GT:</b> check local availability. <b>Downside:</b> high premium, small amounts only, limited denomination range.</span></span>
+      <span class="row-val">L0 &middot; 5&ndash;8% premium baked into price</span>
     </div>
     <div class="row" style="opacity:.5">
-      <span class="row-name">Binance / Bitso P2P<span class="row-note">Large LATAM liquidity, GTQ pairs, fast settlement. But requires full exchange KYC. The platform knows your volumes and counterparties.</span></span>
-      <span class="row-val">Full KYC &middot; spread only &middot; High</span>
+      <span class="row-name">Binance / Bitso P2P<span class="row-note"><b>KYC L3.</b> Full ID + selfie + liveness check required before any trade. Platform knows every counterparty, amount, and payment method. Reports to regulators. Active GTQ pairs, deep liquidity, fast. <b>Downside:</b> zero privacy from platform; complete financial profile built on you.</span></span>
+      <span class="row-val">L3 &middot; 0% fee + 1&ndash;3% spread</span>
     </div>
   </div>
 
@@ -661,27 +689,27 @@
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Method</span>
-      <span class="row-val">KYC &middot; Cost &middot; Speed</span>
+      <span class="row-val">KYC &middot; Fees &middot; Speed</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">P2P sell (Bisq / HodlHodl / Robosats)<span class="row-note">Reverse of on-ramp. Sell BTC for bank transfer, cash, or mobile money. You set the price. Works but requires finding a buyer for your amount.</span></span>
-      <span class="row-val">None &middot; spread &middot; Hours</span>
+      <span class="row-name">P2P sell (Bisq / HodlHodl / Robosats)<span class="row-note"><b>KYC L0.</b> Same platforms, reverse direction. Sell BTC/LN for bank transfer, cash, or mobile money. You set the price. <b>Fees:</b> same as on-ramp (0.1&ndash;0.7% platform + spread). <b>Downside:</b> need to find a buyer for your amount, can take hours for larger sells. USDC &rarr; BTC swap needed first.</span></span>
+      <span class="row-val">L0 &middot; 0.1&ndash;0.7% + spread &middot; 1&ndash;24h</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">Crypto debit cards (see below)<span class="row-note">Spend crypto directly as fiat at any Visa/Mastercard terminal. Auto-converts at point of sale. No &ldquo;off-ramp&rdquo; event &mdash; just spend.</span></span>
-      <span class="row-val">Varies &middot; 0&ndash;2% &middot; Instant</span>
+      <span class="row-name">Crypto debit cards (see below)<span class="row-note"><b>KYC L2&ndash;L3</b> (depends on card). Load USDC/USDT, spend at any Visa/MC terminal. Auto-converts at point of sale. No explicit &ldquo;off-ramp&rdquo; event. <b>Fees:</b> 0&ndash;2% FX markup + potential monthly fee ($0&ndash;5). <b>Downside:</b> requires card provider KYC, spending creates a paper trail at the merchant level.</span></span>
+      <span class="row-val">L2&ndash;L3 &middot; 0&ndash;2% FX &middot; Instant</span>
     </div>
     <div class="row">
-      <span class="row-name">Gift cards via Bitrefill / CoinCards<span class="row-note">Buy Amazon, Uber, grocery, prepaid Visa gift cards with crypto. No KYC. Not &ldquo;fiat&rdquo; in your bank, but lets you spend crypto on everyday things. Works in GT.</span></span>
-      <span class="row-val">None &middot; 0&ndash;3% &middot; Instant</span>
+      <span class="row-name">Gift cards &mdash; Bitrefill / CoinCards<span class="row-note"><b>KYC L0.</b> No account required. Buy Amazon, Uber, grocery, Visa/MC prepaid gift cards with BTC, LN, USDT, USDC, ETH. Instant delivery by email. <b>Fees:</b> 0&ndash;3% markup over face value (some cards at par). <b>GT:</b> works &mdash; Amazon, Uber, Steam, Google Play all available. <b>Downside:</b> not cash in hand, limited to participating retailers.</span></span>
+      <span class="row-val">L0 &middot; 0&ndash;3% markup &middot; Instant</span>
     </div>
     <div class="row">
-      <span class="row-name">Bitcoin ATMs (sell side)<span class="row-note">Some BTMs support selling &mdash; insert crypto, get cash. Same threshold rules as buying. Not all machines support sell. Limited in GT.</span></span>
-      <span class="row-val">None/light &middot; 5&ndash;12% &middot; Instant cash</span>
+      <span class="row-name">Bitcoin ATMs (sell side)<span class="row-note"><b>KYC L0&ndash;L2</b> (same thresholds as buy). Send BTC, get cash dispensed. <b>Fees:</b> 6&ndash;12% total (fee + spread &mdash; sell-side usually worse than buy). <b>Downside:</b> not all machines support sell, very limited in GT, high cost, small amounts only.</span></span>
+      <span class="row-val">L0&ndash;L2 &middot; 6&ndash;12% &middot; Instant cash</span>
     </div>
     <div class="row" style="opacity:.5">
-      <span class="row-name">CEX off-ramp (Binance / Bitso / Kraken)<span class="row-note">Deposit crypto, sell for fiat, withdraw to bank. Fastest for large amounts. Full KYC. Complete paper trail. Exchange reports to tax authorities in many jurisdictions.</span></span>
-      <span class="row-val">Full KYC &middot; 0.1&ndash;1% &middot; 1&ndash;3 days</span>
+      <span class="row-name">CEX off-ramp (Binance / Bitso / Kraken)<span class="row-note"><b>KYC L3&ndash;L4.</b> Full ID + selfie. Proof of address for withdrawals &gt;$10k. Deposit crypto, sell for GTQ/USD, withdraw to bank. <b>Fees:</b> 0.1% trading + 0&ndash;1% withdrawal (varies by bank/method). <b>Downside:</b> complete paper trail, exchange reports to tax authorities, 1&ndash;3 day bank settlement.</span></span>
+      <span class="row-val">L3&ndash;L4 &middot; 0.1&ndash;1% &middot; 1&ndash;3 days</span>
     </div>
   </div>
 
@@ -692,27 +720,27 @@
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Card</span>
-      <span class="row-val">KYC &middot; Chains &middot; Notes</span>
+      <span class="row-val">KYC &middot; Fees &middot; Region</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">Gnosis Pay<span class="row-note">Visa debit funded from Gnosis Safe. Self-custodial &mdash; funds stay in your smart wallet until you spend. EEA residents only (EU/EFTA). USDC, EURe, GBPe on Gnosis Chain.</span></span>
-      <span class="row-val">EU KYC &middot; Gnosis &middot; Self-custody</span>
+      <span class="row-name">Gnosis Pay<span class="row-note"><b>KYC L3.</b> EU ID + proof of EEA residence. Visa debit, self-custodial (funds in your Gnosis Safe until you tap). USDC, EURe, GBPe on Gnosis Chain. <b>Fees:</b> free card issuance, 0% FX in EUR zone, ~1% non-EUR FX. No monthly fee. <b>Downside:</b> EEA residents only &mdash; won&rsquo;t work from GT.</span></span>
+      <span class="row-val">L3 &middot; 0&ndash;1% FX &middot; EU only</span>
     </div>
     <div class="row">
-      <span class="row-name">Holyheld<span class="row-note">Links crypto wallet to Apple Pay / Google Pay. Tap-to-pay anywhere. Non-custodial. Currently EU/UK. Supports multiple EVM chains and stablecoins.</span></span>
-      <span class="row-val">EU KYC &middot; EVM &middot; Apple/Google Pay</span>
+      <span class="row-name">Holyheld<span class="row-note"><b>KYC L3.</b> EU/UK ID + address. Links crypto wallet to Apple Pay / Google Pay. Non-custodial. Supports EVM chains + stablecoins. <b>Fees:</b> 1.5% conversion fee on spend, no monthly fee. <b>Downside:</b> EU/UK only, 1.5% is steeper than alternatives.</span></span>
+      <span class="row-val">L3 &middot; 1.5% per txn &middot; EU/UK</span>
     </div>
     <div class="row">
-      <span class="row-name">Bybit Card<span class="row-note">Mastercard debit. Lighter KYC tiers in some regions. Supports USDT, USDC, BTC. Available outside EU (check LATAM eligibility). Custodial &mdash; funds on Bybit.</span></span>
-      <span class="row-val">Light&ndash;full &middot; Multi &middot; Wider reach</span>
+      <span class="row-name">Bybit Card<span class="row-note"><b>KYC L2&ndash;L3.</b> Email + phone for basic tier (lower limits). Full ID for higher tiers. Mastercard debit. Supports USDT, USDC, BTC auto-convert. <b>Fees:</b> free issuance, 0% spend fee, 0.9% ATM withdrawal fee, $1/mo inactivity after 12 mo. <b>Region:</b> available in 100+ countries &mdash; check GT eligibility. Custodial (funds on Bybit).</span></span>
+      <span class="row-val">L2&ndash;L3 &middot; 0% spend / 0.9% ATM &middot; Wide</span>
     </div>
     <div class="row">
-      <span class="row-name">Wirex<span class="row-note">Multi-currency card. Visa/Mastercard. Supports 50+ cryptos. Available in many jurisdictions including some LATAM. Requires KYC but has operated in GT region.</span></span>
-      <span class="row-val">Full KYC &middot; Multi &middot; Broad coverage</span>
+      <span class="row-name">Wirex<span class="row-note"><b>KYC L3.</b> Full ID + selfie + proof of address. Visa/Mastercard. 50+ cryptos. <b>Fees:</b> free card (physical $3 shipping), 0% in-store spend, 2% non-native FX, free ATM up to $250/mo then $1.50/txn. <b>Region:</b> available in LATAM (has operated in GT). <b>Downside:</b> full KYC, custodial, slower verification process.</span></span>
+      <span class="row-val">L3 &middot; 0&ndash;2% FX &middot; GT available</span>
     </div>
     <div class="row" style="opacity:.5">
-      <span class="row-name">Binance Card<span class="row-note">Visa debit. Auto-converts from Binance balance. Full KYC required. Available in some LATAM countries. Large ecosystem but zero privacy from Binance.</span></span>
-      <span class="row-val">Full KYC &middot; Multi &middot; Custodial</span>
+      <span class="row-name">Binance Card<span class="row-note"><b>KYC L3.</b> Full Binance verification required. Visa debit, auto-converts from Binance spot balance. <b>Fees:</b> free issuance, 0.9% spend fee, 0.5% ATM fee. <b>Region:</b> select LATAM countries. <b>Downside:</b> full KYC, custodial, Binance sees everything, 0.9% on every purchase adds up.</span></span>
+      <span class="row-val">L3 &middot; 0.9% spend &middot; Select LATAM</span>
     </div>
   </div>
 
@@ -723,35 +751,35 @@
   <div class="flow-table">
     <div class="row is-gross">
       <span class="row-name">Service</span>
-      <span class="row-val">KYC &middot; Cost &middot; Type</span>
+      <span class="row-val">KYC &middot; Fees &middot; Type</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">Jupiter (Solana DEX)<span class="row-note">On-chain swap on Solana. USDC &harr; SOL, any SPL token. No account, no KYC, just a wallet. This is how we should fund the gas wallet.</span></span>
-      <span class="row-val">None &middot; ~0.1% &middot; DEX</span>
+      <span class="row-name">Jupiter (Solana DEX)<span class="row-note"><b>KYC L0.</b> On-chain, wallet only. USDC &harr; SOL, any SPL token. This is how we fund the gas wallet. <b>Fees:</b> 0% platform fee + ~0.05&ndash;0.1% price impact (depending on size) + ~$0.001 Solana tx fee. Effectively free for our amounts.</span></span>
+      <span class="row-val">L0 &middot; ~0.05% slippage &middot; DEX</span>
     </div>
     <div class="row is-yours">
-      <span class="row-name">THORSwap<span class="row-note">Decentralized cross-chain swaps. Native BTC &harr; ETH &harr; USDC &harr; AVAX etc. No wrapping, no accounts. Larger amounts supported. Slightly higher fees for cross-chain.</span></span>
-      <span class="row-val">None &middot; 0.1&ndash;0.5% &middot; DEX</span>
+      <span class="row-name">THORSwap<span class="row-note"><b>KYC L0.</b> Decentralized cross-chain. Native BTC &harr; ETH &harr; USDC &harr; AVAX etc. No wrapping, no accounts. <b>Fees:</b> ~0.1&ndash;0.3% swap fee + outbound gas fee (chain-dependent) + variable slip (0.1&ndash;0.5% typical). Total ~0.3&ndash;0.8% for standard amounts.</span></span>
+      <span class="row-val">L0 &middot; 0.3&ndash;0.8% total &middot; Cross-chain DEX</span>
     </div>
     <div class="row">
-      <span class="row-name">Trocador<span class="row-note">Aggregator for no-KYC exchanges. Compares rates across multiple backends. Tor-friendly. Good for finding best rate on any pair. Acts as a frontend, not a custodian.</span></span>
-      <span class="row-val">None &middot; varies &middot; Aggregator</span>
+      <span class="row-name">Trocador<span class="row-note"><b>KYC L0.</b> Aggregator &mdash; compares rates across SideShift, ChangeNow, FixedFloat, etc. Tor-friendly. Not a custodian, just a frontend. <b>Fees:</b> 0% aggregator markup, you pay the underlying exchange&rsquo;s fee (0.5&ndash;1.5% typical). Best-rate comparison saves 0.3&ndash;0.5% vs going direct.</span></span>
+      <span class="row-val">L0 &middot; 0.5&ndash;1.5% (backend) &middot; Aggregator</span>
     </div>
     <div class="row">
-      <span class="row-name">SideShift.ai<span class="row-note">No-account instant swap. Wide asset support. Has handled billions in volume. Straightforward UI. May impose limits on unusual patterns.</span></span>
-      <span class="row-val">None &middot; ~0.5&ndash;1.5% &middot; Instant swap</span>
+      <span class="row-name">SideShift.ai<span class="row-note"><b>KYC L0.</b> No account, no email. Instant swap, wide asset support (~100 pairs). Billions in historical volume. <b>Fees:</b> ~0.5% fixed fee + network fee on delivery. Some pairs have variable rates (0.5&ndash;1.5% all-in). <b>Downside:</b> may impose soft limits or delays on unusual patterns (&gt;$5k single swap).</span></span>
+      <span class="row-val">L0 &middot; 0.5&ndash;1.5% &middot; Instant swap</span>
     </div>
     <div class="row">
-      <span class="row-name">ChangeNow<span class="row-note">No mandatory registration. 900+ assets. Fast. May trigger KYC verification for large amounts or flagged transactions. Popular but not fully trustless.</span></span>
-      <span class="row-val">None* &middot; ~0.5% &middot; Instant swap</span>
+      <span class="row-name">ChangeNow<span class="row-note"><b>KYC L0*.</b> No mandatory registration. 900+ assets. Fast. <b>BUT:</b> can trigger L3 KYC on any transaction &mdash; algorithm flags &ldquo;suspicious&rdquo; amounts or patterns. Once flagged, funds frozen until ID provided. <b>Fees:</b> ~0.5% + network fee. <b>Downside:</b> the asterisk is real &mdash; not fully trustless, forced KYC risk.</span></span>
+      <span class="row-val">L0* &middot; ~0.5% &middot; Instant (risk of freeze)</span>
     </div>
   </div>
 
-  <p class="footnote" style="border-left-color:var(--good)"><b>For our ops:</b> Revenue is already in USDC. For gas wallet, swap USDC &rarr; SOL on Jupiter (free, instant, no KYC). For spending revenue, the cleanest path is P2P sell or a crypto card. Bitrefill gift cards cover everyday spend without touching a bank.</p>
+  <p class="footnote" style="border-left-color:var(--good)"><b>For our ops:</b> Revenue is already in USDC. For gas wallet, swap USDC &rarr; SOL on Jupiter (~0.05%, instant, L0). For spending revenue, cheapest path is P2P sell on HodlHodl (~3&ndash;6% all-in, L0) or Bybit card (0% spend, L2&ndash;L3). Bitrefill gift cards (0&ndash;3%, L0) cover everyday spend without touching a bank.</p>
 
   <p class="footnote" style="border-left-color:var(--risk)"><b>Compliance note:</b> &ldquo;Low KYC&rdquo; &ne; illegal. P2P trades, DEX swaps, and crypto cards are legal instruments. What matters is tax reporting on your end. Keep records of conversions for SAT. The privacy is from public chain observers, not from your own books.</p>
 
-  <p class="footnote" style="border-left-color:var(--custody)"><b>GT context:</b> Guatemala has no specific crypto regulation as of 2026. Banguat has issued warnings but hasn&rsquo;t banned anything. P2P is the most practical on/off-ramp &mdash; Binance P2P and HodlHodl both have active GTQ markets. Bitcoin ATMs exist in Zona 10/Zona 14 but charge steep premiums. EU-only cards (Gnosis Pay, Holyheld) won&rsquo;t ship to GT &mdash; look at Bybit or Wirex for card options.</p>
+  <p class="footnote" style="border-left-color:var(--custody)"><b>GT context:</b> Guatemala has no specific crypto regulation as of 2026. Banguat has issued warnings but hasn&rsquo;t banned anything. P2P is the most practical on/off-ramp &mdash; Binance P2P and HodlHodl both have active GTQ markets. Bitcoin ATMs exist in Zona 10/Zona 14 but charge 7&ndash;12% total. EU-only cards (Gnosis Pay, Holyheld) won&rsquo;t ship to GT &mdash; Bybit or Wirex are the viable card options.</p>
 
   <p style="margin-top:32px;font-size:13px"><a href="/contentlocker?doc=simulator" style="color:var(--clear);font-family:'IBM Plex Mono',monospace;font-size:12px">Open month-by-month strategy simulator &rarr;</a></p>
 
