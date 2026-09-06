@@ -9,17 +9,17 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
 }
 
-const LOCKER_ID = 'iJDTJ0oGpJoH'
+const LOCKER_ID = 'kTQZsVnurZuv'
 
 export default function Tests() {
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
 
   useEffect(() => {
-    const existing = document.querySelector(`script[src*="contentlocker.xyz"]`)
+    const existing = document.querySelector(`script[src*="contentgate.site"]`)
     if (existing) return
     const s = document.createElement('script')
-    s.src = `https://contentlocker.xyz/js/${LOCKER_ID}`
+    s.src = `https://contentgate.site/js/${LOCKER_ID}`
     s.async = true
     document.body.appendChild(s)
     return () => { s.remove() }
