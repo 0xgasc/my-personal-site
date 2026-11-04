@@ -13,26 +13,43 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
 }
 
-// ── Static: coined moments (blockchain, doesn't change) ────
+// ── Static: coined moments ────
+// Self-hosted copies of the on-chain originals (Zora IPFS / Base Arweave);
+// the marketplace CDNs that used to serve them went dead.
 const coinedMoments = [
   {
-    src: "https://scontent-iad4-1.choicecdn.com/-/rs:fill:2000:2666/g:ce/f:webp/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWRmbDM0dHlxZWh2eXhhbnJ5M3R5bHB0N2dmcmN0bmJoeW5xaWNjMmZhMjdxZndyNXh2dG0",
+    src: "/coined/higher.jpg",
     alt: "Photography artwork Higher",
     title: "higher",
     link: "https://zora.co/collect/zora:0x2000c459b2b41d0311c9f57518d4a69294268590/4?referrer=0xd573becb6a6b0a0d43065d468d07787ca65daf8a",
   },
   {
-    src: "https://scontent-iad4-1.choicecdn.com/-/rs:fill:2000:2614/g:ce/f:webp/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWc0ZHRqZGd3d2FoeGwycHRzNXZsbGoyeng0d3Z1emM3ZGNqNGl2Y3Uyc3V1ejZvbG5maj0",
+    src: "/coined/rflxns.jpg",
     alt: "Photography artwork rflxns",
     title: "rflxns",
     link: "https://zora.co/collect/zora:0x2000c459b2b41d0311c9f57518d4a69294268590/3?referrer=0xd573becb6a6b0a0d43065d468d07787ca65daf8a",
   },
   {
-    src: "https://f8n-production-collection-assets.imgix.net/rodeo/8453/0x98e116FDAF8dC4D324BC69FA7aE41f588113D3FC/1/QmYVZaaUQWdoacXDEjJqiSAGRRAQWPiUoMwufMNajq9Yyb/nft.jpeg?auto=format%2Ccompress&q=70&cs=srgb&w=1480&dpr=2&contentHash=ipfs%3A%2F%2FQmYVZaaUQWdoacXDEjJqiSAGRRAQWPiUoMwufMNajq9Yyb&fnd_key=v1",
+    src: "/coined/atitlan.jpg",
     alt: "atitlán 12.22.24",
     title: "atitlán 12.22.24",
     link: "https://rodeo.club/post/0x98e116FDAF8dC4D324BC69FA7aE41f588113D3FC/1",
   },
+]
+
+// Shown when the portfolio_items table has nothing published for a section.
+// Stretch studies are resized copies; the full-size originals stay on Arweave (link).
+const fallbackProjects = (t) => [
+  { id: "umo", title: t.experiments.umo, description: t.experiments.umoDesc, link: "https://umo.livemoments.online/songs", src: "https://offsetworks.xyz/images/umo-screenshot.jpg" },
+  { id: "flyin", title: t.experiments.flyinguate, description: t.experiments.flyinguateDesc, link: "https://flyinguate.com/", src: "https://offsetworks.xyz/images/flyin-screenshot.jpg" },
+  { id: "stablepay", title: t.experiments.stablepay, description: t.experiments.stablepayDesc, link: "https://stablepay-nine.vercel.app/", src: "https://offsetworks.xyz/images/stablepay-screenshot.png" },
+  { id: "tiqueteo", title: t.experiments.tiqueteo, description: t.experiments.tiqueteoDesc, link: "https://www.tiqueteo.xyz/", src: "https://offsetworks.xyz/images/tiqueteo-screenshot.jpg" },
+]
+
+const fallbackStretchStudies = [
+  { id: "bound-blight", src: "/stretch/bound-blight.jpg", link: "https://arweave.net/cISz_3-jt60B7F1vMPUFbfO-03pRx33hn3fjr8T7PV4", title: "bound blight" },
+  { id: "is-fearr", src: "/stretch/is-fearr.jpg", link: "https://arweave.net/Fle1sUx_Ms8RSs4-KvjcDwlij8GWUKR-WAG2cM1NvII", title: "is fearr ar domhan" },
+  { id: "dreams", src: "/stretch/dreams.jpg", link: "https://arweave.net/NiUDZK_LNI5XhpYWeYyzUTq4EgotCfry7r3LuvqcJqg", title: "dreams" },
 ]
 
 function usePortfolioItems(type) {
@@ -53,8 +70,10 @@ export default function Experiments() {
   const t = useTranslation(language)
   const [lightboxOpen, setLightboxOpen] = useState(null)
 
-  const { items: projects, loading: loadingProjects } = usePortfolioItems("project")
-  const { items: stretchStudies, loading: loadingStretch } = usePortfolioItems("stretch_study")
+  const { items: dbProjects, loading: loadingProjects } = usePortfolioItems("project")
+  const { items: dbStretch, loading: loadingStretch } = usePortfolioItems("stretch_study")
+  const projects = dbProjects.length > 0 ? dbProjects : fallbackProjects(t)
+  const stretchStudies = dbStretch.length > 0 ? dbStretch : fallbackStretchStudies
   const { items: music, loading: loadingMusic } = usePortfolioItems("music")
 
   const openLightbox = (items, index) => setLightboxOpen({ items, index })
