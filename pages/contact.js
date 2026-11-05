@@ -11,6 +11,7 @@ const fadeUp = {
 const SOCIAL_DEFS = [
   { key: "email",     labelKey: "emailLabel",     icon: "✉",  href: (v) => `mailto:${v}` },
   { key: "github",    labelKey: "githubLabel",     icon: "⌥",  href: (v) => `https://github.com/${v.replace(/^@/, "")}` },
+  { key: "linkedin",  labelKey: "linkedinLabel",   icon: "in", href: (v) => (/^https?:/.test(v) ? v : `https://www.linkedin.com/in/${v.replace(/^@/, "")}`) },
   { key: "twitter",   labelKey: "twitterLabel",    icon: "𝕏",  href: (v) => `https://x.com/${v.replace(/^@/, "")}` },
   { key: "farcaster", labelKey: "farcasterLabel",  icon: "◈",  href: (v) => `https://warpcast.com/${v.replace(/^@/, "")}` },
   { key: "instagram", labelKey: "instagramLabel",  icon: "◎",  href: (v) => `https://instagram.com/${v.replace(/^@/, "")}` },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import GenerativeShader from "@/components/background/GenerativeShader";
+import GlassShader from "@/components/background/GlassShader";
 import YouTubeBackground from "@/components/background/YouTubeBackground";
 import ClipFxPlayer from "@/components/background/ClipFxPlayer";
 import DitherOverlay from "@/components/background/DitherOverlay";
@@ -14,8 +14,9 @@ const YT_BG_ID = process.env.NEXT_PUBLIC_YOUTUBE_BG_ID;
 /**
  * Background stack:
  *   - Layer -2: chosen backdrop
- *       Priority: Supabase clips (with full per-clip shader mode) → YouTube
- *       env-var fallback → generative beach/city scene shader.
+ *       Priority: Supabase clips whose video actually loads (with full
+ *       per-clip shader mode) → glass shader (random preset per visit).
+ *       The glass shows while clips are checked.
  *   - Layer -1: dither overlay (procedural Bayer-RGB-split). Per-active-clip
  *       overrides — intensity, blend mode — flow in via ClipFxPlayer.
  */
@@ -24,15 +25,16 @@ export default function BackgroundMount() {
   const { fxEnabled } = useApp();
   const [activeClip, setActiveClip] = useState<Clip | null>(null);
 
-  if (loading) return null;
-
-  const hasClips = clips.length > 0;
+  const hasClips = !loading && clips.length > 0;
   const hasYouTube = Boolean(YT_BG_ID);
-  const backdrop: "clips" | "yt" | "scene" = hasClips
+  // YouTube is opt-in only (NEXT_PUBLIC_YOUTUBE_BG_FORCE=1); the glass
+  // shader is the default fallback when no clip can play.
+  const forceYouTube = hasYouTube && process.env.NEXT_PUBLIC_YOUTUBE_BG_FORCE === "1";
+  const backdrop: "clips" | "yt" | "glass" = hasClips
     ? "clips"
-    : hasYouTube
+    : forceYouTube && !loading
       ? "yt"
-      : "scene";
+      : "glass";
 
   // Per-active-clip dither overlay overrides.
   const ditherIntensity = activeClip?.fxDitherIntensity ?? 1;
@@ -46,9 +48,10 @@ export default function BackgroundMount() {
       {fxEnabled && backdrop === "yt" && (
         <YouTubeBackground videoId={YT_BG_ID!} zIndex={0} />
       )}
-      {fxEnabled && backdrop === "scene" && <GenerativeShader />}
+      {fxEnabled && backdrop === "glass" && <GlassShader zIndex={0} />}
 
-      {fxEnabled && (
+      {/* The glass carries its own grain + aberration; dither only over video. */}
+      {fxEnabled && backdrop !== "glass" && (
         <DitherOverlay zIndex={1} blendMode={ditherBlend} opacity={ditherIntensity} />
       )}
 
