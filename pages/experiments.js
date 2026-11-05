@@ -1,17 +1,10 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { stagger, fadeUp } from "@/lib/motion"
 import { useApp } from "@/contexts/AppContext"
 import { useTranslation } from "@/lib/translations"
 import Lightbox from "@/components/gallery/Lightbox"
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.07 } },
-}
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
-}
 
 // ── Static: coined moments ────
 // Self-hosted copies of the on-chain originals (Zora IPFS / Base Arweave);
@@ -40,16 +33,55 @@ const coinedMoments = [
 // Shown when the portfolio_items table has nothing published for a section.
 // Stretch studies are resized copies; the full-size originals stay on Arweave (link).
 const fallbackProjects = (t) => [
-  { id: "umo", title: t.experiments.umo, description: t.experiments.umoDesc, link: "https://umo.livemoments.online/songs", src: "https://offsetworks.xyz/images/umo-screenshot.jpg" },
-  { id: "flyin", title: t.experiments.flyinguate, description: t.experiments.flyinguateDesc, link: "https://flyinguate.com/", src: "https://offsetworks.xyz/images/flyin-screenshot.jpg" },
-  { id: "stablepay", title: t.experiments.stablepay, description: t.experiments.stablepayDesc, link: "https://stablepay-nine.vercel.app/", src: "https://offsetworks.xyz/images/stablepay-screenshot.png" },
-  { id: "tiqueteo", title: t.experiments.tiqueteo, description: t.experiments.tiqueteoDesc, link: "https://www.tiqueteo.xyz/", src: "https://offsetworks.xyz/images/tiqueteo-screenshot.jpg" },
+  {
+    id: "umo",
+    title: t.experiments.umo,
+    description: t.experiments.umoDesc,
+    link: "https://umo.livemoments.online/songs",
+    src: "https://offsetworks.xyz/images/umo-screenshot.jpg",
+  },
+  {
+    id: "flyin",
+    title: t.experiments.flyinguate,
+    description: t.experiments.flyinguateDesc,
+    link: "https://flyinguate.com/",
+    src: "https://offsetworks.xyz/images/flyin-screenshot.jpg",
+  },
+  {
+    id: "stablepay",
+    title: t.experiments.stablepay,
+    description: t.experiments.stablepayDesc,
+    link: "https://stablepay-nine.vercel.app/",
+    src: "https://offsetworks.xyz/images/stablepay-screenshot.png",
+  },
+  {
+    id: "tiqueteo",
+    title: t.experiments.tiqueteo,
+    description: t.experiments.tiqueteoDesc,
+    link: "https://www.tiqueteo.xyz/",
+    src: "https://offsetworks.xyz/images/tiqueteo-screenshot.jpg",
+  },
 ]
 
 const fallbackStretchStudies = [
-  { id: "bound-blight", src: "/stretch/bound-blight.jpg", link: "https://arweave.net/cISz_3-jt60B7F1vMPUFbfO-03pRx33hn3fjr8T7PV4", title: "bound blight" },
-  { id: "is-fearr", src: "/stretch/is-fearr.jpg", link: "https://arweave.net/Fle1sUx_Ms8RSs4-KvjcDwlij8GWUKR-WAG2cM1NvII", title: "is fearr ar domhan" },
-  { id: "dreams", src: "/stretch/dreams.jpg", link: "https://arweave.net/NiUDZK_LNI5XhpYWeYyzUTq4EgotCfry7r3LuvqcJqg", title: "dreams" },
+  {
+    id: "bound-blight",
+    src: "/stretch/bound-blight.jpg",
+    link: "https://arweave.net/cISz_3-jt60B7F1vMPUFbfO-03pRx33hn3fjr8T7PV4",
+    title: "bound blight",
+  },
+  {
+    id: "is-fearr",
+    src: "/stretch/is-fearr.jpg",
+    link: "https://arweave.net/Fle1sUx_Ms8RSs4-KvjcDwlij8GWUKR-WAG2cM1NvII",
+    title: "is fearr ar domhan",
+  },
+  {
+    id: "dreams",
+    src: "/stretch/dreams.jpg",
+    link: "https://arweave.net/NiUDZK_LNI5XhpYWeYyzUTq4EgotCfry7r3LuvqcJqg",
+    title: "dreams",
+  },
 ]
 
 function usePortfolioItems(type) {
@@ -57,8 +89,10 @@ function usePortfolioItems(type) {
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     fetch(`/api/portfolio/public?type=${type}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => { if (json?.items) setItems(json.items) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (json?.items) setItems(json.items)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [type])
@@ -70,11 +104,11 @@ export default function Experiments() {
   const t = useTranslation(language)
   const [lightboxOpen, setLightboxOpen] = useState(null)
 
-  const { items: dbProjects, loading: loadingProjects } = usePortfolioItems("project")
-  const { items: dbStretch, loading: loadingStretch } = usePortfolioItems("stretch_study")
+  const { items: dbProjects } = usePortfolioItems("project")
+  const { items: dbStretch } = usePortfolioItems("stretch_study")
+  const { items: music } = usePortfolioItems("music")
   const projects = dbProjects.length > 0 ? dbProjects : fallbackProjects(t)
   const stretchStudies = dbStretch.length > 0 ? dbStretch : fallbackStretchStudies
-  const { items: music, loading: loadingMusic } = usePortfolioItems("music")
 
   const openLightbox = (items, index) => setLightboxOpen({ items, index })
 
@@ -82,8 +116,6 @@ export default function Experiments() {
 
   return (
     <motion.div className="w-full" variants={stagger} initial="hidden" animate="visible">
-
-      {/* ── Selected Works ── */}
       <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
         {t.experiments.bespokeApps}
       </motion.h2>
@@ -91,45 +123,34 @@ export default function Experiments() {
         {t.experiments.bespokeDesc}
       </motion.p>
 
-      {loadingProjects ? (
-        <motion.div variants={fadeUp} className="text-sm text-gray-400 mb-12">Loading…</motion.div>
-      ) : projects.length > 0 ? (
-        <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
-          {projects.map((p) => (
-            <a
-              key={p.id}
-              href={p.link || undefined}
-              target="_blank"
-              rel="noreferrer"
-              className={`group rounded-xl overflow-hidden border transition-all duration-200 ${
-                p.link ? "cursor-pointer hover:border-gray-500" : "cursor-default"
-              }`}
-              style={{ borderColor: "var(--border-subtle)", background: "var(--glass-bg)" }}
-            >
-              {p.src && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={p.src}
-                  alt={p.title}
-                  className="w-full aspect-video object-cover group-hover:opacity-90 transition-opacity"
-                />
-              )}
-              <div className="p-4">
-                <p className="font-medium text-sm mb-1">{p.title}</p>
-                {p.description && (
-                  <p className={`text-xs leading-relaxed ${muted}`}>{p.description}</p>
-                )}
-              </div>
-            </a>
-          ))}
-        </motion.div>
-      ) : (
-        <motion.div variants={fadeUp} className={`text-sm italic mb-12 ${muted}`}>
-          {t.experiments.comingSoon}
-        </motion.div>
-      )}
+      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
+        {projects.map((p) => (
+          <a
+            key={p.id}
+            href={p.link || undefined}
+            target="_blank"
+            rel="noreferrer"
+            className={`plain group overflow-hidden border transition-colors duration-150 ${
+              p.link ? "cursor-pointer hover:border-gray-500" : "cursor-default"
+            }`}
+            style={{ borderColor: "var(--border-subtle)", background: "var(--glass-bg)" }}
+          >
+            {p.src && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={p.src}
+                alt={p.title}
+                className="w-full aspect-video object-cover group-hover:opacity-90 transition-opacity"
+              />
+            )}
+            <div className="p-4">
+              <p className="font-medium text-sm mb-1">{p.title}</p>
+              {p.description && <p className={`text-xs leading-relaxed ${muted}`}>{p.description}</p>}
+            </div>
+          </a>
+        ))}
+      </motion.div>
 
-      {/* ── Coined Moments ── */}
       <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
         {t.experiments.coinedMoments}
       </motion.h2>
@@ -141,27 +162,28 @@ export default function Experiments() {
         {coinedMoments.map((item, i) => (
           <motion.button
             key={item.src}
-            whileHover={{ scale: 1.03, y: -4 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ opacity: 0.85 }}
+            whileTap={{ opacity: 0.7 }}
             onClick={() => openLightbox(coinedMoments, i)}
-            className="group relative overflow-hidden rounded-xl shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="group relative overflow-hidden focus:outline-none"
+            style={{ border: "1px solid var(--border-subtle)" }}
           >
             <Image
               src={item.src}
               alt={item.alt}
               width={400}
               height={500}
-              className="w-full aspect-[3/4] object-cover transition-transform duration-300 group-hover:scale-110"
+              className="w-full aspect-[3/4] object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-              <p className="text-white text-xs font-medium truncate">{item.title}</p>
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
+              <span className="block text-left text-xs truncate" style={{ color: "#f2f1ee" }}>
+                {item.title}
+              </span>
             </div>
           </motion.button>
         ))}
       </motion.div>
 
-      {/* ── Stretch Studies ── */}
       <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
         {t.experiments.stretchStudies}
       </motion.h2>
@@ -169,99 +191,81 @@ export default function Experiments() {
         {t.experiments.stretchDesc}
       </motion.p>
 
-      {loadingStretch ? (
-        <motion.div variants={fadeUp} className={`text-sm ${muted} mb-12`}>Loading…</motion.div>
-      ) : stretchStudies.length > 0 ? (
-        <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-6 max-w-3xl">
-          {stretchStudies.map((item, i) => (
-            <motion.button
-              key={item.id}
-              whileHover={{ scale: 1.03, y: -4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => openLightbox(stretchStudies.map(s => ({ src: s.src, alt: s.title, title: s.title, link: s.link })), i)}
-              className="group relative overflow-hidden rounded-xl shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <Image
-                src={item.src}
-                alt={item.title}
-                width={400}
-                height={400}
-                className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-white text-xs font-medium truncate">{item.title}</p>
-              </div>
-            </motion.button>
-          ))}
-        </motion.div>
-      ) : (
-        <motion.div variants={fadeUp} className={`text-sm italic mb-6 ${muted}`}>
-          {t.experiments.mintingSoon}
-        </motion.div>
-      )}
+      <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-12 max-w-3xl">
+        {stretchStudies.map((item, i) => (
+          <motion.button
+            key={item.id}
+            whileHover={{ opacity: 0.85 }}
+            whileTap={{ opacity: 0.7 }}
+            onClick={() =>
+              openLightbox(
+                stretchStudies.map((s) => ({ src: s.src, alt: s.title, title: s.title, link: s.link })),
+                i,
+              )
+            }
+            className="group relative overflow-hidden focus:outline-none"
+            style={{ border: "1px solid var(--border-subtle)" }}
+          >
+            <Image
+              src={item.src}
+              alt={item.title}
+              width={400}
+              height={400}
+              className="w-full aspect-square object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
+              <span className="block text-left text-xs truncate" style={{ color: "#f2f1ee" }}>
+                {item.title}
+              </span>
+            </div>
+          </motion.button>
+        ))}
+      </motion.div>
 
-      {/* ── Music ── */}
-      <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
-        {t.experiments.music}
-      </motion.h2>
-
-      {loadingMusic ? (
-        <motion.div variants={fadeUp} className={`text-sm ${muted} mb-10`}>Loading…</motion.div>
-      ) : music.length > 0 ? (
-        <motion.div variants={fadeUp} className="space-y-4 mb-10">
-          {music.map((item) =>
-            item.src ? (
-              <div key={item.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-subtle)" }}>
-                <iframe
-                  src={item.src}
-                  title={item.title}
-                  className="w-full"
-                  style={{ height: 166, border: "none" }}
-                  loading="lazy"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                />
-                {item.title && (
-                  <div className="px-4 py-2">
+      {music.length > 0 && (
+        <>
+          <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
+            {t.experiments.music}
+          </motion.h2>
+          <motion.div variants={fadeUp} className="space-y-4 mb-10">
+            {music.map((item) =>
+              item.src ? (
+                <div key={item.id} className="overflow-hidden" style={{ border: "1px solid var(--border-subtle)" }}>
+                  <iframe
+                    src={item.src}
+                    title={item.title}
+                    className="w-full"
+                    style={{ height: 166, border: "none" }}
+                    loading="lazy"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  />
+                  {item.title && (
+                    <div className="px-4 py-2">
+                      <p className="text-sm font-medium">{item.title}</p>
+                      {item.description && <p className={`text-xs ${muted}`}>{item.description}</p>}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <a
+                  key={item.id}
+                  href={item.link || undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors duration-150"
+                  style={{ border: "1px solid var(--border-subtle)", background: "var(--glass-bg)" }}
+                >
+                  <div>
                     <p className="text-sm font-medium">{item.title}</p>
                     {item.description && <p className={`text-xs ${muted}`}>{item.description}</p>}
                   </div>
-                )}
-              </div>
-            ) : (
-              <a
-                key={item.id}
-                href={item.link || undefined}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
-                style={{ border: "1px solid var(--border-subtle)", background: "var(--glass-bg)" }}
-              >
-                <span className="text-lg" style={{ color: "var(--accent)" }}>♪</span>
-                <div>
-                  <p className="text-sm font-medium">{item.title}</p>
-                  {item.description && <p className={`text-xs ${muted}`}>{item.description}</p>}
-                </div>
-                {item.link && <span className="ml-auto text-xs opacity-50">↗</span>}
-              </a>
-            )
-          )}
-        </motion.div>
-      ) : (
-        <motion.p variants={fadeUp} className={`text-sm italic mb-10 ${muted}`}>
-          {t.experiments.comingSoon}
-        </motion.p>
+                  {item.link && <span className="ml-auto text-xs opacity-50">↗</span>}
+                </a>
+              ),
+            )}
+          </motion.div>
+        </>
       )}
-
-      {/* Back */}
-      <motion.div variants={fadeUp}>
-        <button
-          onClick={() => window.history.back()}
-          className="text-blue-600 underline underline-offset-2 cursor-pointer"
-        >
-          {t.experiments.goBack}
-        </button>
-      </motion.div>
 
       {lightboxOpen && (
         <Lightbox

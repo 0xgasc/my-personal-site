@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
-import Sidebar from './Sidebar'
 import BackgroundMount from './BackgroundMount'
 import SceneCycler from './SceneCycler'
 import SectionsRenderer from '@/components/cms/SectionsRenderer'
@@ -8,11 +7,9 @@ import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
 // Map known top-level routes -> the page key used by /admin/sections.
-// Anything not in here falls back to `null` (no CMS sections rendered).
 function routeToPageKey(pathname) {
   if (pathname === '/') return 'home'
-  // Pages-router catch-all looks like `/[slug]` — the renderer there reads
-  // the slug from query and passes it explicitly, so we skip here.
+  // The catch-all page renders its own sections from the slug.
   if (pathname === '/[slug]') return null
   if (pathname.startsWith('/admin') || pathname.startsWith('/api')) return null
   if (pathname.startsWith('/preview')) return null
@@ -20,111 +17,59 @@ function routeToPageKey(pathname) {
   return m ? m[1] : null
 }
 
-const GLASS_LEVELS = [0.03, 0.35, 0.65, 0.90]
-const GLASS_ICONS  = ['○', '◔', '◑', '◕']
-
 export default function Layout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [glassLevel, setGlassLevel] = useState(2)
   const { language, cycleLanguage, darkMode, setDarkMode } = useApp()
   const t = useTranslation(language)
   const router = useRouter()
   const pageKey = routeToPageKey(router.pathname)
 
+  const nav = [
+    { name: t.nav.home, href: '/' },
+    { name: t.nav.background, href: '/career' },
+    { name: t.nav.collection, href: '/collection' },
+    { name: t.nav.experiments, href: '/experiments' },
+    { name: t.nav.tip, href: '/tip' },
+    { name: t.nav.contact, href: '/contact' },
+  ]
+
   return (
-    <div
-      className={`relative min-h-screen flex flex-col font-sans transition-colors duration-500 ${
-        darkMode ? 'dark' : 'light'
-      }`}
-      style={{
-        background: darkMode
-          ? 'var(--page-gradient), var(--bg-primary)'
-          : 'var(--page-gradient), var(--bg-primary)',
-        backgroundAttachment: 'fixed',
-      }}
-    >
-      {/* Background shader layer */}
+    <div className={`film-dirt relative min-h-screen flex flex-col ${darkMode ? 'dark' : 'light'}`}>
       <BackgroundMount />
 
-      {/* Top left controls */}
-      <div className="fixed top-5 left-5 z-50 flex items-center gap-2">
-        <button
-          onClick={cycleLanguage}
-          className="btn-ghost"
-          aria-label="Toggle language"
-        >
-          {language}
-        </button>
-
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="btn-ghost"
-          aria-label="Toggle dark mode"
-        >
-          {darkMode ? '☀️' : '🌙'}
-        </button>
-
-        <SceneCycler darkMode={darkMode} />
-
-        <button
-          onClick={() => setGlassLevel((l) => (l + 1) % GLASS_LEVELS.length)}
-          className="btn-ghost"
-          aria-label="Toggle card opacity"
-          title={`Card opacity: ${Math.round(GLASS_LEVELS[glassLevel] * 100)}%`}
-        >
-          {GLASS_ICONS[glassLevel]}
-        </button>
-
-        <button
-          onClick={() => typeof window !== 'undefined' && window.dispatchEvent(new CustomEvent('clip:next'))}
-          className="btn-ghost"
-          aria-label="Next background clip"
-          title="Next clip"
-        >
-          ✦
-        </button>
-      </div>
-
-      {/* Main content */}
-      <main className="relative z-10 flex-grow flex justify-center px-5 pt-24 pb-12">
+      <main className="relative z-10 flex-grow flex justify-center px-5 pt-10 pb-12 max-sm:pt-5">
         <div className="w-full max-w-3xl">
-          <div
-            className="glass-card"
-            style={{
-              background: darkMode
-                ? `rgba(8, 12, 22, ${GLASS_LEVELS[glassLevel]})`
-                : `rgba(255, 247, 224, ${GLASS_LEVELS[glassLevel]})`,
-            }}
-          >
+          <div className="glass-card">
+            <header className="site-head">
+              <nav className="site-nav">
+                {nav.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={router.pathname === item.href ? 'page' : undefined}
+                  >
+                    {item.name.toLowerCase()}
+                  </Link>
+                ))}
+              </nav>
+              <div className="site-tools">
+                <button onClick={cycleLanguage} aria-label="Change language">
+                  {language.toLowerCase()}
+                </button>
+                <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle dark mode">
+                  {darkMode ? 'light' : 'dark'}
+                </button>
+                <SceneCycler darkMode={darkMode} />
+              </div>
+            </header>
             {children}
             {pageKey && <SectionsRenderer page={pageKey} />}
           </div>
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="relative z-10 flex justify-center px-5 pb-8">
-        <div
-          className="text-center text-xs tracking-wider uppercase"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <p>{t.footer.credits}</p>
-        </div>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.footer.credits}</p>
       </footer>
-
-      {/* Sidebar toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="btn-ghost fixed top-5 right-5 z-50 p-2.5"
-        aria-label="Toggle menu"
-      >
-        <div className="w-5 h-0.5 mb-1 rounded bg-current opacity-60"></div>
-        <div className="w-5 h-0.5 mb-1 rounded bg-current opacity-60"></div>
-        <div className="w-5 h-0.5 rounded bg-current opacity-60"></div>
-      </button>
-
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} darkMode={darkMode} />
     </div>
   )
 }

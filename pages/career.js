@@ -1,14 +1,7 @@
 import { motion } from 'framer-motion'
+import { stagger, fadeUp } from '@/lib/motion'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.07 } },
-}
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
-}
 
 export default function Career() {
   const { darkMode, language } = useApp()
@@ -66,14 +59,6 @@ export default function Career() {
         </p>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="mt-10">
-        <button
-          onClick={() => window.history.back()}
-          className="btn-ghost"
-        >
-          ← {t.career.goBack}
-        </button>
-      </motion.div>
     </motion.div>
   )
 }

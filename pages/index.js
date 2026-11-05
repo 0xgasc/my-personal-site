@@ -1,15 +1,9 @@
 import { motion } from 'framer-motion'
+import { stagger, fadeUp } from '@/lib/motion'
 import Link from 'next/link'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } },
-}
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } },
-}
 
 export default function Home() {
   const { language } = useApp()
@@ -62,7 +56,7 @@ export default function Home() {
       {/* ArtTab embed */}
       <motion.div
         variants={fadeUp}
-        className="rounded-xl overflow-hidden border"
+        className="overflow-hidden border"
         style={{ borderColor: 'var(--border-subtle)' }}
       >
         <iframe

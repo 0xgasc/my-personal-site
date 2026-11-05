@@ -23,16 +23,16 @@ type Preset = {
 };
 
 const PRESETS: Preset[] = [
-  { name: "magenta-rib", base: ["#12040f", "#1c0619"], blooms: ["#ff2bd6", "#b100ff", "#ff5ad9"], flutes: 46, refract: 0.035, aberration: 0.6, grain: 0.07, beam: 0.8, spread: 0.32 },
-  { name: "cold-warm", base: ["#2d4c86", "#cfd8ea"], blooms: ["#ff5a2a", "#3b6fd8", "#f4c6c0"], flutes: 0, refract: 0, aberration: 0.25, grain: 0.11, beam: 0, spread: 0.42 },
-  { name: "moss-haze", base: ["#2a3a22", "#516a3c"], blooms: ["#7f9b5a", "#1d2a17", "#a9b98a"], flutes: 0, refract: 0, aberration: 0.15, grain: 0.16, beam: 0, spread: 0.36 },
-  { name: "violet-frost", base: ["#e9ecff", "#9fb0ff"], blooms: ["#1e2bff", "#4a12c9", "#ff4a1c", "#0b1a9e"], flutes: 0, refract: 0, aberration: 1.0, grain: 0.08, beam: 0, spread: 0.3 },
-  { name: "ember-rib", base: ["#2a0905", "#3a0c06"], blooms: ["#ff4a1f", "#ff8a3d", "#1a0b3a"], flutes: 11, refract: 0.06, aberration: 0.5, grain: 0.07, beam: 0.15, spread: 0.36 },
-  { name: "indigo-blend", base: ["#1f1a6e", "#3b2fd0"], blooms: ["#6a5cff", "#2a1f9a", "#9a8cff"], flutes: 0, refract: 0, aberration: 0.1, grain: 0.06, beam: 0, spread: 0.5 },
-  { name: "ultraviolet-rib", base: ["#050310", "#0a0620"], blooms: ["#5a1fff", "#2b00c9", "#8a4bff"], flutes: 34, refract: 0.045, aberration: 0.7, grain: 0.08, beam: 0.55, spread: 0.3 },
-  { name: "prism-white", base: ["#f4f2ec", "#e6e9f2"], blooms: ["#0d1f8a", "#2a56d6", "#0a0f3a"], flutes: 18, refract: 0.05, aberration: 0.9, grain: 0.05, beam: 0.65, spread: 0.24 },
-  { name: "garden-blur", base: ["#1f2a18", "#33452a"], blooms: ["#f2b8c8", "#f7f2ea", "#5c7a43", "#e891aa"], flutes: 0, refract: 0, aberration: 0.3, grain: 0.13, beam: 0, spread: 0.22 },
-  { name: "dusk-teal", base: ["#06232a", "#0d3a40"], blooms: ["#ffb35c", "#1fa3a3", "#ff6f61"], flutes: 24, refract: 0.03, aberration: 0.45, grain: 0.09, beam: 0.25, spread: 0.34 },
+  { name: "magenta-rib", base: ["#12040f", "#1c0619"], blooms: ["#ff2bd6", "#b100ff", "#ff5ad9"], flutes: 46, refract: 0.035, aberration: 0.8, grain: 0.14, beam: 0.8, spread: 0.32 },
+  { name: "cold-warm", base: ["#2d4c86", "#cfd8ea"], blooms: ["#ff5a2a", "#3b6fd8", "#f4c6c0"], flutes: 0, refract: 0, aberration: 0.4, grain: 0.18, beam: 0, spread: 0.42 },
+  { name: "moss-haze", base: ["#2a3a22", "#516a3c"], blooms: ["#7f9b5a", "#1d2a17", "#a9b98a"], flutes: 0, refract: 0, aberration: 0.3, grain: 0.22, beam: 0, spread: 0.36 },
+  { name: "violet-frost", base: ["#e9ecff", "#9fb0ff"], blooms: ["#1e2bff", "#4a12c9", "#ff4a1c", "#0b1a9e"], flutes: 0, refract: 0, aberration: 1.2, grain: 0.15, beam: 0, spread: 0.3 },
+  { name: "ember-rib", base: ["#2a0905", "#3a0c06"], blooms: ["#ff4a1f", "#ff8a3d", "#1a0b3a"], flutes: 11, refract: 0.06, aberration: 0.7, grain: 0.14, beam: 0.15, spread: 0.36 },
+  { name: "indigo-blend", base: ["#1f1a6e", "#3b2fd0"], blooms: ["#6a5cff", "#2a1f9a", "#9a8cff"], flutes: 0, refract: 0, aberration: 0.25, grain: 0.13, beam: 0, spread: 0.5 },
+  { name: "ultraviolet-rib", base: ["#050310", "#0a0620"], blooms: ["#5a1fff", "#2b00c9", "#8a4bff"], flutes: 34, refract: 0.045, aberration: 0.9, grain: 0.15, beam: 0.55, spread: 0.3 },
+  { name: "prism-white", base: ["#f4f2ec", "#e6e9f2"], blooms: ["#0d1f8a", "#2a56d6", "#0a0f3a"], flutes: 18, refract: 0.05, aberration: 1.1, grain: 0.12, beam: 0.65, spread: 0.24 },
+  { name: "garden-blur", base: ["#1f2a18", "#33452a"], blooms: ["#f2b8c8", "#f7f2ea", "#5c7a43", "#e891aa"], flutes: 0, refract: 0, aberration: 0.5, grain: 0.2, beam: 0, spread: 0.22 },
+  { name: "dusk-teal", base: ["#06232a", "#0d3a40"], blooms: ["#ffb35c", "#1fa3a3", "#ff6f61"], flutes: 24, refract: 0.03, aberration: 0.6, grain: 0.16, beam: 0.25, spread: 0.34 },
 ];
 
 const VS = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=(a_pos+1.0)*0.5;gl_Position=vec4(a_pos,0.0,1.0);}`;
@@ -99,14 +99,36 @@ void main(){
 
   col *= shade;
 
-  // Vignette
-  float v = smoothstep(1.05, 0.25, length(fromCentre * vec2(1.1, 1.0)));
-  col *= mix(0.62, 1.0, v);
+  // Heavy vignette — burned edges like an old print
+  float v = smoothstep(1.0, 0.18, length(fromCentre * vec2(1.2, 1.05)));
+  col *= mix(0.35, 1.0, v);
 
-  // Film grain (re-rolled ~24 times a second)
+  // Halation — blooms bleed light into the vignette ring
+  float halo = smoothstep(0.55, 0.9, length(fromCentre * vec2(1.1, 1.0)));
+  float bloomGlow = 0.0;
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= u_count) break;
+    vec4 o = u_orbit[i];
+    float ht = u_time * (0.05 + 0.02 * float(i));
+    vec2 bc = o.xy + o.zw * vec2(sin(ht + float(i)*2.1), cos(ht*0.8 + float(i)*1.3));
+    vec2 bd = uv - bc;
+    bd.x *= u_res.x / u_res.y;
+    bloomGlow += exp(-dot(bd,bd) / 0.4) * 0.15;
+  }
+  col += halo * bloomGlow * vec3(0.8, 0.5, 0.6);
+
+  // Scanlines — faint horizontal CRT
+  float scan = 0.94 + 0.06 * sin(gl_FragCoord.y * 1.8);
+  col *= scan;
+
+  // Film grain (re-rolled ~24 times a second) — heavy and gritty
   float fr = floor(u_time * 24.0);
   float n = hash(gl_FragCoord.xy + fr * 17.31) - 0.5;
   col += n * u_grain;
+
+  // Occasional flicker — the whole frame dims briefly like a projector gate
+  float flicker = 1.0 - 0.03 * sin(u_time * 11.0) * sin(u_time * 7.3);
+  col *= flicker;
 
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;

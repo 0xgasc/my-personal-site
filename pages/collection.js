@@ -1,18 +1,10 @@
 import { useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { useRouter } from "next/router"
+import { stagger, fadeUp } from '@/lib/motion'
 import { useApp } from "@/contexts/AppContext"
 import { useTranslation } from "@/lib/translations"
 import Lightbox from "@/components/gallery/Lightbox"
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.06 } },
-}
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
-}
 
 // ── Gallery data ──────────────────────────────────────────
 const randomGallery = [
@@ -53,7 +45,6 @@ const vaultGallery = [
 ]
 
 export default function Collection() {
-  const router = useRouter()
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
   const [lightboxOpen, setLightboxOpen] = useState(null)
@@ -71,12 +62,6 @@ export default function Collection() {
       <motion.h1 variants={fadeUp}>
         {t.collection.title}
       </motion.h1>
-      <motion.p
-        variants={fadeUp}
-        className="section-label mt-2 mb-8"
-      >
-        {t.collection.clickImage}
-      </motion.p>
 
       {/* Gallery: Random Collectibles */}
       <motion.section variants={fadeUp} className="mb-12">
@@ -198,15 +183,6 @@ export default function Collection() {
           ))}
         </div>
       </motion.section>
-
-      <motion.div variants={fadeUp}>
-        <button
-          onClick={() => router.back()}
-          className="btn-ghost"
-        >
-          ← {t.collection.goBack}
-        </button>
-      </motion.div>
 
       {lightboxOpen && (
         <Lightbox

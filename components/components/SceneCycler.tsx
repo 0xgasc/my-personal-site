@@ -25,15 +25,14 @@ export default function SceneCycler({ darkMode }: Props) {
     <>
       <button
         onClick={() => setFxEnabled(!fxEnabled)}
-        className={`btn-ghost ${fxEnabled ? "active" : ""}`}
         aria-label="Toggle background FX"
-        title={fxEnabled ? "Hide background FX" : "Show background FX"}
+        aria-pressed={fxEnabled}
       >
-        {fxEnabled ? "FX" : "fx"}
+        fx
       </button>
       {scenes.length > 1 && fxEnabled && (
-        <button onClick={cycleScene} className="btn-ghost" aria-label="Next scene" title="Next scene">
-          →
+        <button onClick={cycleScene} aria-label="Next scene">
+          next
         </button>
       )}
     </>

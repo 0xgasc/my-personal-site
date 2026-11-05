@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import Script from 'next/script'
 import { motion } from 'framer-motion'
+import { stagger, fadeUp } from '@/lib/motion'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
 
 const MERCHANT_ID =
   process.env.NEXT_PUBLIC_STABLEPAY_MERCHANT_ID ?? 'cmn979jnf0000110ntpw8x6fi'
 
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
-}
-
 const TIERS = [
-  { icon: '*',  label: 'coffee', amount: 5 },
-  { icon: '**', label: 'meal',   amount: 15 },
+  { label: 'coffee', amount: 5 },
+  { label: 'meal', amount: 15 },
 ]
 
 export default function Tip() {
@@ -90,7 +85,7 @@ export default function Tip() {
 
   return (
     <motion.div
-      className="w-full max-w-lg mx-auto"
+      className="w-full"
       variants={stagger}
       initial="hidden"
       animate="visible"
@@ -109,57 +104,32 @@ export default function Tip() {
         {t.tip?.subtitle ?? 'If you enjoy my work, consider buying me a coffee.'}
       </motion.p>
 
-      <motion.div variants={fadeUp} className="flex flex-col gap-3 mb-6">
+      <motion.div variants={fadeUp} className="flex flex-col mb-6 text-sm" style={{ borderTop: '1px solid var(--border-subtle)' }}>
         {TIERS.map((tier) => (
           <button
             key={tier.label}
             onClick={() => handleWidgetTier(tier)}
             disabled={!widgetReady}
-            className="flex items-center gap-4 px-5 py-5 rounded-sm border transition-all cursor-pointer group"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--glass-bg)', opacity: widgetReady ? 1 : 0.5 }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--glass-hover)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--glass-bg)' }}
+            className="row-btn"
+            style={{ opacity: widgetReady ? 1 : 0.5 }}
           >
-            <span className="text-lg font-bold w-8 text-center shrink-0" style={{ color: 'var(--accent)' }}>{tier.icon}</span>
-            <span className="flex-1 text-left"><span className="block text-sm font-medium">{t.tip?.[tier.label] ?? tier.label}</span></span>
-            <span className="text-lg font-semibold tabular-nums">${tier.amount}</span>
+            <span className="flex-1 text-left">{t.tip?.[tier.label] ?? tier.label}</span>
+            <span className="tabular-nums">${tier.amount}</span>
           </button>
         ))}
 
         {!customMode ? (
           <button
             onClick={enterCustom}
-            className="flex items-center gap-4 px-5 py-5 rounded-sm border transition-all cursor-pointer group"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              background: 'var(--glass-bg)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
-              e.currentTarget.style.background = 'var(--glass-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)'
-              e.currentTarget.style.background = 'var(--glass-bg)'
-            }}
+            className="row-btn"
           >
-            <span
-              className="text-lg font-bold w-8 text-center shrink-0"
-              style={{ color: 'var(--accent)' }}
-            >
-              +
-            </span>
-            <span className="flex-1 text-left">
-              <span className="block text-sm font-medium">
-                {t.tip?.custom ?? 'Custom amount'}
-              </span>
-            </span>
-            <span className={`text-sm ${mutedFaint}`}>$...</span>
+            <span className="flex-1 text-left">{t.tip?.custom ?? 'Custom amount'}</span>
+            <span style={{ color: 'var(--text-muted)' }}>$</span>
           </button>
         ) : (
           <div
-            className="flex items-center gap-3 px-5 py-4 rounded-sm border"
-            style={{ borderColor: 'var(--accent)', background: 'var(--glass-bg)' }}
+            className="flex items-center gap-3 py-3"
+            style={{ borderBottom: '1px solid var(--border-default)' }}
           >
             <span className={`text-lg font-medium ${muted}`}>$</span>
             <input
@@ -171,7 +141,7 @@ export default function Tip() {
               onChange={(e) => setCustomAmount(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') openCustomCheckout() }}
               placeholder="0"
-              className={`flex-1 text-xl font-bold bg-transparent outline-none ${
+              className={`flex-1 text-base bg-transparent outline-none ${
                 darkMode ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-300'
               }`}
               style={{ appearance: 'textfield' }}
@@ -179,7 +149,7 @@ export default function Tip() {
             <button
               onClick={openCustomCheckout}
               disabled={!widgetReady || !customAmount || parseFloat(customAmount) < 0.05}
-              className="px-4 py-2 rounded-sm text-sm font-medium transition-opacity disabled:opacity-30"
+              className="px-4 py-1.5 text-sm transition-opacity disabled:opacity-30"
               style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
             >
               {widgetReady ? 'Pay' : '...'}
@@ -197,7 +167,7 @@ export default function Tip() {
       {error && (
         <motion.div
           variants={fadeUp}
-          className={`p-3 rounded-sm text-xs mb-4 ${
+          className={`p-3 text-xs mb-4 ${
             darkMode ? 'bg-red-900/20 border border-red-800/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'
           }`}
         >
@@ -205,18 +175,10 @@ export default function Tip() {
         </motion.div>
       )}
 
-      <motion.p variants={fadeUp} className={`text-xs text-center ${mutedFaint}`}>
+      <motion.p variants={fadeUp} className="text-xs" style={{ color: 'var(--text-muted)' }}>
         {t.tip?.note ?? 'All tips go directly toward building open-source tools and creative experiments.'}
       </motion.p>
 
-      <motion.div variants={fadeUp} className="mt-8">
-        <button
-          onClick={() => window.history.back()}
-          className={`text-sm underline ${mutedFaint} hover:opacity-100`}
-        >
-          {t.tip?.goBack ?? 'back'}
-        </button>
-      </motion.div>
     </motion.div>
   )
 }

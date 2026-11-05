@@ -1,13 +1,8 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { stagger, fadeUp } from '@/lib/motion'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
-
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
-}
 
 const LOCKER_ID = 'kTQZsVnurZuv'
 
@@ -74,15 +69,6 @@ export default function Tests() {
         </div>
       </motion.div>
 
-      <motion.div variants={fadeUp}>
-        <button
-          onClick={() => window.history.back()}
-          className="text-sm underline underline-offset-2 cursor-pointer"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {t.tip?.goBack ?? 'back'}
-        </button>
-      </motion.div>
     </motion.div>
   )
 }
