@@ -408,33 +408,6 @@ img {
   border-color: #443 !important;
 }
 
-/* ─── Film dirt: scanlines + noise over the entire viewport ── */
-.film-dirt::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.03) 2px,
-      rgba(0, 0, 0, 0.03) 4px
-    );
-  mix-blend-mode: multiply;
-}
-.light .film-dirt::after {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.02) 2px,
-      rgba(0, 0, 0, 0.02) 4px
-    );
-}
 
 @keyframes lightboxShimmer {
   0% { background-position: 200% 0; }

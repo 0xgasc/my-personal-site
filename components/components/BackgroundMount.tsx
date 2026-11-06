@@ -53,9 +53,6 @@ export default function BackgroundMount() {
       {fxEnabled && backdrop !== "glass" && (
         <DitherOverlay zIndex={1} blendMode={ditherBlend} opacity={ditherIntensity} />
       )}
-      {fxEnabled && backdrop === "glass" && (
-        <DitherOverlay zIndex={1} blendMode="soft-light" opacity={0.25} />
-      )}
 
     </>
   );

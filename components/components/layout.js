@@ -33,7 +33,7 @@ export default function Layout({ children }) {
   ]
 
   return (
-    <div className={`film-dirt relative min-h-screen flex flex-col ${darkMode ? 'dark' : 'light'}`}>
+    <div className={`relative min-h-screen flex flex-col ${darkMode ? 'dark' : 'light'}`}>
       <BackgroundMount />
 
       <main className="relative z-10 flex-grow flex justify-center px-5 pt-10 pb-12 max-sm:pt-5">

@@ -4,35 +4,65 @@ import { useEffect, useRef } from "react";
 import { useApp } from "@/contexts/AppContext";
 
 /**
- * Shaded "glass" backdrop: soft colour blooms seen through fluted or
- * frosted glass, with film grain, chromatic aberration and a vignette.
- * A preset is picked at random on each visit (never the same one twice in
- * a row) and its blooms get a fresh random layout, so no two loads match.
+ * Dark, out-of-focus backdrop, like a night photo taken wide open: a few
+ * soft shapes (a pale figure, foliage, skin tones) drifting very slowly,
+ * shaded by a side light and a deep vignette, with fine film grain.
+ * A preset is picked at random on each visit (never the same twice in a
+ * row) and its shapes get a fresh layout.
  */
+
+type Bloom = [hex: string, size: number, strength: number];
 
 type Preset = {
   name: string;
-  base: [string, string]; // background gradient, top → bottom
-  blooms: string[]; // up to 4 bloom colours
-  flutes: number; // ribs across the screen; 0 = frosted only
-  refract: number; // how far each rib bends what's behind it
-  aberration: number; // RGB split strength
+  base: [string, string]; // top → bottom
+  blooms: Bloom[]; // up to 6
   grain: number;
-  beam: number; // 0..1, squeezes blooms into a vertical beam
-  spread: number; // bloom size
 };
 
 const PRESETS: Preset[] = [
-  { name: "magenta-rib", base: ["#12040f", "#1c0619"], blooms: ["#ff2bd6", "#b100ff", "#ff5ad9"], flutes: 46, refract: 0.035, aberration: 0.8, grain: 0.14, beam: 0.8, spread: 0.32 },
-  { name: "cold-warm", base: ["#2d4c86", "#cfd8ea"], blooms: ["#ff5a2a", "#3b6fd8", "#f4c6c0"], flutes: 0, refract: 0, aberration: 0.4, grain: 0.18, beam: 0, spread: 0.42 },
-  { name: "moss-haze", base: ["#2a3a22", "#516a3c"], blooms: ["#7f9b5a", "#1d2a17", "#a9b98a"], flutes: 0, refract: 0, aberration: 0.3, grain: 0.22, beam: 0, spread: 0.36 },
-  { name: "violet-frost", base: ["#e9ecff", "#9fb0ff"], blooms: ["#1e2bff", "#4a12c9", "#ff4a1c", "#0b1a9e"], flutes: 0, refract: 0, aberration: 1.2, grain: 0.15, beam: 0, spread: 0.3 },
-  { name: "ember-rib", base: ["#2a0905", "#3a0c06"], blooms: ["#ff4a1f", "#ff8a3d", "#1a0b3a"], flutes: 11, refract: 0.06, aberration: 0.7, grain: 0.14, beam: 0.15, spread: 0.36 },
-  { name: "indigo-blend", base: ["#1f1a6e", "#3b2fd0"], blooms: ["#6a5cff", "#2a1f9a", "#9a8cff"], flutes: 0, refract: 0, aberration: 0.25, grain: 0.13, beam: 0, spread: 0.5 },
-  { name: "ultraviolet-rib", base: ["#050310", "#0a0620"], blooms: ["#5a1fff", "#2b00c9", "#8a4bff"], flutes: 34, refract: 0.045, aberration: 0.9, grain: 0.15, beam: 0.55, spread: 0.3 },
-  { name: "prism-white", base: ["#f4f2ec", "#e6e9f2"], blooms: ["#0d1f8a", "#2a56d6", "#0a0f3a"], flutes: 18, refract: 0.05, aberration: 1.1, grain: 0.12, beam: 0.65, spread: 0.24 },
-  { name: "garden-blur", base: ["#1f2a18", "#33452a"], blooms: ["#f2b8c8", "#f7f2ea", "#5c7a43", "#e891aa"], flutes: 0, refract: 0, aberration: 0.5, grain: 0.2, beam: 0, spread: 0.22 },
-  { name: "dusk-teal", base: ["#06232a", "#0d3a40"], blooms: ["#ffb35c", "#1fa3a3", "#ff6f61"], flutes: 24, refract: 0.03, aberration: 0.6, grain: 0.16, beam: 0.25, spread: 0.34 },
+  {
+    name: "night-garden",
+    base: ["#0c1311", "#050807"],
+    blooms: [["#8c8f93", 0.26, 0.75], ["#6b5749", 0.16, 0.7], ["#3a4c28", 0.12, 0.8], ["#2e3f21", 0.1, 0.8], ["#56656c", 0.2, 0.5]],
+    grain: 0.07,
+  },
+  {
+    name: "pool",
+    base: ["#081014", "#030608"],
+    blooms: [["#3c5660", 0.34, 0.7], ["#9aa2a4", 0.14, 0.55], ["#1d2e29", 0.2, 0.8]],
+    grain: 0.07,
+  },
+  {
+    name: "dim-room",
+    base: ["#120f0d", "#060504"],
+    blooms: [["#76594a", 0.24, 0.7], ["#382a21", 0.3, 0.8], ["#a8907c", 0.1, 0.5]],
+    grain: 0.08,
+  },
+  {
+    name: "fog-moss",
+    base: ["#151a14", "#090c08"],
+    blooms: [["#55624a", 0.3, 0.65], ["#868c7c", 0.16, 0.5], ["#283120", 0.14, 0.85], ["#283120", 0.1, 0.85]],
+    grain: 0.08,
+  },
+  {
+    name: "blue-hour",
+    base: ["#0b0f18", "#04060a"],
+    blooms: [["#384868", 0.32, 0.65], ["#868e9e", 0.12, 0.5], ["#1b2334", 0.22, 0.8]],
+    grain: 0.07,
+  },
+  {
+    name: "ash",
+    base: ["#121212", "#070707"],
+    blooms: [["#595957", 0.28, 0.6], ["#93918a", 0.12, 0.45], ["#262626", 0.2, 0.8]],
+    grain: 0.08,
+  },
+  {
+    name: "late-skin",
+    base: ["#140d0c", "#070404"],
+    blooms: [["#85604f", 0.22, 0.65], ["#472e2a", 0.3, 0.8], ["#b89e8d", 0.1, 0.45], ["#2c3a24", 0.1, 0.7]],
+    grain: 0.07,
+  },
 ];
 
 const VS = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=(a_pos+1.0)*0.5;gl_Position=vec4(a_pos,0.0,1.0);}`;
@@ -43,92 +73,59 @@ uniform vec2  u_res;
 uniform float u_time;
 uniform vec3  u_base0;
 uniform vec3  u_base1;
-uniform vec3  u_bloom[4];
-uniform vec4  u_orbit[4];   // xy = centre, zw = drift radius
+uniform vec3  u_bloom[6];
+uniform vec4  u_orbit[6];   // xy = centre, zw = drift radius
+uniform vec2  u_shape[6];   // x = size, y = strength
 uniform float u_count;
-uniform float u_flutes;
-uniform float u_refract;
-uniform float u_aberr;
 uniform float u_grain;
-uniform float u_beam;
-uniform float u_spread;
+uniform vec2  u_light;      // direction the light comes from
 
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
-// The scene behind the glass: a gradient plus slow, soft gaussian blooms.
 vec3 scene(vec2 uv){
   float aspect = u_res.x / u_res.y;
   vec3 col = mix(u_base1, u_base0, smoothstep(0.0, 1.0, uv.y));
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 6; i++) {
     if (float(i) >= u_count) break;
     vec4 o = u_orbit[i];
-    float t = u_time * (0.05 + 0.02 * float(i));
+    float t = u_time * (0.018 + 0.006 * float(i));
     vec2 c = o.xy + o.zw * vec2(sin(t + float(i) * 2.1), cos(t * 0.8 + float(i) * 1.3));
     vec2 d = uv - c;
     d.x *= aspect;
-    d.x *= mix(1.0, 2.6, u_beam);           // beam: narrow horizontally
-    d.y *= mix(1.0, 0.45, u_beam);          // ...and stretch vertically
-    float r = u_spread * (0.85 + 0.3 * sin(t * 1.7 + float(i)));
+    float r = u_shape[i].x * 1.3 * (0.92 + 0.08 * sin(t * 1.3 + float(i)));
     float g = exp(-dot(d, d) / (r * r));
-    col = mix(col, u_bloom[i], clamp(g, 0.0, 1.0) * 0.92);
+    col = mix(col, u_bloom[i], g * u_shape[i].y);
   }
   return col;
 }
 
 void main(){
   vec2 uv = v_uv;
-
-  // Fluted glass: each rib bends the scene sideways and is shaded at its seams.
-  float shade = 1.0;
-  vec2 bend = vec2(0.0);
-  if (u_flutes > 0.5) {
-    float f = fract(uv.x * u_flutes);
-    float k = f - 0.5;
-    bend.x = k * u_refract * 2.0 + sin(uv.y * 3.0 + u_time * 0.2) * u_refract * 0.15;
-    shade = 1.0 - pow(abs(k) * 2.0, 5.0) * 0.38;     // dark seams
-    shade += smoothstep(0.30, 0.0, abs(k + 0.22)) * 0.06; // soft highlight per rib
-  }
-
-  // Chromatic aberration: split channels sideways and slightly outward.
   vec2 fromCentre = uv - 0.5;
-  vec2 split = (vec2(0.004, 0.0) + fromCentre * 0.006) * u_aberr + bend * 0.25 * u_aberr;
+
+  // Faint lens fringing, only toward the edges.
+  vec2 split = fromCentre * 0.0025;
   vec3 col;
-  col.r = scene(uv + bend + split).r;
-  col.g = scene(uv + bend).g;
-  col.b = scene(uv + bend - split).b;
+  col.r = scene(uv + split).r;
+  col.g = scene(uv).g;
+  col.b = scene(uv - split).b;
 
-  col *= shade;
+  // Side light: one side of the frame a touch brighter than the other.
+  col *= 0.82 + 0.3 * smoothstep(-0.7, 0.7, dot(fromCentre, u_light));
 
-  // Heavy vignette — burned edges like an old print
-  float v = smoothstep(1.0, 0.18, length(fromCentre * vec2(1.2, 1.05)));
-  col *= mix(0.35, 1.0, v);
+  // Deep, soft vignette.
+  float v = smoothstep(1.0, 0.2, length(fromCentre * vec2(1.15, 1.0)));
+  col *= mix(0.3, 1.0, v);
 
-  // Halation — blooms bleed light into the vignette ring
-  float halo = smoothstep(0.55, 0.9, length(fromCentre * vec2(1.1, 1.0)));
-  float bloomGlow = 0.0;
-  for (int i = 0; i < 4; i++) {
-    if (float(i) >= u_count) break;
-    vec4 o = u_orbit[i];
-    float ht = u_time * (0.05 + 0.02 * float(i));
-    vec2 bc = o.xy + o.zw * vec2(sin(ht + float(i)*2.1), cos(ht*0.8 + float(i)*1.3));
-    vec2 bd = uv - bc;
-    bd.x *= u_res.x / u_res.y;
-    bloomGlow += exp(-dot(bd,bd) / 0.4) * 0.15;
-  }
-  col += halo * bloomGlow * vec3(0.8, 0.5, 0.6);
+  // Muted film response: pull saturation down, lift the blacks slightly.
+  float l = dot(col, vec3(0.299, 0.587, 0.114));
+  col = mix(vec3(l), col, 0.82);
+  col = col * 0.96 + vec3(0.012, 0.016, 0.018);
 
-  // Scanlines — faint horizontal CRT
-  float scan = 0.94 + 0.06 * sin(gl_FragCoord.y * 1.8);
-  col *= scan;
-
-  // Film grain (re-rolled ~24 times a second) — heavy and gritty
-  float fr = floor(u_time * 24.0);
+  // Fine grain, stronger in the shadows like film.
+  float fr = floor(u_time * 12.0);
   float n = hash(gl_FragCoord.xy + fr * 17.31) - 0.5;
-  col += n * u_grain;
-
-  // Occasional flicker — the whole frame dims briefly like a projector gate
-  float flicker = 1.0 - 0.03 * sin(u_time * 11.0) * sin(u_time * 7.3);
-  col *= flicker;
+  col += n * u_grain * (1.0 - l * 0.6);
 
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
@@ -181,27 +178,28 @@ export default function GlassShader({ zIndex = 0 }: { zIndex?: number }) {
 
     const u = (n: string) => gl.getUniformLocation(prog, n);
     const p = pickPreset();
-    const blooms = p.blooms.slice(0, 4);
-    const bloomData = new Float32Array(12);
-    const orbitData = new Float32Array(16);
-    blooms.forEach((hex, i) => {
+    const blooms = p.blooms.slice(0, 6);
+    const bloomData = new Float32Array(18);
+    const orbitData = new Float32Array(24);
+    const shapeData = new Float32Array(12);
+    blooms.forEach(([hex, size, strength], i) => {
       bloomData.set(hexToRgb(hex), i * 3);
-      // Random layout per visit, kept mostly on screen.
-      const cx = 0.15 + Math.random() * 0.7;
-      const cy = 0.15 + Math.random() * 0.7;
-      orbitData.set([cx, cy, 0.05 + Math.random() * 0.12, 0.04 + Math.random() * 0.1], i * 4);
+      // Big shapes sit nearer the middle; small ones (foliage) drift near the edges.
+      const reach = size > 0.18 ? 0.36 : 0.44;
+      const cx = 0.5 + (Math.random() * 2 - 1) * reach;
+      const cy = 0.5 + (Math.random() * 2 - 1) * reach;
+      orbitData.set([cx, cy, 0.02 + Math.random() * 0.04, 0.02 + Math.random() * 0.04], i * 4);
+      shapeData.set([size, strength], i * 2);
     });
+    const angle = Math.random() * Math.PI * 2;
     gl.uniform3fv(u("u_base0"), hexToRgb(p.base[0]));
     gl.uniform3fv(u("u_base1"), hexToRgb(p.base[1]));
     gl.uniform3fv(u("u_bloom"), bloomData);
     gl.uniform4fv(u("u_orbit"), orbitData);
+    gl.uniform2fv(u("u_shape"), shapeData);
     gl.uniform1f(u("u_count"), blooms.length);
-    gl.uniform1f(u("u_flutes"), p.flutes);
-    gl.uniform1f(u("u_refract"), p.refract);
-    gl.uniform1f(u("u_aberr"), p.aberration);
     gl.uniform1f(u("u_grain"), p.grain);
-    gl.uniform1f(u("u_beam"), p.beam);
-    gl.uniform1f(u("u_spread"), p.spread);
+    gl.uniform2f(u("u_light"), Math.cos(angle), Math.sin(angle));
     canvas.dataset.preset = p.name;
 
     const uRes = u("u_res");
