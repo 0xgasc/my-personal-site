@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/translations'
+import CareerText from '@/components/components/CareerText'
 
 export default function PDFVersion() {
   const { language } = useApp()
@@ -66,35 +67,7 @@ export default function PDFVersion() {
         <section className="mb-12 page-break">
           <h2 className="text-2xl font-bold mb-4">{t.career.title}</h2>
 
-          <p className="mb-4 text-justify">
-            {t.career.paragraph1}{' '}
-            <a href="https://www.uvg.edu.gt/carreras/industrial/" className="text-blue-600 underline">UVG</a>
-            {t.career.paragraph1b}{' '}
-            <a href="https://en.ufm.edu/maestrias/mba/pensum/" className="text-blue-600 underline">UFM</a>
-            {t.career.paragraph1c}{' '}
-            <a href="https://www.unic.ac.cy/blockchain" className="text-blue-600 underline">UNIC</a>
-            {t.career.paragraph1d}
-          </p>
-
-          <p className="mb-4 text-justify">
-            {t.career.paragraph2}{' '}
-            <a href="https://www.slickcharts.com/symbol/CL" className="text-blue-600 underline">{t.career.manufacturer}</a>{' '}
-            {t.career.paragraph2b}
-          </p>
-
-          <p className="mb-4 text-justify">
-            {t.career.paragraph3}{' '}
-            <a href="https://www.augmentir.com/news/augmentir-brings-ai-to-sap-plant-maintenance-with-its-connected-worker-solution" className="text-blue-600 underline">
-              {t.career.readMore}
-            </a>.
-          </p>
-
-          <p className="text-justify">
-            {t.career.paragraph4}{' '}
-            <a href="https://docs.google.com/document/d/1dADh80WJbSXYeYvpU3jf9qtZU2A-seU1MaD4cu9P6ME/edit?usp=sharing" className="text-blue-600 underline">
-              {t.career.myResume}
-            </a>.
-          </p>
+          <CareerText t={t} pClassName="mb-4 text-justify" linkClassName="text-blue-600 underline" external={false} />
         </section>
 
         <hr className="my-8 border-gray-300" />
