@@ -15,10 +15,11 @@
   --border-subtle: rgba(236, 235, 232, 0.09);
   --border-default: rgba(236, 235, 232, 0.18);
 
-  --glass-bg: rgba(10, 10, 11, 0.38);
+  --glass-bg: rgba(10, 10, 11, 0.16);
+  --glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 40%, rgba(255, 255, 255, 0) 70%);
   --glass-edge: rgba(255, 255, 255, 0.07);
   --glass-grain: 0.07;
-  --text-glow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  --text-glow: 0 1px 2px rgba(0, 0, 0, 0.6);
   --glass-border: rgba(236, 235, 232, 0.12);
   --glass-hover: rgba(24, 24, 26, 0.86);
 
@@ -41,7 +42,8 @@
   --border-subtle: rgba(21, 21, 21, 0.1);
   --border-default: rgba(21, 21, 21, 0.2);
 
-  --glass-bg: rgba(239, 238, 233, 0.62);
+  --glass-bg: rgba(239, 238, 233, 0.34);
+  --glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0) 75%);
   --glass-edge: rgba(255, 255, 255, 0.5);
   --glass-grain: 0.07;
   --text-glow: none;
@@ -188,6 +190,9 @@ a.plain {
 .site-tools button {
   color: var(--text-muted);
 }
+.light .site-tools button {
+  color: var(--text-secondary);
+}
 
 /* ─── Content card ───────────────────────────────────────── */
 /* Translucent on purpose: the shader's shading and grain must show through.
@@ -196,9 +201,9 @@ a.plain {
 .glass-card {
   position: relative;
   isolation: isolate;
-  background: var(--glass-bg);
-  backdrop-filter: blur(6px) saturate(115%);
-  -webkit-backdrop-filter: blur(6px) saturate(115%);
+  background: var(--glass-sheen), var(--glass-bg);
+  backdrop-filter: blur(3px) saturate(150%) brightness(1.08);
+  -webkit-backdrop-filter: blur(3px) saturate(150%) brightness(1.08);
   border: 1px solid var(--glass-border);
   box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-lg);
   padding: 32px;
