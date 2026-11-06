@@ -133,7 +133,7 @@ export default function Experiments() {
             className={`plain group overflow-hidden border transition-colors duration-150 ${
               p.link ? "cursor-pointer hover:border-gray-500" : "cursor-default"
             }`}
-            style={{ borderColor: "var(--border-subtle)", background: "var(--glass-bg)" }}
+            style={{ borderColor: "var(--border-subtle)", background: "var(--accent-subtle)" }}
           >
             {p.src && (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -253,7 +253,7 @@ export default function Experiments() {
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-3 px-4 py-3 transition-colors duration-150"
-                  style={{ border: "1px solid var(--border-subtle)", background: "var(--glass-bg)" }}
+                  style={{ border: "1px solid var(--border-subtle)", background: "var(--accent-subtle)" }}
                 >
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
