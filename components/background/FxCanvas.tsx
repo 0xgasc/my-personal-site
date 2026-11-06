@@ -5,6 +5,7 @@ import type { FxMode, FxParams } from "@/lib/fx/effects";
 import { MODE_INDEX } from "@/lib/fx/effects";
 import type { HoverSettings, BlendMode } from "@/lib/types";
 import { DEFAULT_HOVER } from "@/lib/types";
+import { resolveVideoSrc } from "@/lib/clips/resolveVideoSrc";
 
 interface Props {
   videoUrl: string | null;
@@ -25,6 +26,9 @@ interface Props {
   /** When the video first loads metadata, seek to this second. Used by
    *  ClipFxPlayer to drive random start times per the clip's startMode. */
   initialSeekSec?: number;
+  /** Change this to re-seek to `initialSeekSec` (or switch to a new
+   *  videoUrl) without tearing down the WebGL context. */
+  seekKey?: number;
 }
 
 /**
@@ -368,16 +372,20 @@ void main() {
     fxUv = floor(uv / cs) * cs + cs * 0.5;
   }
 
-  vec3 raw = sampleVideo(fxUv);
-  vec3 fx = raw;
-  if (u_mode == 1)      fx = applyCRT(fxUv);
-  else if (u_mode == 2) fx = applyVHS(fxUv);
-  else if (u_mode == 3) fx = applyDream(fxUv);
-  else if (u_mode == 4) fx = applyAscii(fxUv);
-  else if (u_mode == 5) fx = applyPixel(fxUv);
-  else if (u_mode == 6) fx = applyDither(fxUv);
-
-  vec3 col = mix(raw, fx, u_wet);
+  vec3 col;
+  if (u_mode == 0) {
+    col = sampleVideo(fxUv);
+  } else {
+    vec3 fx;
+    if (u_mode == 1)      fx = applyCRT(fxUv);
+    else if (u_mode == 2) fx = applyVHS(fxUv);
+    else if (u_mode == 3) fx = applyDream(fxUv);
+    else if (u_mode == 4) fx = applyAscii(fxUv);
+    else if (u_mode == 5) fx = applyPixel(fxUv);
+    else                  fx = applyDither(fxUv);
+    // Only fetch the raw frame when some of it shows through.
+    col = u_wet >= 0.999 ? fx : mix(sampleVideo(fxUv), fx, u_wet);
+  }
   // Hover post-pass: invert / recolor / sharpen on the final color.
   col = applyHoverPost(col, h);
   gl_FragColor = vec4(col, 1.0);
@@ -414,6 +422,13 @@ const ASCII_PALETTE_INDEX: Record<string, number> = {
   tritone: 3,
   quadtone: 4,
 };
+const ASCII_CHARSET_INDEX: Record<string, number> = {
+  default: 0,
+  dots: 1,
+  blocks: 2,
+  lines: 3,
+  binary: 4,
+};
 const ALGO_INDEX: Record<string, number> = { bayer: 0, ordered: 1, atkinson: 2 };
 const HOVER_EFFECT_INDEX: Record<string, number> = {
   invert: 0,
@@ -421,6 +436,29 @@ const HOVER_EFFECT_INDEX: Record<string, number> = {
   recolor: 2,
   sharpen: 3,
 };
+
+const UNIFORMS = [
+  "u_viewport", "u_video", "u_videoReady", "u_videoPxSize", "u_bgColor", "u_time", "u_mode", "u_wet",
+  "u_scanline", "u_mask", "u_barrel", "u_ca", "u_vignette", "u_flicker", "u_brightness", "u_vhs_ca",
+  "u_bloom", "u_bloomThr", "u_cell", "u_ditherLevels", "u_ditherSpread", "u_ditherAlgo", "u_dithCharMode",
+  "u_dithCharSize", "u_asciiInvert", "u_asciiCharset", "u_asciiThreshold", "u_asciiShimmer", "u_palette",
+  "u_pal0", "u_pal1", "u_pal2", "u_pal3", "u_hoverEnabled", "u_hoverEffect", "u_hoverRadius",
+  "u_hoverIntensity", "u_mouse",
+] as const;
+
+interface VideoEntry {
+  src: string;
+  tex: WebGLTexture;
+  el: HTMLVideoElement;
+  pxSize: { w: number; h: number };
+  /** A frame has been uploaded to `tex`. */
+  ready: boolean;
+  /** A new decoded frame is waiting to be uploaded. */
+  frameDirty: boolean;
+  lastTime: number;
+  hasFrameCallback: boolean;
+  onMeta: () => void;
+}
 
 export default function FxCanvas({
   videoUrl,
@@ -434,31 +472,20 @@ export default function FxCanvas({
   fixed = true,
   zIndex,
   initialSeekSec,
+  seekKey = 0,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const effectiveHover = hover ?? DEFAULT_HOVER;
-  const propsRef = useRef({
-    videoUrl,
-    mode,
-    params,
-    wet,
-    videoOpacity,
-    videoBlur,
-    hover: effectiveHover,
-    initialSeekSec,
-  });
-  propsRef.current = {
-    videoUrl,
-    mode,
-    params,
-    wet,
-    videoOpacity,
-    videoBlur,
-    hover: effectiveHover,
-    initialSeekSec,
-  };
+  const propsRef = useRef({ videoUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey });
+  propsRef.current = { videoUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey };
   // Mouse in normalized 0..1 coords relative to the canvas. (-1,-1) = inactive.
   const mouseRef = useRef({ x: -1, y: -1 });
+  // Set when the per-clip settings change so uniforms are re-sent once,
+  // instead of re-parsing every param on every frame.
+  const settingsDirtyRef = useRef(true);
+  useEffect(() => {
+    settingsDirtyRef.current = true;
+  }, [mode, params, wet, effectiveHover.enabled, effectiveHover.effect, effectiveHover.radius, effectiveHover.intensity]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -493,195 +520,145 @@ export default function FxCanvas({
     gl.enableVertexAttribArray(posLoc);
     gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-    const uniformNames = [
-      "u_viewport",
-      "u_video",
-      "u_videoReady",
-      "u_videoPxSize",
-      "u_bgColor",
-      "u_time",
-      "u_mode",
-      "u_wet",
-      "u_scanline",
-      "u_mask",
-      "u_barrel",
-      "u_ca",
-      "u_vignette",
-      "u_flicker",
-      "u_brightness",
-      "u_vhs_ca",
-      "u_bloom",
-      "u_bloomThr",
-      "u_cell",
-      "u_ditherLevels",
-      "u_ditherSpread",
-      "u_ditherAlgo",
-      "u_dithCharMode",
-      "u_dithCharSize",
-      "u_asciiInvert",
-      "u_asciiCharset",
-      "u_asciiThreshold",
-      "u_asciiShimmer",
-      "u_palette",
-      "u_pal0",
-      "u_pal1",
-      "u_pal2",
-      "u_pal3",
-      "u_hoverEnabled",
-      "u_hoverEffect",
-      "u_hoverRadius",
-      "u_hoverIntensity",
-      "u_mouse",
-    ] as const;
     const u: Record<string, WebGLUniformLocation | null> = {};
-    for (const n of uniformNames) u[n] = gl.getUniformLocation(prog, n);
+    for (const n of UNIFORMS) u[n] = gl.getUniformLocation(prog, n);
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(u.u_video, 0);
+    gl.uniform3f(u.u_bgColor, 0.039, 0.039, 0.039);
 
-    const setupTex = (t: WebGLTexture) => {
-      gl.bindTexture(gl.TEXTURE_2D, t);
+    // ── Video sources ──────────────────────────────────────────
+    // `current` is the clip we want; `prev` keeps drawing the outgoing clip
+    // until the new one has a frame, so switches never flash to black.
+    let current: VideoEntry | null = null;
+    let prev: VideoEntry | null = null;
+
+    const dispose = (e: VideoEntry | null) => {
+      if (!e) return;
+      e.el.pause();
+      e.el.removeEventListener("loadedmetadata", e.onMeta);
+      e.el.removeAttribute("src");
+      e.el.load();
+      gl.deleteTexture(e.tex);
+    };
+
+    const createEntry = (src: string): VideoEntry => {
+      const tex = gl.createTexture()!;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([10, 10, 10, 255]));
-    };
 
-    interface VideoEntry {
-      tex: WebGLTexture;
-      el: HTMLVideoElement;
-      pxSize: { w: number; h: number };
-      ready: boolean;
-      onMeta: () => void;
-    }
-    let current: { src: string; entry: VideoEntry } | null = null;
-
-    const ensureVideo = (src: string | null) => {
-      if (!src) {
-        if (current) {
-          current.entry.el.pause();
-          current.entry.el.removeEventListener("loadedmetadata", current.entry.onMeta);
-          current = null;
-        }
-        return;
-      }
-      if (current && current.src === src) return;
-      if (current) {
-        current.entry.el.pause();
-        current.entry.el.removeEventListener("loadedmetadata", current.entry.onMeta);
-      }
-      // Route remote (cross-origin) sources through a same-origin proxy so
-      // WebGL doesn't taint the canvas. Local /public assets pass through.
-      let resolved = src;
-      try {
-        const parsed = new URL(src, window.location.href);
-        if (parsed.origin !== window.location.origin) {
-          resolved = `/api/video?url=${encodeURIComponent(src)}`;
-        }
-      } catch {
-        // not a parseable URL — leave as-is
-      }
-      const tex = gl.createTexture()!;
-      setupTex(tex);
       const el = document.createElement("video");
       el.muted = true;
       el.playsInline = true;
       el.loop = true;
       el.preload = "auto";
       const entry: VideoEntry = {
+        src,
         tex,
         el,
         pxSize: { w: 1, h: 1 },
         ready: false,
+        frameDirty: false,
+        lastTime: -1,
+        hasFrameCallback: false,
         onMeta() {
           entry.pxSize = { w: el.videoWidth || 1, h: el.videoHeight || 1 };
-          // Apply caller's initial seek if provided.
-          const seek = propsRef.current.initialSeekSec;
-          if (typeof seek === "number" && el.duration > 0) {
-            const target = Math.max(0, Math.min(el.duration - 0.1, seek));
-            try {
-              el.currentTime = target;
-            } catch {
-              // ignore — some browsers reject seeks pre-canplay
-            }
-          }
+          seekTo(entry, propsRef.current.initialSeekSec);
         },
       };
+      // Upload only when the decoder has a new frame (video is ~24–30fps,
+      // the screen is 60–120Hz). Older browsers fall back to watching currentTime.
+      if ("requestVideoFrameCallback" in el) {
+        entry.hasFrameCallback = true;
+        const onFrame = () => {
+          entry.frameDirty = true;
+          if (entry === current || entry === prev) el.requestVideoFrameCallback(onFrame);
+        };
+        el.requestVideoFrameCallback(onFrame);
+      }
       el.addEventListener("loadedmetadata", entry.onMeta);
-      el.src = resolved;
+      el.src = resolveVideoSrc(src);
       el.load();
       el.play().catch(() => {});
-      current = { src, entry };
+      return entry;
     };
 
-    ensureVideo(propsRef.current.videoUrl);
+    const seekTo = (e: VideoEntry, sec: number | undefined) => {
+      if (typeof sec !== "number" || !(e.el.duration > 0)) return;
+      try {
+        e.el.currentTime = Math.max(0, Math.min(e.el.duration - 0.1, sec));
+      } catch {
+        // some browsers reject seeks before canplay
+      }
+    };
 
-    let rafId = 0;
+    let lastSeekKey = propsRef.current.seekKey;
+    const syncVideo = () => {
+      const p = propsRef.current;
+      const src = p.videoUrl;
+      if (!src) {
+        dispose(current);
+        dispose(prev);
+        current = prev = null;
+        return;
+      }
+      if (!current || current.src !== src) {
+        dispose(prev);
+        prev = current?.ready ? current : null;
+        if (current && !prev) dispose(current);
+        current = createEntry(src); // seeks on loadedmetadata
+        lastSeekKey = p.seekKey;
+        return;
+      }
+      if (p.seekKey !== lastSeekKey) {
+        lastSeekKey = p.seekKey;
+        seekTo(current, p.initialSeekSec);
+      }
+    };
+
+    const uploadFrame = (e: VideoEntry) => {
+      if (e.el.readyState < 2) return;
+      const fresh = e.hasFrameCallback ? e.frameDirty : e.el.currentTime !== e.lastTime;
+      if (!fresh && e.ready) return;
+      gl.bindTexture(gl.TEXTURE_2D, e.tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, e.el);
+      e.frameDirty = false;
+      e.lastTime = e.el.currentTime;
+      e.ready = true;
+    };
+
+    // ── Size ───────────────────────────────────────────────────
+    // A full-screen background doesn't need retina resolution: the FX are
+    // cell/scanline based, so cap it lower than bounded previews.
+    const maxDpr = fixed ? 1.5 : 2;
     let dpr = 1;
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
       const rect = canvas.getBoundingClientRect();
-      const cssW = Math.max(1, Math.floor(rect.width));
-      const cssH = Math.max(1, Math.floor(rect.height));
-      const newW = Math.max(1, Math.floor(cssW * dpr));
-      const newH = Math.max(1, Math.floor(cssH * dpr));
+      const newW = Math.max(1, Math.floor(Math.max(1, rect.width) * dpr));
+      const newH = Math.max(1, Math.floor(Math.max(1, rect.height) * dpr));
       if (canvas.width !== newW || canvas.height !== newH) {
         canvas.width = newW;
         canvas.height = newH;
       }
       gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(u.u_viewport, canvas.width, canvas.height);
+      settingsDirtyRef.current = true; // cell sizes scale with dpr
     };
-    window.addEventListener("resize", resize);
     resize();
 
-    // Track mouse in normalized canvas-space (0..1). Listen on window so the
-    // hover effect picks up the cursor even though the canvas itself has
-    // pointer-events: none.
-    const onPointerMove = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / Math.max(rect.width, 1);
-      const y = (e.clientY - rect.top) / Math.max(rect.height, 1);
-      if (x < 0 || x > 1 || y < 0 || y > 1) {
-        mouseRef.current.x = -1;
-        mouseRef.current.y = -1;
-      } else {
-        mouseRef.current.x = x;
-        mouseRef.current.y = y;
-      }
-    };
-    const onPointerLeave = () => {
-      mouseRef.current.x = -1;
-      mouseRef.current.y = -1;
-    };
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerleave", onPointerLeave);
-    document.addEventListener("mouseleave", onPointerLeave);
-
-    const startT = performance.now();
-
-    const render = () => {
+    // ── Per-clip settings (sent only when they change) ─────────
+    const applySettings = () => {
       const p = propsRef.current;
-      ensureVideo(p.videoUrl);
-      resize();
-
-      const v = current?.entry;
-      if (v && v.el.readyState >= 2) {
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, v.tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v.el);
-        v.ready = true;
-      }
-
-      gl.uniform2f(u.u_viewport, canvas.width, canvas.height);
-      gl.uniform1i(u.u_video, 0);
-      gl.uniform1i(u.u_videoReady, v?.ready ? 1 : 0);
-      gl.uniform2f(u.u_videoPxSize, v?.pxSize.w ?? 1, v?.pxSize.h ?? 1);
-      gl.uniform3f(u.u_bgColor, 0.039, 0.039, 0.039);
-      gl.uniform1f(u.u_time, (performance.now() - startT) / 1000);
+      const pp = p.params;
       gl.uniform1i(u.u_mode, MODE_INDEX[p.mode]);
       gl.uniform1f(u.u_wet, p.wet);
 
-      const pp = p.params;
       gl.uniform1f(u.u_scanline, num(pp, "crt", "crt", "scanlineIntensity", 0.55));
       gl.uniform1f(u.u_mask, num(pp, "crt", "crt", "maskIntensity", 0.55));
       gl.uniform1f(u.u_barrel, num(pp, "crt", "crt", "barrelDistortion", 0.18));
@@ -702,32 +679,14 @@ export default function FxCanvas({
               : 8;
       gl.uniform1f(u.u_cell, cell * dpr);
 
-      // Dither-specific
       gl.uniform1f(u.u_ditherLevels, num(pp, "dither", "dithering", "levels", 3));
       gl.uniform1f(u.u_ditherSpread, num(pp, "dither", "dithering", "spread", 0.5));
-      gl.uniform1i(
-        u.u_ditherAlgo,
-        ALGO_INDEX[str(pp, "dither", "dithering", "algorithm", "bayer")] ?? 0
-      );
+      gl.uniform1i(u.u_ditherAlgo, ALGO_INDEX[str(pp, "dither", "dithering", "algorithm", "bayer")] ?? 0);
       gl.uniform1i(u.u_dithCharMode, num(pp, "dither", "dithering", "charMode", 0) > 0.5 ? 1 : 0);
-      gl.uniform1f(
-        u.u_dithCharSize,
-        num(pp, "dither", "dithering", "charSize", 10) * dpr
-      );
+      gl.uniform1f(u.u_dithCharSize, num(pp, "dither", "dithering", "charSize", 10) * dpr);
 
-      // ASCII-specific
       gl.uniform1i(u.u_asciiInvert, num(pp, "ascii", "ascii", "invert", 0) > 0.5 ? 1 : 0);
-      const charsetIdx: Record<string, number> = {
-        default: 0,
-        dots: 1,
-        blocks: 2,
-        lines: 3,
-        binary: 4,
-      };
-      gl.uniform1i(
-        u.u_asciiCharset,
-        charsetIdx[str(pp, "ascii", "ascii", "charset", "default")] ?? 0
-      );
+      gl.uniform1i(u.u_asciiCharset, ASCII_CHARSET_INDEX[str(pp, "ascii", "ascii", "charset", "default")] ?? 0);
       gl.uniform1f(u.u_asciiThreshold, num(pp, "ascii", "ascii", "presenceThreshold", 0));
       gl.uniform1f(u.u_asciiShimmer, num(pp, "ascii", "ascii", "shimmerAmount", 0));
 
@@ -735,56 +694,120 @@ export default function FxCanvas({
       let paletteIdx = 0;
       let c0Hex = "#0a0a0a", c1Hex = "#ffffff", c2Hex = "#ff00aa", c3Hex = "#00ddff";
       if (p.mode === "ascii") {
-        paletteIdx =
-          ASCII_PALETTE_INDEX[str(pp, "ascii", "ascii", "palette", "video")] ?? 0;
+        paletteIdx = ASCII_PALETTE_INDEX[str(pp, "ascii", "ascii", "palette", "video")] ?? 0;
         c0Hex = str(pp, "ascii", "ascii", "color0", c0Hex);
         c1Hex = str(pp, "ascii", "ascii", "color1", c1Hex);
         c2Hex = str(pp, "ascii", "ascii", "color2", c2Hex);
         c3Hex = str(pp, "ascii", "ascii", "color3", c3Hex);
       } else if (p.mode === "dither") {
-        paletteIdx =
-          DITHER_PALETTE_INDEX[str(pp, "dither", "dithering", "palette", "mono")] ?? 0;
+        paletteIdx = DITHER_PALETTE_INDEX[str(pp, "dither", "dithering", "palette", "mono")] ?? 0;
         c0Hex = str(pp, "dither", "dithering", "color0", c0Hex);
         c1Hex = str(pp, "dither", "dithering", "color1", c1Hex);
         c2Hex = str(pp, "dither", "dithering", "color2", c2Hex);
         c3Hex = str(pp, "dither", "dithering", "color3", c3Hex);
       }
       gl.uniform1i(u.u_palette, paletteIdx);
-      const c0 = hexToRgb(c0Hex);
-      const c1 = hexToRgb(c1Hex);
-      const c2 = hexToRgb(c2Hex);
-      const c3 = hexToRgb(c3Hex);
-      gl.uniform3f(u.u_pal0, c0[0], c0[1], c0[2]);
-      gl.uniform3f(u.u_pal1, c1[0], c1[1], c1[2]);
-      gl.uniform3f(u.u_pal2, c2[0], c2[1], c2[2]);
-      gl.uniform3f(u.u_pal3, c3[0], c3[1], c3[2]);
+      gl.uniform3fv(u.u_pal0, hexToRgb(c0Hex));
+      gl.uniform3fv(u.u_pal1, hexToRgb(c1Hex));
+      gl.uniform3fv(u.u_pal2, hexToRgb(c2Hex));
+      gl.uniform3fv(u.u_pal3, hexToRgb(c3Hex));
 
-      // Hover is now scene-level — applies to ALL modes uniformly.
       gl.uniform1i(u.u_hoverEnabled, p.hover.enabled ? 1 : 0);
       gl.uniform1i(u.u_hoverEffect, HOVER_EFFECT_INDEX[p.hover.effect] ?? 0);
       gl.uniform1f(u.u_hoverRadius, p.hover.radius);
       gl.uniform1f(u.u_hoverIntensity, p.hover.intensity);
-      gl.uniform2f(u.u_mouse, mouseRef.current.x, mouseRef.current.y);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      rafId = requestAnimationFrame(render);
     };
-    rafId = requestAnimationFrame(render);
+
+    // ── Mouse ──────────────────────────────────────────────────
+    // Listen on window so hover works even though the canvas has
+    // pointer-events: none. Skipped entirely when hover is off.
+    let rect = canvas.getBoundingClientRect();
+    const ro = new ResizeObserver(() => {
+      resize();
+      rect = canvas.getBoundingClientRect();
+    });
+    ro.observe(canvas);
+    const onPointerMove = (e: PointerEvent) => {
+      if (!propsRef.current.hover.enabled) return;
+      const x = (e.clientX - rect.left) / Math.max(rect.width, 1);
+      const y = (e.clientY - rect.top) / Math.max(rect.height, 1);
+      const inside = x >= 0 && x <= 1 && y >= 0 && y <= 1;
+      mouseRef.current.x = inside ? x : -1;
+      mouseRef.current.y = inside ? y : -1;
+    };
+    const onPointerLeave = () => {
+      mouseRef.current.x = -1;
+      mouseRef.current.y = -1;
+    };
+    // Bounded previews can move with page scroll; keep their rect fresh.
+    const onScroll = () => {
+      if (!fixed) rect = canvas.getBoundingClientRect();
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("mouseleave", onPointerLeave);
+
+    // ── Loop ───────────────────────────────────────────────────
+    const startT = performance.now();
+    let rafId = 0;
+    const render = () => {
+      rafId = requestAnimationFrame(render);
+      syncVideo();
+      if (settingsDirtyRef.current) {
+        settingsDirtyRef.current = false;
+        applySettings();
+      }
+
+      if (current) uploadFrame(current);
+      if (current?.ready && prev) {
+        dispose(prev);
+        prev = null;
+      }
+      if (prev) uploadFrame(prev);
+      const v = current?.ready ? current : prev ?? current;
+      if (v) gl.bindTexture(gl.TEXTURE_2D, v.tex);
+
+      gl.uniform1i(u.u_videoReady, v?.ready ? 1 : 0);
+      gl.uniform2f(u.u_videoPxSize, v?.pxSize.w ?? 1, v?.pxSize.h ?? 1);
+      gl.uniform1f(u.u_time, (performance.now() - startT) / 1000);
+      gl.uniform2f(u.u_mouse, mouseRef.current.x, mouseRef.current.y);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+
+    // Stop drawing (and decoding) while the tab is hidden.
+    const onVisibility = () => {
+      cancelAnimationFrame(rafId);
+      if (document.hidden) {
+        current?.el.pause();
+        prev?.el.pause();
+      } else {
+        current?.el.play().catch(() => {});
+        prev?.el.play().catch(() => {});
+        rafId = requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    if (!document.hidden) rafId = requestAnimationFrame(render);
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("scroll", onScroll);
       document.removeEventListener("mouseleave", onPointerLeave);
-      if (current) {
-        current.entry.el.pause();
-        current.entry.el.removeEventListener("loadedmetadata", current.entry.onMeta);
-        current.entry.el.removeAttribute("src");
-        current.entry.el.load();
-        current = null;
-      }
+      document.removeEventListener("visibilitychange", onVisibility);
+      dispose(current);
+      dispose(prev);
+      current = prev = null;
+      gl.deleteBuffer(buf);
+      gl.deleteProgram(prog);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      // Free the context now rather than waiting for GC; browsers cap live
+      // WebGL contexts (~16) and drop the oldest when it's exceeded.
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const effectiveZ = zIndex ?? 0;

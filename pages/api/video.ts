@@ -45,14 +45,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     upstreamHeaders["If-Modified-Since"] = String(req.headers["if-modified-since"]);
   }
 
+  // Stop pulling from upstream as soon as the viewer goes away (seek, clip
+  // change, tab closed) instead of streaming the rest of the file for nothing.
+  const abort = new AbortController();
+  res.on("close", () => abort.abort());
+
   let upstream: Response;
   try {
     upstream = await fetch(target, {
       method: req.method,
       headers: upstreamHeaders,
       redirect: "follow",
+      signal: abort.signal,
     });
   } catch (err) {
+    if (abort.signal.aborted) return;
     console.error("[/api/video] fetch failed:", err);
     res.status(502).end("Upstream fetch failed");
     return;
@@ -72,7 +79,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const v = upstream.headers.get(h);
     if (v) res.setHeader(h, v);
   }
-  res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+  // Cache real video bytes for a day; never cache a 404 or upstream error.
+  res.setHeader(
+    "Cache-Control",
+    upstream.ok ? "public, max-age=86400, stale-while-revalidate=604800" : "no-store",
+  );
   res.status(upstream.status);
 
   if (req.method === "HEAD" || !upstream.body) {
@@ -83,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Pipe Web ReadableStream → Node response.
   const nodeStream = Readable.fromWeb(upstream.body as never);
   nodeStream.on("error", (err) => {
-    console.error("[/api/video] stream error:", err);
+    if (!abort.signal.aborted) console.error("[/api/video] stream error:", err);
     res.end();
   });
   nodeStream.pipe(res);

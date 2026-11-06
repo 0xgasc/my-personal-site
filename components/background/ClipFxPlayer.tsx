@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import FxCanvas from "./FxCanvas";
+import { resolveVideoSrc } from "@/lib/clips/resolveVideoSrc";
 import type { Clip } from "@/lib/clips/types";
 
 interface Props {
@@ -136,8 +137,9 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
 
   return (
     <>
+      {/* One canvas for the whole session: clip changes swap the video and
+          settings in place instead of rebuilding the WebGL context. */}
       <FxCanvas
-        key={`${active.id}:${jumpKey}`}
         videoUrl={active.videoUrl}
         videoOpacity={1}
         videoBlur={0}
@@ -148,11 +150,12 @@ export default function ClipFxPlayer({ clips, zIndex = 0, onActiveClipChange }: 
         fixed
         zIndex={zIndex}
         initialSeekSec={seekTarget}
+        seekKey={jumpKey}
       />
       {queued && queued.videoUrl !== active.videoUrl && (
         <video
           key={`q:${queued.id}`}
-          src={queued.videoUrl}
+          src={resolveVideoSrc(queued.videoUrl)}
           preload="auto"
           muted
           playsInline
