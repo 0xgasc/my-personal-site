@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import BackgroundMount from './BackgroundMount'
 import SceneCycler from './SceneCycler'
@@ -23,12 +24,22 @@ export default function Layout({ children }) {
   const router = useRouter()
   const pageKey = routeToPageKey(router.pathname)
 
+  // Signed-in owner sees an "edit" shortcut; visitors never do.
+  const [isAdmin, setIsAdmin] = useState(false)
+  useEffect(() => {
+    fetch('/api/admin/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setIsAdmin(Boolean(j?.admin)))
+      .catch(() => {})
+  }, [])
+
   const nav = [
     { name: t.nav.home, href: '/' },
     { name: t.nav.background, href: '/career' },
     { name: t.nav.collection, href: '/collection' },
     { name: t.nav.experiments, href: '/experiments' },
     { name: t.nav.tip, href: '/tip' },
+    { name: t.nav.guestbook, href: '/guestbook' },
     { name: t.nav.contact, href: '/contact' },
   ]
 
@@ -59,6 +70,7 @@ export default function Layout({ children }) {
                   {darkMode ? 'light' : 'dark'}
                 </button>
                 <SceneCycler darkMode={darkMode} />
+                {isAdmin && <Link href="/admin/guestbook" className="plain" style={{ color: 'var(--text-secondary)' }}>edit</Link>}
               </div>
             </header>
             {children}

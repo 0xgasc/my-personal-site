@@ -29,6 +29,12 @@ interface Props {
   /** Change this to re-seek to `initialSeekSec` (or switch to a new
    *  videoUrl) without tearing down the WebGL context. */
   seekKey?: number;
+  /** Render a still image instead of the video (takes precedence). Must be
+   *  same-origin or CORS-enabled, or the canvas can't be read back. */
+  imageUrl?: string | null;
+  /** Filled with a function that renders a frame and returns it as a JPEG
+   *  data URL (null if the image isn't loaded yet). */
+  captureRef?: { current: ((quality?: number) => string | null) | null };
 }
 
 /**
@@ -473,11 +479,13 @@ export default function FxCanvas({
   zIndex,
   initialSeekSec,
   seekKey = 0,
+  imageUrl = null,
+  captureRef,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const effectiveHover = hover ?? DEFAULT_HOVER;
-  const propsRef = useRef({ videoUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey });
-  propsRef.current = { videoUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey };
+  const propsRef = useRef({ videoUrl, imageUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey });
+  propsRef.current = { videoUrl, imageUrl, mode, params, wet, hover: effectiveHover, initialSeekSec, seekKey };
   // Mouse in normalized 0..1 coords relative to the canvas. (-1,-1) = inactive.
   const mouseRef = useRef({ x: -1, y: -1 });
   // Set when the per-clip settings change so uniforms are re-sent once,
@@ -595,6 +603,40 @@ export default function FxCanvas({
       } catch {
         // some browsers reject seeks before canplay
       }
+    };
+
+    // ── Still image ────────────────────────────────────────────
+    let still: { src: string; tex: WebGLTexture; pxSize: { w: number; h: number }; ready: boolean; el: HTMLImageElement } | null = null;
+    const disposeStill = () => {
+      if (!still) return;
+      still.el.onload = null;
+      gl.deleteTexture(still.tex);
+      still = null;
+    };
+    const syncImage = () => {
+      const src = propsRef.current.imageUrl;
+      if (!src) return disposeStill();
+      if (still?.src === src) return;
+      disposeStill();
+      const tex = gl.createTexture()!;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([10, 10, 10, 255]));
+      const el = new Image();
+      el.crossOrigin = "anonymous";
+      const entry = { src, tex, pxSize: { w: 1, h: 1 }, ready: false, el };
+      el.onload = () => {
+        if (still !== entry) return;
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, el);
+        entry.pxSize = { w: el.naturalWidth || 1, h: el.naturalHeight || 1 };
+        entry.ready = true;
+      };
+      el.src = src;
+      still = entry;
     };
 
     let lastSeekKey = propsRef.current.seekKey;
@@ -750,12 +792,19 @@ export default function FxCanvas({
     // ── Loop ───────────────────────────────────────────────────
     const startT = performance.now();
     let rafId = 0;
-    const render = () => {
-      rafId = requestAnimationFrame(render);
-      syncVideo();
+    const draw = () => {
       if (settingsDirtyRef.current) {
         settingsDirtyRef.current = false;
         applySettings();
+      }
+      if (still) {
+        gl.bindTexture(gl.TEXTURE_2D, still.tex);
+        gl.uniform1i(u.u_videoReady, still.ready ? 1 : 0);
+        gl.uniform2f(u.u_videoPxSize, still.pxSize.w, still.pxSize.h);
+        gl.uniform1f(u.u_time, (performance.now() - startT) / 1000);
+        gl.uniform2f(u.u_mouse, mouseRef.current.x, mouseRef.current.y);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        return;
       }
 
       if (current) uploadFrame(current);
@@ -773,6 +822,25 @@ export default function FxCanvas({
       gl.uniform2f(u.u_mouse, mouseRef.current.x, mouseRef.current.y);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
+    const render = () => {
+      rafId = requestAnimationFrame(render);
+      syncImage();
+      if (!still) syncVideo();
+      draw();
+    };
+    if (captureRef) {
+      // Without preserveDrawingBuffer the canvas can only be read in the same
+      // task that drew it, so draw a fresh frame right before reading.
+      captureRef.current = (quality = 0.9) => {
+        if (!still?.ready) return null;
+        draw();
+        try {
+          return canvas.toDataURL("image/jpeg", quality);
+        } catch {
+          return null; // tainted (image without CORS)
+        }
+      };
+    }
 
     // Stop drawing (and decoding) while the tab is hidden.
     const onVisibility = () => {
@@ -799,6 +867,8 @@ export default function FxCanvas({
       dispose(current);
       dispose(prev);
       current = prev = null;
+      disposeStill();
+      if (captureRef) captureRef.current = null;
       gl.deleteBuffer(buf);
       gl.deleteProgram(prog);
       gl.deleteShader(vs);

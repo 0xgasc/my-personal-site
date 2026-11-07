@@ -16,6 +16,7 @@ const navItems = [
   { href: "/admin", label: "Clips" },
   { href: "/admin/upload", label: "Upload" },
   { href: "/admin/portfolio", label: "Portfolio" },
+  { href: "/admin/guestbook", label: "Guestbook" },
   { href: "/admin/content", label: "Content" },
   { href: "/admin/media", label: "Media" },
   { href: "/admin/sections", label: "Sections" },

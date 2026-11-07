@@ -12,6 +12,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(400).json({ error: "Missing page" });
     return;
   }
+  // Pages starting with "_" are internal (e.g. the guestbook's pending entries).
+  if (page.startsWith("_")) {
+    res.status(200).json({ sections: [] });
+    return;
+  }
   try {
     const sections = await listSectionsForPage(page, false);
     res.setHeader(

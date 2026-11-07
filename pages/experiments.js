@@ -5,6 +5,7 @@ import { stagger, fadeUp } from "@/lib/motion"
 import { useApp } from "@/contexts/AppContext"
 import { useTranslation } from "@/lib/translations"
 import Lightbox from "@/components/gallery/Lightbox"
+import SiteModal from "@/components/gallery/SiteModal"
 
 // ── Static: coined moments ────
 // Self-hosted copies of the on-chain originals (Zora IPFS / Base Arweave);
@@ -39,6 +40,7 @@ const fallbackProjects = (t) => [
     description: t.experiments.umoDesc,
     link: "https://umo.livemoments.online/songs",
     src: "https://offsetworks.xyz/images/umo-screenshot.jpg",
+    embed: "https://umo.livemoments.online",
   },
   {
     id: "flyin",
@@ -46,6 +48,7 @@ const fallbackProjects = (t) => [
     description: t.experiments.flyinguateDesc,
     link: "https://flyinguate.com/",
     src: "https://offsetworks.xyz/images/flyin-screenshot.jpg",
+    embed: "https://flyinguate.com/",
   },
   {
     id: "stablepay",
@@ -53,6 +56,7 @@ const fallbackProjects = (t) => [
     description: t.experiments.stablepayDesc,
     link: "https://wetakestables.shop/",
     src: "/projects/wetakestables.jpg",
+    embed: "https://wetakestables.shop/",
   },
   {
     id: "tiqueteo",
@@ -60,6 +64,7 @@ const fallbackProjects = (t) => [
     description: t.experiments.tiqueteoDesc,
     link: "https://www.tiqueteo.xyz/",
     src: "https://offsetworks.xyz/images/tiqueteo-screenshot.jpg",
+    embed: "https://www.tiqueteo.xyz/",
   },
 ]
 
@@ -103,6 +108,7 @@ export default function Experiments() {
   const { darkMode, language } = useApp()
   const t = useTranslation(language)
   const [lightboxOpen, setLightboxOpen] = useState(null)
+  const [site, setSite] = useState(null)
 
   const { items: dbProjects } = usePortfolioItems("project")
   const { items: dbStretch } = usePortfolioItems("stretch_study")
@@ -162,31 +168,35 @@ export default function Experiments() {
       </motion.p>
 
       <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
-        {projects.map((p) => (
-          <a
-            key={p.id}
-            href={p.link || undefined}
-            target="_blank"
-            rel="noreferrer"
-            className={`plain group overflow-hidden border transition-colors duration-150 ${
-              p.link ? "cursor-pointer hover:border-gray-500" : "cursor-default"
-            }`}
-            style={{ borderColor: "var(--border-subtle)", background: "var(--accent-subtle)" }}
-          >
-            {p.src && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={p.src}
-                alt={p.title}
-                className="w-full aspect-video object-cover group-hover:opacity-90 transition-opacity"
-              />
-            )}
-            <div className="p-4">
-              <p className="font-medium text-sm mb-1">{p.title}</p>
-              {p.description && <p className={`text-xs leading-relaxed ${muted}`}>{p.description}</p>}
-            </div>
-          </a>
-        ))}
+        {projects.map((p) => {
+          // Clicking a card opens the live site in a modal; sites without an
+          // embed (e.g. CMS rows) still open the modal with their link.
+          const url = p.embed || p.link
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => url && setSite({ title: p.title, url, link: p.link || url })}
+              className={`group text-left overflow-hidden border transition-colors duration-150 ${
+                url ? "cursor-pointer hover:border-gray-500" : "cursor-default"
+              }`}
+              style={{ borderColor: "var(--border-subtle)", background: "var(--accent-subtle)" }}
+            >
+              {p.src && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={p.src}
+                  alt={p.title}
+                  className="w-full aspect-video object-cover group-hover:opacity-90 transition-opacity"
+                />
+              )}
+              <div className="p-4">
+                <p className="font-medium text-sm mb-1">{p.title}</p>
+                {p.description && <p className={`text-xs leading-relaxed ${muted}`}>{p.description}</p>}
+              </div>
+            </button>
+          )
+        })}
       </motion.div>
 
       <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
@@ -266,6 +276,8 @@ export default function Experiments() {
           </motion.div>
         </>
       )}
+
+      <SiteModal site={site} onClose={() => setSite(null)} strings={t.site} />
 
       {lightboxOpen && (
         <Lightbox

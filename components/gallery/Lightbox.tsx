@@ -3,6 +3,26 @@
 import { useEffect, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import RemixStudio, { type RemixStrings } from "./RemixStudio";
+import { shadedBackdropStyle, BackdropGrain } from "./ShadedBackdrop";
+
+/**
+ * The shaders can only read images that are same-origin or CORS-enabled.
+ * Local files, the weserv proxy and Supabase storage are; anything else on
+ * https is routed through weserv. Returns null when it can't be remixed.
+ */
+export function remixSource(src: string | undefined): string | null {
+  if (!src) return null;
+  if (src.startsWith("/") && !src.startsWith("//")) return src;
+  try {
+    const u = new URL(src);
+    if (u.hostname === "images.weserv.nl" || u.hostname.endsWith(".supabase.co")) return src;
+    if (u.protocol !== "https:") return null;
+    return `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=1600&output=jpg&q=90`;
+  } catch {
+    return null;
+  }
+}
 
 export interface LightboxItem {
   /** Thumbnail src used in the grid. */
@@ -25,7 +45,9 @@ interface Props {
     falling?: string;
     cannotLoad?: string;
     viewOnChain?: string;
-  };
+    remix?: string;
+    back?: string;
+  } & Partial<RemixStrings>;
 }
 
 /**
@@ -38,7 +60,23 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
     falling: strings?.falling ?? "falling back to thumb…",
     cannotLoad: strings?.cannotLoad ?? "Image couldn't load.",
     viewOnChain: strings?.viewOnChain ?? "View on chain ↗",
+    remix: strings?.remix ?? "remix",
+    back: strings?.back ?? "back",
   };
+  const remixStrings: RemixStrings = {
+    wet: strings?.wet ?? "wet",
+    amount: strings?.amount ?? "amount",
+    palette: strings?.palette ?? "palette",
+    save: strings?.save ?? "save",
+    submit: strings?.submit ?? "submit to guestbook",
+    name: strings?.name ?? "name",
+    note: strings?.note ?? "note (optional)",
+    send: strings?.send ?? "send",
+    sending: strings?.sending ?? "sending…",
+    sent: strings?.sent ?? "sent — it shows after review",
+    failed: strings?.failed ?? "couldn't send, try again",
+  };
+  const [remixing, setRemixing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
   const [loaded, setLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -52,6 +90,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
     setLoaded(false);
     setImageError(false);
     setUsingFallback(false);
+    setRemixing(false);
     const id = setTimeout(() => setLoaded(true), 8000);
     return () => clearTimeout(id);
   }, [currentIndex]);
@@ -85,6 +124,9 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      // Leave arrow keys to sliders and text fields.
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
@@ -124,13 +166,10 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
           className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{
-            background: "rgba(0,0,0,0.92)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-          }}
+          style={shadedBackdropStyle}
           onClick={onClose}
         >
+          <BackdropGrain />
           {/* Image container */}
           <motion.div
             key={currentIndex}
@@ -138,11 +177,19 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="relative max-w-[90vw] max-h-[85vh] flex flex-col items-center"
+            className="relative max-w-[90vw] max-h-[92vh] overflow-y-auto flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {remixing && (
+              <RemixStudio
+                src={remixSource(current.full && !usingFallback ? current.full : current.src)!}
+                title={current.title ?? current.alt}
+                link={current.link}
+                strings={remixStrings}
+              />
+            )}
             {/* Image */}
-            <div className="relative flex items-center justify-center">
+            <div className={`relative flex items-center justify-center ${remixing ? "hidden" : ""}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={
@@ -211,7 +258,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.3 }}
-              className="mt-4 flex items-center gap-4"
+              className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
             >
               {current.title && (
                 <span className="text-white/80 text-sm font-medium tracking-wide">
@@ -227,6 +274,19 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
                 >
                   {s.viewOnChain}
                 </a>
+              )}
+              {remixSource(current.full && !usingFallback ? current.full : current.src) && !imageError && (
+                <button
+                  type="button"
+                  onClick={() => setRemixing((r) => !r)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                    remixing
+                      ? "border-white/30 text-white/70 hover:text-white"
+                      : "bg-white text-black border-white hover:bg-white/85"
+                  }`}
+                >
+                  {remixing ? s.back : s.remix}
+                </button>
               )}
               <span className="text-white/30 text-xs">
                 {currentIndex + 1} / {items.length}
@@ -246,7 +306,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           </button>
 
           {/* Prev / Next arrows */}
-          {hasPrev && (
+          {hasPrev && !remixing && (
             <button
               onClick={goPrev}
               className="fixed left-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
@@ -257,7 +317,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
               </svg>
             </button>
           )}
-          {hasNext && (
+          {hasNext && !remixing && (
             <button
               onClick={goNext}
               className="fixed right-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
@@ -270,7 +330,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           )}
 
           {/* Dots at bottom */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] flex gap-2">
+          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] flex gap-2 ${remixing ? "hidden" : ""}`}>
             {items.map((_, i) => (
               <button
                 key={i}
