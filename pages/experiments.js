@@ -51,8 +51,8 @@ const fallbackProjects = (t) => [
     id: "stablepay",
     title: t.experiments.stablepay,
     description: t.experiments.stablepayDesc,
-    link: "https://stablepay-nine.vercel.app/",
-    src: "https://offsetworks.xyz/images/stablepay-screenshot.png",
+    link: "https://wetakestables.shop/",
+    src: "/projects/wetakestables.jpg",
   },
   {
     id: "tiqueteo",
@@ -117,6 +117,44 @@ export default function Experiments() {
   return (
     <motion.div className="w-full" variants={stagger} initial="hidden" animate="visible">
       <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
+        {t.experiments.stretchStudies}
+      </motion.h2>
+      <motion.p variants={fadeUp} className={`mb-6 max-w-3xl text-sm leading-relaxed ${muted}`}>
+        {t.experiments.stretchDesc}
+      </motion.p>
+
+      <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-12 max-w-3xl">
+        {stretchStudies.map((item, i) => (
+          <motion.button
+            key={item.id}
+            whileHover={{ opacity: 0.85 }}
+            whileTap={{ opacity: 0.7 }}
+            onClick={() =>
+              openLightbox(
+                stretchStudies.map((s) => ({ src: s.src, alt: s.title, title: s.title, link: s.link })),
+                i,
+              )
+            }
+            className="group relative overflow-hidden focus:outline-none"
+            style={{ border: "1px solid var(--border-subtle)" }}
+          >
+            <Image
+              src={item.src}
+              alt={item.title}
+              width={400}
+              height={400}
+              className="w-full aspect-square object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
+              <span className="block text-left text-xs truncate" style={{ color: "#f2f1ee" }}>
+                {item.title}
+              </span>
+            </div>
+          </motion.button>
+        ))}
+      </motion.div>
+
+      <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
         {t.experiments.bespokeApps}
       </motion.h2>
       <motion.p variants={fadeUp} className={`mb-6 text-sm leading-relaxed ${muted}`}>
@@ -174,44 +212,6 @@ export default function Experiments() {
               width={400}
               height={500}
               className="w-full aspect-[3/4] object-cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
-              <span className="block text-left text-xs truncate" style={{ color: "#f2f1ee" }}>
-                {item.title}
-              </span>
-            </div>
-          </motion.button>
-        ))}
-      </motion.div>
-
-      <motion.h2 variants={fadeUp} className="text-xl font-semibold mb-3">
-        {t.experiments.stretchStudies}
-      </motion.h2>
-      <motion.p variants={fadeUp} className={`mb-6 max-w-3xl text-sm leading-relaxed ${muted}`}>
-        {t.experiments.stretchDesc}
-      </motion.p>
-
-      <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-12 max-w-3xl">
-        {stretchStudies.map((item, i) => (
-          <motion.button
-            key={item.id}
-            whileHover={{ opacity: 0.85 }}
-            whileTap={{ opacity: 0.7 }}
-            onClick={() =>
-              openLightbox(
-                stretchStudies.map((s) => ({ src: s.src, alt: s.title, title: s.title, link: s.link })),
-                i,
-              )
-            }
-            className="group relative overflow-hidden focus:outline-none"
-            style={{ border: "1px solid var(--border-subtle)" }}
-          >
-            <Image
-              src={item.src}
-              alt={item.title}
-              width={400}
-              height={400}
-              className="w-full aspect-square object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
               <span className="block text-left text-xs truncate" style={{ color: "#f2f1ee" }}>
