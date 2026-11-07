@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import BackgroundMount from './BackgroundMount'
 import SceneCycler from './SceneCycler'
@@ -33,6 +33,33 @@ export default function Layout({ children }) {
       .catch(() => {})
   }, [])
 
+  // Phone status bar follows the theme.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', darkMode ? '#0a0a0b' : '#efeee9')
+    document.documentElement.style.colorScheme = darkMode ? 'dark' : 'light'
+  }, [darkMode])
+
+  // On phones the nav scrolls sideways: keep the current page in view and
+  // drop the edge fade once the end is reached.
+  const navRef = useRef(null)
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const active = el.querySelector('[aria-current="page"]')
+    if (active && el.scrollWidth > el.clientWidth) {
+      el.scrollLeft = Math.max(0, active.offsetLeft - el.offsetLeft - el.clientWidth / 2 + active.offsetWidth / 2)
+    }
+    const onScroll = () => el.classList.toggle('at-end', el.scrollLeft + el.clientWidth >= el.scrollWidth - 2)
+    onScroll()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [router.pathname, language])
+
   const nav = [
     { name: t.nav.home, href: '/' },
     { name: t.nav.background, href: '/career' },
@@ -47,11 +74,11 @@ export default function Layout({ children }) {
     <div className={`relative min-h-screen flex flex-col ${darkMode ? 'dark' : 'light'}`}>
       <BackgroundMount />
 
-      <main className="relative z-10 flex-grow flex justify-center px-5 pt-10 pb-12 max-sm:pt-5">
+      <main className="relative z-10 flex-grow flex justify-center px-5 pt-10 pb-12 max-sm:px-2.5 max-sm:pt-2.5 max-sm:pb-8">
         <div className="w-full max-w-3xl">
           <div className="glass-card">
             <header className="site-head">
-              <nav className="site-nav">
+              <nav className="site-nav" ref={navRef}>
                 {nav.map((item) => (
                   <Link
                     key={item.href}

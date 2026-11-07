@@ -38,7 +38,9 @@ const tezosGallery = tezosOriginals.map((o) => {
 const vaultGallery = [
   { src: "https://art-blocks-explorations-mainnet.s3.amazonaws.com/12686.png", alt: "Friendship Bracelet by Alexis Andre and Snowfro", title: "Friendship Bracelet — Alexis Andre + Snowfro", link: "https://opensea.io/item/ethereum/0x942bc2d3e7a589fe5bd4a5c6ef9727dfd82f5c8a/12686" },
   { src: "https://i2.seadn.io/ethereum/0x8585103b49286a40d61f4c8286aab516601f6786/1c88d763ca63bd325e7c8b6bc864644c.jpeg?w=1000", alt: "Fiat Dude by Alejandro Peters", title: "Fiat Dude — Alejandro Peters", link: "https://opensea.io/item/ethereum/0x8585103b49286a40d61f4c8286aab516601f6786/18" },
-  { src: "https://i2.seadn.io/ethereum/0x232a68a51d6e07357ae025d2a459c16077327102/d8ec1c65324b53f9cbeca81514d63b/02d8ec1c65324b53f9cbeca81514d63b.gif?w=1000", alt: "Max Pain v2 by Alpha Centaury Kid", title: "Max Pain v2 — Alpha Centaury Kid", link: "https://opensea.io/item/ethereum/0x232a68a51d6e07357ae025d2a459c16077327102/14" },
+  // Animated GIF: next/image can't shrink it (730KB), so the grid gets a
+  // small animated WebP from weserv and the lightbox keeps the original.
+  { src: `https://images.weserv.nl/?url=${encodeURIComponent("https://i2.seadn.io/ethereum/0x232a68a51d6e07357ae025d2a459c16077327102/d8ec1c65324b53f9cbeca81514d63b/02d8ec1c65324b53f9cbeca81514d63b.gif")}&w=400&h=400&fit=cover&n=-1&output=webp`, full: "https://i2.seadn.io/ethereum/0x232a68a51d6e07357ae025d2a459c16077327102/d8ec1c65324b53f9cbeca81514d63b/02d8ec1c65324b53f9cbeca81514d63b.gif?w=1000", alt: "Max Pain v2 by Alpha Centaury Kid", title: "Max Pain v2 — Alpha Centaury Kid", link: "https://opensea.io/item/ethereum/0x232a68a51d6e07357ae025d2a459c16077327102/14" },
   { src: "https://raw2.seadn.io/ethereum/0x33fd426905f149f8376e227d0c9d3340aad17af1/579216d77a7580dd8cf08db689324f/10579216d77a7580dd8cf08db689324f.jpeg", alt: "Uncle Seize, 6529er", title: "Uncle Seize — 6529er", link: "https://opensea.io/item/ethereum/0x33fd426905f149f8376e227d0c9d3340aad17af1/3" },
   { src: "https://i2.seadn.io/ethereum/0x68930072647a0d79e601d5ee3914833ae9148247/463e210b12cfda412a6f84ef12d74801.png?w=1000", alt: "Wavelength by Kaleb Johnston", title: "Wavelength — Kaleb Johnston", link: "https://opensea.io/item/ethereum/0x68930072647a0d79e601d5ee3914833ae9148247/878" },
   { src: "https://i2.seadn.io/ethereum/0x33fd426905f149f8376e227d0c9d3340aad17af1/870b0bfc37bd9e6294fb2d955aad2d/df870b0bfc37bd9e6294fb2d955aad2d.jpeg?w=1000", alt: "Sgt Pepe by Ars0nic", title: "Sgt Pepe — Ars0nic", link: "https://opensea.io/item/ethereum/0x33fd426905f149f8376e227d0c9d3340aad17af1/37" },
@@ -65,13 +67,13 @@ export default function Collection() {
 
       {/* Gallery: Random Collectibles */}
       <motion.section variants={fadeUp} className="mb-12">
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="flex items-baseline justify-between gap-3 mb-1">
           <h2>{t.collection.galleryRandom}</h2>
           <a
             href="https://opensea.io/gallery/0xd573becb6a6b0a0d43065d468d07787ca65daf8a/0ede10101eb1468b9a3978a9da1eca28"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+            className="shrink-0 whitespace-nowrap text-xs opacity-60 hover:opacity-100 transition-opacity"
           >
             OpenSea ↗
           </a>
@@ -93,6 +95,7 @@ export default function Collection() {
                 alt={item.alt}
                 width={400}
                 height={400}
+                sizes="(max-width: 640px) 50vw, 240px"
                 className="w-full aspect-square object-cover"
               />
               <div className="overlay" />
@@ -106,13 +109,13 @@ export default function Collection() {
 
       {/* Gallery: Tezos Evergreen */}
       <motion.section variants={fadeUp} className="mb-12">
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="flex items-baseline justify-between gap-3 mb-1">
           <h2>{t.collection.galleryEvergreen}</h2>
           <a
             href="https://objkt.com/curations/objkt/exploring-the-evergreen-b3fe55e2"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+            className="shrink-0 whitespace-nowrap text-xs opacity-60 hover:opacity-100 transition-opacity"
           >
             Objkt ↗
           </a>
@@ -132,6 +135,8 @@ export default function Collection() {
               <img
                 src={item.src}
                 alt={item.alt}
+                loading="lazy"
+                decoding="async"
                 className="w-full aspect-square object-cover"
               />
               <div className="overlay" />
@@ -145,13 +150,13 @@ export default function Collection() {
 
       {/* Vault: Memetic Artifacts */}
       <motion.section variants={fadeUp} className="mb-12">
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="flex items-baseline justify-between gap-3 mb-1">
           <h2>{t.collection.vaultMemetic}</h2>
           <a
             href="https://opensea.io/0x69c8c2923005d26eaeea9500d7602eff8c81c848"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+            className="shrink-0 whitespace-nowrap text-xs opacity-60 hover:opacity-100 transition-opacity"
           >
             OpenSea ↗
           </a>
@@ -168,13 +173,19 @@ export default function Collection() {
               onClick={() => openLightbox(vaultGallery, i)}
               className="gallery-item"
             >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                width={400}
-                height={400}
-                className="w-full aspect-square object-cover"
-              />
+              {item.full ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={item.src} alt={item.alt} loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
+              ) : (
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  width={400}
+                  height={400}
+                  sizes="(max-width: 640px) 50vw, 240px"
+                  className="w-full aspect-square object-cover"
+                />
+              )}
               <div className="overlay" />
               <div className="caption">
                 <p className="text-white text-xs font-medium truncate">{item.title}</p>

@@ -1,10 +1,16 @@
 // pages/_app.js
 import { useRouter } from 'next/router'
+import { IBM_Plex_Mono } from 'next/font/google'
 import { AnimatePresence, motion } from 'framer-motion'
 import Layout from '@/components/components/layout'
 import { AppProvider } from '@/contexts/AppContext'
 import { initOverrides } from '@/lib/translations'
 import '@/styles/globals.css'
+
+// Self-hosted and preloaded: no render-blocking Google Fonts request.
+// Exposed as a CSS variable on :root so portals (lightbox, modals) get it too.
+const plex = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'], display: 'swap' })
+const fontVar = <style jsx global>{`:root { --font-plex: ${plex.style.fontFamily}; }`}</style>
 
 // ── Page transition variants ──────────────────────────────
 const pageVariants = {
@@ -26,6 +32,7 @@ export default function App({ Component, pageProps, overrides }) {
   if (isFullscreen) {
     return (
       <AppProvider>
+        {fontVar}
         <Component {...pageProps} />
       </AppProvider>
     )
@@ -33,6 +40,7 @@ export default function App({ Component, pageProps, overrides }) {
 
   return (
     <AppProvider>
+      {fontVar}
       <Layout>
         <AnimatePresence mode="wait">
           <motion.div

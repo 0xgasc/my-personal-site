@@ -1,4 +1,31 @@
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
+
+/**
+ * While a full-screen modal is open: lock page scroll (iOS-safe) and flag
+ * <html data-modal="1"> so the background shader stops drawing underneath.
+ */
+export function useModalOpen(open: boolean) {
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const y = window.scrollY;
+    const prev = { overflow: body.style.overflow, position: body.style.position, top: body.style.top, width: body.style.width };
+    html.dataset.modal = "1";
+    body.style.overflow = "hidden";
+    // iOS Safari ignores overflow:hidden on body; pinning it stops the page
+    // scrolling behind the modal.
+    body.style.position = "fixed";
+    body.style.top = `-${y}px`;
+    body.style.width = "100%";
+    return () => {
+      delete html.dataset.modal;
+      Object.assign(body.style, prev);
+      // "instant": html has scroll-behavior:smooth, which would animate from the top.
+      window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+    };
+  }, [open]);
+}
 
 /** Dark vignette + blur behind modals, so the page recedes like a lit stage. */
 export const shadedBackdropStyle: CSSProperties = {

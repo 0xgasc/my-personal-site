@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import RemixStudio, { type RemixStrings } from "./RemixStudio";
-import { shadedBackdropStyle, BackdropGrain } from "./ShadedBackdrop";
+import { shadedBackdropStyle, BackdropGrain, useModalOpen } from "./ShadedBackdrop";
 
 /**
  * The shaders can only read images that are same-origin or CORS-enabled.
@@ -134,13 +134,24 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, goPrev, goNext]);
 
-  // Lock body scroll
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
+  useModalOpen(true);
+
+  // Swipe left/right on touch screens (off while remixing: sliders need the drag).
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (remixing || e.touches.length !== 1) return;
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start || remixing) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) goNext();
+    else goPrev();
+  };
 
   const isOpen = initialIndex !== null && initialIndex !== undefined;
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
@@ -165,9 +176,11 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[100] flex items-center justify-center max-sm:px-4 max-sm:pt-16 max-sm:pb-12"
           style={shadedBackdropStyle}
           onClick={onClose}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
         >
           <BackdropGrain />
           {/* Image container */}
@@ -177,7 +190,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="relative max-w-[90vw] max-h-[92vh] overflow-y-auto flex flex-col items-center"
+            className="relative max-w-[90vw] max-h-[92vh] max-sm:max-w-full max-sm:max-h-full overflow-y-auto overscroll-contain flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
             {remixing && (
@@ -297,7 +310,7 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           {/* Close button */}
           <button
             onClick={onClose}
-            className="fixed top-6 right-6 z-[110] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all backdrop-blur-md"
+            className="fixed top-6 right-6 max-sm:top-3 max-sm:right-3 z-[110] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all backdrop-blur-md"
             aria-label="Close lightbox"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
@@ -308,8 +321,11 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           {/* Prev / Next arrows */}
           {hasPrev && !remixing && (
             <button
-              onClick={goPrev}
-              className="fixed left-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                goPrev();
+              }}
+              className="max-sm:hidden fixed left-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
               aria-label="Previous"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -319,8 +335,11 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           )}
           {hasNext && !remixing && (
             <button
-              onClick={goNext}
-              className="fixed right-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                goNext();
+              }}
+              className="max-sm:hidden fixed right-6 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all backdrop-blur-md"
               aria-label="Next"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -330,21 +349,24 @@ export default function Lightbox({ items, initialIndex, onClose, strings }: Prop
           )}
 
           {/* Dots at bottom */}
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] flex gap-2 ${remixing ? "hidden" : ""}`}>
+          <div className={`fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[110] flex ${remixing ? "hidden" : ""}`}>
             {items.map((_, i) => (
               <button
                 key={i}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setLoaded(false);
                   setCurrentIndex(i);
                 }}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i === currentIndex
-                    ? "bg-white w-6"
-                    : "bg-white/30 hover:bg-white/50"
-                }`}
+                className="group h-8 px-1 flex items-center"
                 aria-label={`Go to image ${i + 1}`}
-              />
+              >
+                <span
+                  className={`block h-2 rounded-full transition-all duration-300 ${
+                    i === currentIndex ? "bg-white w-6" : "w-2 bg-white/30 group-hover:bg-white/50"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </motion.div>

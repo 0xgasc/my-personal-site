@@ -44,10 +44,10 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
-      <header className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950/95 backdrop-blur z-30">
-        <div className="flex items-center gap-6">
-          <span className="font-mono text-sm tracking-widest uppercase">Admin</span>
-          <nav className="flex gap-4 text-sm">
+      <header className="border-b border-gray-800 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-y-2 sticky top-0 bg-gray-950/95 backdrop-blur z-30">
+        <div className="flex items-center gap-6 min-w-0 max-sm:w-full max-sm:order-2">
+          <span className="max-sm:hidden font-mono text-sm tracking-widest uppercase">Admin</span>
+          <nav className="flex gap-4 text-sm overflow-x-auto whitespace-nowrap [scrollbar-width:none] max-sm:py-1">
             {navItems.map((item) => {
               const active =
                 item.href === "/admin"
@@ -65,7 +65,7 @@ export default function AdminLayout({
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-4 text-sm text-gray-400">
+        <div className="flex items-center gap-4 text-sm text-gray-400 max-sm:w-full max-sm:justify-end">
           {storeMode && (
             <span
               className={`px-2 py-0.5 rounded text-xs font-mono uppercase ${
@@ -100,7 +100,7 @@ export default function AdminLayout({
         </div>
       </header>
       <main
-        className={`px-6 py-6 ${constrainWidth ? "max-w-6xl mx-auto" : ""}`}
+        className={`px-4 sm:px-6 py-6 ${constrainWidth ? "max-w-6xl mx-auto" : ""}`}
         style={reserveFxGutter ? { paddingRight: 340 } : undefined}
       >
         {children}

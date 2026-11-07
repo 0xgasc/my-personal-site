@@ -59,7 +59,7 @@ export default function AdminGuestbook({ initialEntries }: Props) {
         <title>Admin · Guestbook</title>
       </Head>
       <AdminLayout>
-        <div className="flex items-baseline gap-4 mb-6">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 mb-6">
           <h1 className="text-xl font-semibold">Guestbook</h1>
           <div className="flex gap-1 text-sm">
             {(["pending", "approved", "all"] as const).map((f) => (

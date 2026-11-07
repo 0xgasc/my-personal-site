@@ -98,7 +98,7 @@ function shrink(dataUrl: string, maxSide = 1400, quality = 0.86): Promise<string
 }
 
 const chip = (active: boolean) =>
-  `px-2.5 py-1 text-xs rounded-full border transition-colors ${
+  `px-3 py-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full border transition-colors ${
     active ? "bg-white text-black border-white" : "border-white/20 text-white/70 hover:text-white hover:border-white/50"
   }`;
 
@@ -137,9 +137,23 @@ export default function RemixStudio({ src, title, link, strings: s }: Props) {
   async function save() {
     const url = await capture();
     if (!url) return;
+    const filename = `${(title || "remix").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${mode}.jpg`;
+    // Phones: the share sheet is how you get an image into Photos.
+    if (window.matchMedia("(pointer: coarse)").matches && navigator.canShare) {
+      try {
+        const blob = await (await fetch(url)).blob();
+        const file = new File([blob], filename, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
+    }
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(title || "remix").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${mode}.jpg`;
+    a.download = filename;
     a.click();
   }
 
@@ -181,7 +195,7 @@ export default function RemixStudio({ src, title, link, strings: s }: Props) {
         className="relative overflow-hidden rounded-lg shadow-2xl bg-black/40"
         style={{
           aspectRatio: ratio ? String(ratio) : "1",
-          width: ratio ? `min(90vw, calc(58vh * ${ratio}))` : "min(90vw, 58vh)",
+          width: ratio ? `min(100%, 90vw, calc(58dvh * ${ratio}))` : "min(100%, 90vw, 58dvh)",
           visibility: ratio ? "visible" : "hidden",
         }}
       >
@@ -209,9 +223,9 @@ export default function RemixStudio({ src, title, link, strings: s }: Props) {
 
         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
           <span className={label}>{s.wet}</span>
-          <input type="range" min={0} max={1} step={0.01} value={wet} onChange={(e) => setWet(Number(e.target.value))} className="accent-white" />
+          <input type="range" min={0} max={1} step={0.01} value={wet} onChange={(e) => setWet(Number(e.target.value))} className="accent-white h-8" />
           <span className={label}>{s.amount}</span>
-          <input type="range" min={0} max={1} step={0.01} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="accent-white" />
+          <input type="range" min={0} max={1} step={0.01} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="accent-white h-8" />
           {palettes.length > 1 && (
             <>
               <span className={label}>{s.palette}</span>
@@ -245,14 +259,14 @@ export default function RemixStudio({ src, title, link, strings: s }: Props) {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={40}
                 placeholder={s.name}
-                className="w-1/3 min-w-0 px-3 py-2 text-sm rounded-md bg-white/10 border border-white/15 focus:outline-none focus:border-white/50 placeholder:text-white/40"
+                className="w-1/3 min-w-0 px-3 py-2 text-base sm:text-sm rounded-md bg-white/10 border border-white/15 focus:outline-none focus:border-white/50 placeholder:text-white/40"
               />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={280}
                 placeholder={s.note}
-                className="flex-1 min-w-0 px-3 py-2 text-sm rounded-md bg-white/10 border border-white/15 focus:outline-none focus:border-white/50 placeholder:text-white/40"
+                className="flex-1 min-w-0 px-3 py-2 text-base sm:text-sm rounded-md bg-white/10 border border-white/15 focus:outline-none focus:border-white/50 placeholder:text-white/40"
               />
             </div>
             <input

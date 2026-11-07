@@ -222,9 +222,19 @@ export default function GlassShader({ zIndex = 0 }: { zIndex?: number }) {
     const uDay = u("u_day");
     let day = dayTarget.current;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let lastW = 0;
+    let lastH = 0;
     const resize = () => {
-      canvas.width = Math.round(window.innerWidth * dpr);
-      canvas.height = Math.round(window.innerHeight * dpr);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      // Phones fire resize as the address bar slides while scrolling. The
+      // scene is soft, so skip small height-only changes instead of
+      // reallocating the canvas mid-scroll.
+      if (w === lastW && Math.abs(h - lastH) < 160) return;
+      lastW = w;
+      lastH = h;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uRes, canvas.width, canvas.height);
     };
@@ -232,17 +242,29 @@ export default function GlassShader({ zIndex = 0 }: { zIndex?: number }) {
     window.addEventListener("resize", resize);
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // The drift is slow; 30fps looks the same on touch devices and halves GPU work.
+    const minGap = window.matchMedia("(pointer: coarse)").matches ? 1000 / 30 - 2 : 0;
     const offset = Math.random() * 100; // start mid-drift so it never opens on the same frame
     const start = performance.now();
     let raf = 0;
     let running = true;
+    let lastDraw = 0;
     const frame = () => {
       if (!running) return;
+      const now = performance.now();
+      // Skip drawing while a full-screen modal covers the page (its blurred
+      // backdrop would otherwise re-blur every frame) or between 30fps ticks.
+      const covered = document.documentElement.dataset.modal === "1";
+      if (!still && (covered || now - lastDraw < minGap)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      lastDraw = now;
       // Ease toward the current mode so toggling dark/light fades the scene.
       day = still ? dayTarget.current : day + (dayTarget.current - day) * 0.08;
       if (Math.abs(dayTarget.current - day) < 0.002) day = dayTarget.current;
       gl.uniform1f(uDay, day);
-      gl.uniform1f(uTime, still ? offset : offset + (performance.now() - start) / 1000);
+      gl.uniform1f(uTime, still ? offset : offset + (now - start) / 1000);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       if (!still) raf = requestAnimationFrame(frame);
     };
@@ -252,6 +274,7 @@ export default function GlassShader({ zIndex = 0 }: { zIndex?: number }) {
 
     const onVis = () => {
       running = !document.hidden;
+      cancelAnimationFrame(raf);
       if (running && !still) raf = requestAnimationFrame(frame);
     };
     document.addEventListener("visibilitychange", onVis);

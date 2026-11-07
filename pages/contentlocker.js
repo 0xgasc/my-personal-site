@@ -103,7 +103,7 @@ export default function ContentLocker({ state, html, reads, embed }) {
 
 const styles = {
   container: {
-    fontFamily: '"IBM Plex Mono", monospace',
+    fontFamily: 'var(--font-plex), monospace',
     padding: '80px 20px',
     textAlign: 'center',
     color: '#5D6A75',
@@ -137,7 +137,7 @@ const styles = {
     flex: 1,
     padding: '12px 14px',
     fontSize: '14px',
-    fontFamily: '"IBM Plex Mono", monospace',
+    fontFamily: 'var(--font-plex), monospace',
     border: '1px solid #B2BCC5',
     background: '#fff',
     color: '#141C24',
@@ -146,7 +146,7 @@ const styles = {
   btn: {
     padding: '12px 20px',
     fontSize: '13px',
-    fontFamily: '"IBM Plex Mono", monospace',
+    fontFamily: 'var(--font-plex), monospace',
     fontWeight: 600,
     background: '#141C24',
     color: '#DFE4E8',
@@ -165,7 +165,7 @@ const styles = {
     color: '#DFE4E8',
     padding: '6px 16px',
     fontSize: '11px',
-    fontFamily: '"IBM Plex Mono", monospace',
+    fontFamily: 'var(--font-plex), monospace',
     display: 'flex',
     justifyContent: 'space-between',
   },

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { shadedBackdropStyle, BackdropGrain } from "./ShadedBackdrop";
+import { shadedBackdropStyle, BackdropGrain, useModalOpen } from "./ShadedBackdrop";
 
 export interface SiteModalItem {
   title: string;
@@ -26,15 +26,12 @@ export default function SiteModal({ site, onClose, strings }: Props) {
   useEffect(() => setPortal(document.body), []);
   useEffect(() => setLoaded(false), [site?.url]);
 
+  useModalOpen(Boolean(site));
   useEffect(() => {
     if (!site) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [site, onClose]);
 
   if (!portal) return null;
@@ -48,7 +45,7 @@ export default function SiteModal({ site, onClose, strings }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-8"
+          className="fixed inset-0 z-[100] flex items-center justify-center sm:p-8"
           style={shadedBackdropStyle}
           onClick={onClose}
         >
@@ -58,7 +55,7 @@ export default function SiteModal({ site, onClose, strings }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="relative flex flex-col w-full max-w-6xl h-full max-h-[88vh] rounded-xl overflow-hidden"
+            className="relative flex flex-col w-full max-w-6xl h-[100dvh] sm:h-full sm:max-h-[88vh] sm:rounded-xl overflow-hidden max-sm:!border-0"
             style={{
               border: "1px solid rgba(255,255,255,0.12)",
               boxShadow: "0 30px 120px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)",
@@ -66,13 +63,13 @@ export default function SiteModal({ site, onClose, strings }: Props) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-4 px-4 py-2.5 text-sm text-white/80 border-b border-white/10">
-              <span className="truncate">{site.title}</span>
+            <div className="flex items-center gap-4 px-4 py-2 text-sm text-white/80 border-b border-white/10">
+              <span className="truncate min-w-0">{site.title}</span>
               <a
                 href={site.link ?? site.url}
                 target="_blank"
                 rel="noreferrer"
-                className="ml-auto shrink-0 text-xs text-white/55 hover:text-white"
+                className="ml-auto shrink-0 py-2 text-xs text-white/55 hover:text-white"
               >
                 {strings?.open ?? "open site ↗"}
               </a>
@@ -80,7 +77,7 @@ export default function SiteModal({ site, onClose, strings }: Props) {
                 type="button"
                 onClick={onClose}
                 aria-label={strings?.close ?? "close"}
-                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
               >
                 <svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 3l12 12M15 3L3 15" />

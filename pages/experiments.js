@@ -149,6 +149,7 @@ export default function Experiments() {
               alt={item.title}
               width={400}
               height={400}
+              sizes="(max-width: 768px) 50vw, 240px"
               className="w-full aspect-square object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
@@ -187,6 +188,8 @@ export default function Experiments() {
                 <img
                   src={p.src}
                   alt={p.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full aspect-video object-cover group-hover:opacity-90 transition-opacity"
                 />
               )}
@@ -221,6 +224,7 @@ export default function Experiments() {
               alt={item.alt}
               width={400}
               height={500}
+              sizes="(max-width: 768px) 50vw, 240px"
               className="w-full aspect-[3/4] object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-black/60">
