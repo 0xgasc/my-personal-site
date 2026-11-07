@@ -42,7 +42,7 @@
   --border-subtle: rgba(21, 21, 21, 0.1);
   --border-default: rgba(21, 21, 21, 0.2);
 
-  --glass-bg: rgba(239, 238, 233, 0.34);
+  --glass-bg: rgba(239, 238, 233, 0.22);
   --glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0) 75%);
   --glass-edge: rgba(255, 255, 255, 0.5);
   --glass-grain: 0.07;
